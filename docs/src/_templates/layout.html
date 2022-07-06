@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 {% extends "!layout.html" %}
 
 {# 
@@ -14,9 +15,14 @@
 
 {% if logo %}
 
-<img src="{{ pathto('_static/' + logo, 1) }}" class="logo" />
+<img alt="logo" src="{{ pathto('_static/' + logo, 1) }}" class="logo" />
 {% endif %}
+
+{% if logo and theme_logo_only %}
 </a>
+{% else %}
+</a>
+{% endif %}
 
 {% if theme_display_version %}
 {%- set nav_version = version %}
