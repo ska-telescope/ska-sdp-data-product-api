@@ -4,13 +4,16 @@ import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.config import Config
 from starlette.responses import FileResponse
 
-app = FastAPI()
-
-PERSISTANTSTORAGEPATH = (
-    "/mnt/c/Users/Andre/ska_repos/ska-sdp-data-product-api/files/"
+config = Config(".env")
+PERSISTANT_STORAGE_PATH: str = config(
+    "PERSISTANT_STORAGE_PATH",
+    default="../files/",
 )
+
+app = FastAPI()
 
 origins = [
     "http://localhost",
@@ -56,7 +59,7 @@ def getfilenames(path):
 
 def downloadfile(filename):
     """Work in progress"""
-    file_path = os.path.join(PERSISTANTSTORAGEPATH, filename)
+    file_path = os.path.join(PERSISTANT_STORAGE_PATH, filename)
     if os.path.exists(file_path):
         print(file_path)
         return FileResponse(
@@ -74,7 +77,7 @@ async def root():
 @app.get("/filelist")
 def index():
     """Work in progress"""
-    return {"filelist": getfilenames(PERSISTANTSTORAGEPATH)}
+    return {"filelist": getfilenames(PERSISTANT_STORAGE_PATH)}
 
 
 @app.get("/download/{filename}")
