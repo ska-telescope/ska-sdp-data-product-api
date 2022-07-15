@@ -6,9 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import FileResponse
 
-
 app = FastAPI()
-filename = ""
 
 PERSISTANTSTORAGEPATH = (
     "/mnt/c/Users/Andre/ska_repos/ska-sdp-data-product-api/files/"
@@ -27,36 +25,45 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 def getfilenames(path):
     """Work in progress"""
     filelist = []
-    
-    currentDirectory = ""
-    id = 0
+
+    current_directory = ""
+    file_id = 0
     for _root, dirs, files in os.walk(path):
         for file in files:
-            # filelist.append(os.path.join(currentDirectory,file))
-            fileListItem = {}
-            fileListItem.update({'id':id})
-            fileListItem.update({'filename':os.path.join(currentDirectory,file)})
-            filelist.append(fileListItem)
-            # print(str(fileListItem))
-            id = id+1
+            # filelist.append(os.path.join(current_directory,file))
+            file_list_item = {}
+            file_list_item.update({"id": file_id})
+            file_list_item.update(
+                {"filename": os.path.join(current_directory, file)}
+            )
+            filelist.append(file_list_item)
+            # print(str(file_list_item))
+            file_id = file_id + 1
             # print("This is a File:"+file)
         for directory in dirs:
-            currentDirectory = currentDirectory + directory+"/"
+            current_directory = current_directory + directory + "/"
             # filelist.append(directory)
             # print("This is a folder:"+directory)
     return filelist
+
+
 # getfilenames("/mnt/c/Users/Andre/ska_repos/ska-sdp-data-product-api/files/")
+
 
 def downloadfile(filename):
     """Work in progress"""
     file_path = os.path.join(PERSISTANTSTORAGEPATH, filename)
     if os.path.exists(file_path):
         print(file_path)
-        return FileResponse(file_path, media_type='application/octet-stream',filename=filename)
+        return FileResponse(
+            file_path, media_type="application/octet-stream", filename=filename
+        )
     return {"error": "File not found!"}
+
 
 @app.get("/")
 async def root():
@@ -73,4 +80,4 @@ def index():
 @app.get("/download/{filename}")
 async def download(filename):
     """Work in progress"""
-    return (downloadfile(filename))
+    return downloadfile(filename)
