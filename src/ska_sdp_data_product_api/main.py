@@ -4,8 +4,6 @@ import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-# from fastapi.responses import FileResponse
-
 from starlette.responses import FileResponse
 
 
@@ -32,15 +30,23 @@ app.add_middleware(
 def getfilenames(path):
     """Work in progress"""
     filelist = []
+    
     currentDirectory = ""
+    id = 0
     for _root, dirs, files in os.walk(path):
         for file in files:
-            filelist.append(os.path.join(currentDirectory,file))
-            print("This is a File:"+file)
+            # filelist.append(os.path.join(currentDirectory,file))
+            fileListItem = {}
+            fileListItem.update({'id':id})
+            fileListItem.update({'filename':os.path.join(currentDirectory,file)})
+            filelist.append(fileListItem)
+            # print(str(fileListItem))
+            id = id+1
+            # print("This is a File:"+file)
         for directory in dirs:
-            currentDirectory = directory+"/"
-            filelist.append(directory)
-            print("This is a folder:"+directory)
+            currentDirectory = currentDirectory + directory+"/"
+            # filelist.append(directory)
+            # print("This is a folder:"+directory)
     return filelist
 # getfilenames("/mnt/c/Users/Andre/ska_repos/ska-sdp-data-product-api/files/")
 
