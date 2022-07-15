@@ -2,7 +2,7 @@
 
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.config import Config
 from starlette.responses import FileResponse
@@ -30,31 +30,35 @@ app.add_middleware(
 
 
 def getfilenames(path):
-    """Work in progress"""
+    """getfilenames itterates through a folder specified with the path
+    parameter, and returns a list of files and their relative paths as
+    well as an index used.
+
+    This is done as a first proof of concept, and will need to be updated
+    to actual use cases"""
     filelist = []
 
     current_directory = ""
     file_id = 0
     for _root, dirs, files in os.walk(path):
         for file in files:
-            # filelist.append(os.path.join(current_directory,file))
             file_list_item = {}
             file_list_item.update({"id": file_id})
             file_list_item.update(
                 {"filename": os.path.join(current_directory, file)}
             )
             filelist.append(file_list_item)
-            # print(str(file_list_item))
             file_id = file_id + 1
-            # print("This is a File:"+file)
         for directory in dirs:
+            file_list_item = {}
+            file_list_item.update({"id": file_id})
+            file_list_item.update(
+                {"filename": os.path.join(current_directory, directory)}
+            )
             current_directory = current_directory + directory + "/"
-            # filelist.append(directory)
-            # print("This is a folder:"+directory)
+            filelist.append(file_list_item)
+            file_id = file_id + 1
     return filelist
-
-
-# getfilenames("/mnt/c/Users/Andre/ska_repos/ska-sdp-data-product-api/files/")
 
 
 def downloadfile(filename):
@@ -65,22 +69,29 @@ def downloadfile(filename):
         return FileResponse(
             file_path, media_type="application/octet-stream", filename=filename
         )
-    return {"error": "File not found!"}
+    raise HTTPException(
+        status_code=404, detail=f"File with name {filename} not found"
+    )
 
 
 @app.get("/")
 async def root():
-    """Work in progress"""
+    """An enpoint that just returns Hello World"""
     return {"message": "Hello World"}
 
 
 @app.get("/filelist")
 def index():
-    """Work in progress"""
+    """This API endpoint returns a list of all the files in the
+    PERSISTANT_STORAGE_PATH in the following format {"filelist":
+    [{"id":0,"filename":"file1.extentions"},{"id":1,"filename":"
+    Subfolder1/SubSubFolder/file2.extentions"}]}
+    """
     return {"filelist": getfilenames(PERSISTANT_STORAGE_PATH)}
 
 
 @app.get("/download/{filename}")
 async def download(filename):
-    """Work in progress"""
+    """This API endpoint returns a FileResponse that is used by a
+    frontend to download a file"""
     return downloadfile(filename)

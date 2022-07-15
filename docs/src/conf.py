@@ -96,7 +96,7 @@ html_theme = 'sphinx_rtd_theme'
 # html_theme_options = {}
 
 html_context = {
-    'logo': 'img/logo.jpg',
+    'logo': 'img/logo.png',
     'theme_logo_only' : True,
     'display_github': True, # Integrate GitHub
     'github_user': 'flyingfrog81', # Username
