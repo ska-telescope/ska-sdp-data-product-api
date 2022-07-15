@@ -4,10 +4,13 @@ import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 # from fastapi.responses import FileResponse
 
+from starlette.responses import FileResponse
+
+
 app = FastAPI()
+filename = ""
 
 PERSISTANTSTORAGEPATH = (
     "/mnt/c/Users/Andre/ska_repos/ska-sdp-data-product-api/files/"
@@ -26,19 +29,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 def getfilenames(path):
     """Work in progress"""
     filelist = []
+    currentDirectory = ""
     for _root, dirs, files in os.walk(path):
         for file in files:
-            # filelist.append(os.path.join(root,file))
-            filelist.append(file)
+            filelist.append(os.path.join(currentDirectory,file))
+            print("This is a File:"+file)
         for directory in dirs:
-            # filelist.append(os.path.join(root,file))
+            currentDirectory = directory+"/"
             filelist.append(directory)
+            print("This is a folder:"+directory)
     return filelist
+# getfilenames("/mnt/c/Users/Andre/ska_repos/ska-sdp-data-product-api/files/")
 
+def downloadfile(filename):
+    """Work in progress"""
+    file_path = os.path.join(PERSISTANTSTORAGEPATH, filename)
+    if os.path.exists(file_path):
+        print(file_path)
+        return FileResponse(file_path, media_type='application/octet-stream',filename=filename)
+    return {"error": "File not found!"}
 
 @app.get("/")
 async def root():
@@ -49,25 +61,10 @@ async def root():
 @app.get("/filelist")
 def index():
     """Work in progress"""
-    return {"Filelist": getfilenames(PERSISTANTSTORAGEPATH)}
+    return {"filelist": getfilenames(PERSISTANTSTORAGEPATH)}
 
 
-# @app.get(
-#     "/cat",
-#     responses={
-#         200: {
-#             "description": "A picture of a cat.",
-#             "content": {
-#                 "image/jpeg": {"example": "Just imagine a picture of a cat."}
-#             },
-#         }
-#     },
-# )
-# def cat():
-#     """Work in progress"""
-#     file_path = os.path.join(PERSISTANTSTORAGEPATH, "files/cat.jpg")
-#     if os.path.exists(file_path):
-#         return FileResponse(
-#             file_path, media_type="image/jpeg", filename="mycat.jpg"
-#         )
-#     return {"error": "File not found!"}
+@app.get("/download/{filename}")
+async def download(filename):
+    """Work in progress"""
+    return (downloadfile(filename))
