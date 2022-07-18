@@ -2,13 +2,13 @@
 ## Description
 This repository contains an SKA SDP Data Product API that is used to provide a list of SDP data products (files) and make them available to download.
 ##### Badges
-[![Documentation Status](https://readthedocs.org/projects/ska-telescope-ska-sdp-data-product-api/badge/?version=latest)](https://developer.skao.int/projects/ska-sdp-data-product-api/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/ska-telescope-ska-sdp-data-product-api/badge/?version=latest)](https://developer.skao.int/projects/ska-sdp-data-product-api/en/latest/?badge=latest)  ![Pipeline](https://gitlab.com/ska-telescope/sdp/ska-sdp-data-product-api/badges/main/pipeline.svg)
 
 ## Getting Started
 
 ## Tooling Pre-requisites
 
-Below are some tools that will be required to work with the QA Data API:
+Below are some tools that will be required to work with the data product api:
 - Python 3.8 or later versions: Install page URL: https://www.python.org/downloads/
 - Poetry 1.1 or later versions: Install page URL: https://python-poetry.org/docs/#installation
 - GNU make 4.2 or later versions: Install page URL: https://www.gnu.org/software/make/

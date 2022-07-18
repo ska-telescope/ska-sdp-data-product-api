@@ -8,6 +8,7 @@ and also contains the Helm chart for this system.
    :maxdepth: 2
    :caption: Contents:
 
+   overview
 
 Indices and tables
 ==================
