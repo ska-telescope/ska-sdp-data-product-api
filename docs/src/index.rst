@@ -1,8 +1,7 @@
-Documentation for the SKA QA Metrics API and Helm Chart
+Documentation for the SKA SDP Data Product API Overview
 =======================================================
 
-The `ska-sdp-qa-data-api` repository contains the code for the main API image,
-and also contains the Helm chart for this system.
+The `ska-sdp-data-product-api` repository contains the code for the main API.
 
 .. toctree::
    :maxdepth: 2
