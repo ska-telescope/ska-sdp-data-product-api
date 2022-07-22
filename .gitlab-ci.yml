@@ -29,10 +29,6 @@ include:
     # Build and push the docker image
   - project: 'ska-telescope/templates-repository'
     file: 'gitlab-ci/includes/oci-image.gitlab-ci.yml'
-
-    # Helm building and pushing
-  - project: 'ska-telescope/templates-repository'
-    file: 'gitlab-ci/includes/helm-chart.gitlab-ci.yml'
     
     # .post step finalisers eg: badges
   - project: 'ska-telescope/templates-repository'

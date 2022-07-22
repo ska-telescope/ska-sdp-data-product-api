@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Basic test for the ska_sdp_qa_data_api fastapi module."""
 from fastapi.testclient import TestClient
 

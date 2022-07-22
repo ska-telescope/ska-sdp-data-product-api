@@ -65,7 +65,6 @@ def downloadfile(filename):
     """Work in progress"""
     file_path = os.path.join(PERSISTANT_STORAGE_PATH, filename)
     if os.path.exists(file_path):
-        print(file_path)
         return FileResponse(
             file_path, media_type="application/octet-stream", filename=filename
         )

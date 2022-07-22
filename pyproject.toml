@@ -2,7 +2,7 @@
 name = "ska-sdp-data-product-api"
 version = "0.1.0"
 description = "This repository contain the API that exposes SDP Data Products to the SDP Data Product Dashboard"
-authors = ["Your Name <you@example.com>"]
+authors = ["Andre Odendaal <andre@vivosa.co.za>"]
 license = "BSD-3-Clause"
 packages = [
     { include = "ska_sdp_data_product_api", from = "src" },
