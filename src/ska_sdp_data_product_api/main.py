@@ -10,7 +10,7 @@ from starlette.responses import FileResponse
 config = Config(".env")
 PERSISTANT_STORAGE_PATH: str = config(
     "PERSISTANT_STORAGE_PATH",
-    default="../files/",
+    default="./tests/test_files",
 )
 REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL: str = config(
     "REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL",
@@ -47,6 +47,7 @@ def getfilenames(path):
     This is done as a first proof of concept, and will need to be updated
     to actual use cases"""
     filelist = []
+    print(path)
 
     current_directory = ""
     file_id = 0
@@ -83,10 +84,10 @@ def downloadfile(filename):
     )
 
 
-@app.get("/")
+@app.get("/ping")
 async def root():
-    """An enpoint that just returns Hello World"""
-    return {"message": "Hello World"}
+    """An enpoint that just returns ping live"""
+    return {"ping": "live"}
 
 
 @app.get("/filelist")
