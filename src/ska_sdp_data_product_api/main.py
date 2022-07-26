@@ -12,12 +12,22 @@ PERSISTANT_STORAGE_PATH: str = config(
     "PERSISTANT_STORAGE_PATH",
     default="../files/",
 )
+REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL: str = config(
+    "REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL",
+    default="http://localhost",
+)
+REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT: str = config(
+    "REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT",
+    default="3300",
+)
 
 app = FastAPI()
 
 origins = [
-    "http://localhost",
-    "http://localhost:3300",
+    REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL,
+    REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL
+    + ":"
+    + REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT,
 ]
 
 app.add_middleware(
