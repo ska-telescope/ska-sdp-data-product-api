@@ -47,8 +47,6 @@ def getfilenames(path):
     This is done as a first proof of concept, and will need to be updated
     to actual use cases"""
     filelist = []
-    print(path)
-
     current_directory = ""
     file_id = 0
     for _root, dirs, files in os.walk(path):
