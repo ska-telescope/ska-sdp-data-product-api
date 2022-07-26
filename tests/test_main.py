@@ -1,20 +1,18 @@
 #!/usr/bin/env python
 """Basic test for the ska_sdp_qa_data_api fastapi module."""
-from fastapi.testclient import TestClient
-
-from ska_sdp_data_product_api.main import app
-
-client = TestClient(app)
 
 
-def test_ping_root():
-    """Ping test"""
-    response = client.get("/")
+def test_ping_main(test_app):
+    """Can we hit the ping endpoint"""
+    response = test_app.get("/ping")
     assert response.status_code == 200
-    assert response.json() == {"message": "Hello World"}
+    assert response.json() == {"ping": "live"}
 
 
-def test_ping_filelist():
-    """Ping test"""
-    response = client.get("/filelist")
+def test_filelist(test_app):
+    """Test to see if a file list can be retrieved"""
+    response = test_app.get("/filelist")
     assert response.status_code == 200
+    assert response.json() == {
+        "filelist": [{"id": 0, "filename": "testfile.txt"}]
+    }

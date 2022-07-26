@@ -10,14 +10,24 @@ from starlette.responses import FileResponse
 config = Config(".env")
 PERSISTANT_STORAGE_PATH: str = config(
     "PERSISTANT_STORAGE_PATH",
-    default="../files/",
+    default="./tests/test_files",
+)
+REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL: str = config(
+    "REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL",
+    default="http://localhost",
+)
+REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT: str = config(
+    "REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT",
+    default="3300",
 )
 
 app = FastAPI()
 
 origins = [
-    "http://localhost",
-    "http://localhost:3300",
+    REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL,
+    REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL
+    + ":"
+    + REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT,
 ]
 
 app.add_middleware(
@@ -37,7 +47,6 @@ def getfilenames(path):
     This is done as a first proof of concept, and will need to be updated
     to actual use cases"""
     filelist = []
-
     current_directory = ""
     file_id = 0
     for _root, dirs, files in os.walk(path):
@@ -73,10 +82,10 @@ def downloadfile(filename):
     )
 
 
-@app.get("/")
+@app.get("/ping")
 async def root():
-    """An enpoint that just returns Hello World"""
-    return {"message": "Hello World"}
+    """An enpoint that just returns ping live"""
+    return {"ping": "live"}
 
 
 @app.get("/filelist")
