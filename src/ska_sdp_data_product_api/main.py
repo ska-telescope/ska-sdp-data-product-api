@@ -121,7 +121,7 @@ def index():
     """
     global tree_item_id
     tree_item_id = 'root'
-    return {"filelist": getfilenames(PERSISTANT_STORAGE_PATH)}
+    return getfilenames(PERSISTANT_STORAGE_PATH)
 
 
 @app.post("/download")
