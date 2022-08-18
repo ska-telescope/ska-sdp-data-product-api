@@ -52,23 +52,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-global tree_item_id
-tree_item_id = 'root'
+TREE_ITEM_ID = "root"
+
 
 def getfilenames(path):
     """getfilenames itterates through a folder specified with the path
     parameter, and returns a list of files and their relative paths as
     well as an index used.
     """
-    global tree_item_id
+    # pylint: disable=global-statement
+    global TREE_ITEM_ID
     tree_data = {
-        "id": tree_item_id,
+        "id": TREE_ITEM_ID,
         "name": os.path.basename(path),
-        "url": str(pathlib.Path(*pathlib.Path(path).parts[2:]))
+        "relativefilename": str(pathlib.Path(*pathlib.Path(path).parts[2:])),
     }
-    if (tree_item_id == 'root'):
-        tree_item_id = 0
-    tree_item_id = tree_item_id + 1
+    if TREE_ITEM_ID == "root":
+        TREE_ITEM_ID = 0
+    TREE_ITEM_ID = TREE_ITEM_ID + 1
     if os.path.isdir(path):
         tree_data["type"] = "directory"
         tree_data["children"] = [
@@ -119,8 +120,9 @@ def index():
     [{"id":0,"filename":"file1.extentions"},{"id":1,"filename":"
     Subfolder1/SubSubFolder/file2.extentions"}]}
     """
-    global tree_item_id
-    tree_item_id = 'root'
+    # pylint: disable=global-statement
+    global TREE_ITEM_ID
+    TREE_ITEM_ID = "root"
     return getfilenames(PERSISTANT_STORAGE_PATH)
 
 
