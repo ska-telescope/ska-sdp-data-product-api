@@ -30,7 +30,16 @@ poetry shell
 poetry install
 uvicorn src.ska_sdp_data_product_api.main:app --reload
 ```
+## Running the application inside a containder
 
+To run the application using docker, build the docker file in the root directory and run the container exposing port 8000.
+
+```
+ docker build -t api-docker .
+ docker run -p 8000:8000 api-docker
+```
+
+The API can be teste by requesting the file list at the url http://127.0.0.1:8000/filelist
 ## Roadmap
 This project is in very early development, but the following have already been identified to be added:
 []  Addition of different endpoints for files shared as a directory or with Rucio
