@@ -1,7 +1,7 @@
 # Using multi stage build to update the requirements.txt from the project.toml.
 FROM python:3.9-slim as builder
 WORKDIR /usr/src/app
-RUN pip install poetry
+RUN pip install --no-cache-dir poetry==1.1.13
 COPY pyproject.toml poetry.lock ./
 RUN poetry export --format requirements.txt --without-hashes > requirements.txt
 
@@ -17,8 +17,7 @@ COPY src/ska_sdp_data_product_api/ .
 # install app dependencies
 COPY --from=builder /usr/src/app/requirements.txt .
 RUN set -eux \
-    && pip install --upgrade pip setuptools wheel \
-    && pip install -r requirements.txt \
+    && pip install --no-cache-dir -r requirements.txt \
     && rm -rf /root/.cache/pip
 
 # start app
