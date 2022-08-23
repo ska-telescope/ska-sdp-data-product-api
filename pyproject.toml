@@ -15,6 +15,7 @@ url = 'https://artefact.skao.int/repository/pypi-internal/simple'
 [tool.poetry.dependencies]
 python = "^3.7"
 fastapi = "^0.78.0"
+uvicorn = "^0.18.2"
 
 [tool.poetry.dev-dependencies]
 isort = "^5.10.1"

@@ -1,9 +1,14 @@
 """This API exposes SDP Data Products to the SDP Data Product Dashboard."""
 
 import os
+import pathlib
+import shutil
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+
+# pylint: disable=no-name-in-module
+from pydantic import BaseModel
 from starlette.config import Config
 from starlette.responses import FileResponse
 
@@ -20,6 +25,15 @@ REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT: str = config(
     "REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT",
     default="3300",
 )
+
+# pylint: disable=too-few-public-methods
+
+
+class FileUrl(BaseModel):
+    """Relative path and file name"""
+
+    relativeFileName: str
+
 
 app = FastAPI()
 
@@ -38,47 +52,58 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+TREE_ITEM_ID = "root"
+
 
 def getfilenames(path):
     """getfilenames itterates through a folder specified with the path
     parameter, and returns a list of files and their relative paths as
     well as an index used.
-
-    This is done as a first proof of concept, and will need to be updated
-    to actual use cases"""
-    filelist = []
-    current_directory = ""
-    file_id = 0
-    for _root, dirs, files in os.walk(path):
-        for file in files:
-            file_list_item = {}
-            file_list_item.update({"id": file_id})
-            file_list_item.update(
-                {"filename": os.path.join(current_directory, file)}
-            )
-            filelist.append(file_list_item)
-            file_id = file_id + 1
-        for directory in dirs:
-            file_list_item = {}
-            file_list_item.update({"id": file_id})
-            file_list_item.update(
-                {"filename": os.path.join(current_directory, directory)}
-            )
-            current_directory = current_directory + directory + "/"
-            filelist.append(file_list_item)
-            file_id = file_id + 1
-    return filelist
+    """
+    # pylint: disable=global-statement
+    global TREE_ITEM_ID
+    tree_data = {
+        "id": TREE_ITEM_ID,
+        "name": os.path.basename(path),
+        "relativefilename": str(pathlib.Path(*pathlib.Path(path).parts[2:])),
+    }
+    if TREE_ITEM_ID == "root":
+        TREE_ITEM_ID = 0
+    TREE_ITEM_ID = TREE_ITEM_ID + 1
+    if os.path.isdir(path):
+        tree_data["type"] = "directory"
+        tree_data["children"] = [
+            getfilenames(os.path.join(path, x)) for x in os.listdir(path)
+        ]
+    else:
+        tree_data["type"] = "file"
+    return tree_data
 
 
-def downloadfile(filename):
+def downloadfile(relative_path_name):
     """Work in progress"""
-    file_path = os.path.join(PERSISTANT_STORAGE_PATH, filename)
-    if os.path.exists(file_path):
+    persistant_file_path = os.path.join(
+        PERSISTANT_STORAGE_PATH, relative_path_name
+    )
+
+    if os.path.exists(persistant_file_path):
+        if os.path.isdir(persistant_file_path):
+            shutil.make_archive(
+                persistant_file_path, "zip", persistant_file_path
+            )
+            return FileResponse(
+                persistant_file_path + ".zip",
+                media_type="application/zip",
+                filename=relative_path_name,
+            )
         return FileResponse(
-            file_path, media_type="application/octet-stream", filename=filename
+            persistant_file_path,
+            media_type="application/octet-stream",
+            filename=relative_path_name,
         )
     raise HTTPException(
-        status_code=404, detail=f"File with name {filename} not found"
+        status_code=404,
+        detail=f"File with name {relative_path_name} not found",
     )
 
 
@@ -95,11 +120,14 @@ def index():
     [{"id":0,"filename":"file1.extentions"},{"id":1,"filename":"
     Subfolder1/SubSubFolder/file2.extentions"}]}
     """
-    return {"filelist": getfilenames(PERSISTANT_STORAGE_PATH)}
+    # pylint: disable=global-statement
+    global TREE_ITEM_ID
+    TREE_ITEM_ID = "root"
+    return getfilenames(PERSISTANT_STORAGE_PATH)
 
 
-@app.get("/download/{filename}")
-async def download(filename):
+@app.post("/download")
+async def download(relative_file_name: FileUrl):
     """This API endpoint returns a FileResponse that is used by a
     frontend to download a file"""
-    return downloadfile(filename)
+    return downloadfile(relative_file_name.relativeFileName)

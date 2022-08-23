@@ -46,3 +46,13 @@ http://127.0.0.1:8000/filelist
 http://127.0.0.1:8000/download/{filename}
 
 Will return a FileResponse object to download the file.
+
+Running the application inside a container
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To run the application using docker, build the docker file in the root directory and run the container exposing port 8000.
+
+```
+ docker build -t api-docker .
+ docker run -p 8000:8000 api-docker
+```
