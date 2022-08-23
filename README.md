@@ -30,7 +30,7 @@ poetry shell
 poetry install
 uvicorn src.ska_sdp_data_product_api.main:app --reload
 ```
-## Running the application inside a containder
+## Running the application inside a container
 
 To run the application using docker, build the docker file in the root directory and run the container exposing port 8000.
 
