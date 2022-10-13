@@ -15,7 +15,7 @@ from starlette.responses import FileResponse
 config = Config(".env")
 PERSISTANT_STORAGE_PATH: str = config(
     "PERSISTANT_STORAGE_PATH",
-    default="/mnt/files",
+    default="./tests/test_files",
 )
 REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL: str = config(
     "REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL",
