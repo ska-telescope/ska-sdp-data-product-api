@@ -38,6 +38,8 @@ class FileUrl(BaseModel):
 app = FastAPI()
 
 origins = [
+    "http://localhost",
+    "http://localhost" + ":" + REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT,
     REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL,
     REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL
     + ":"
