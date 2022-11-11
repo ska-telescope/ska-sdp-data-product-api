@@ -23,7 +23,7 @@ REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL: str = config(
 )
 REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT: str = config(
     "REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT",
-    default="3300",
+    default="8100",
 )
 
 # pylint: disable=too-few-public-methods
@@ -38,6 +38,8 @@ class FileUrl(BaseModel):
 app = FastAPI()
 
 origins = [
+    "http://localhost",
+    "http://localhost" + ":" + REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT,
     REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL,
     REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL
     + ":"
@@ -65,7 +67,7 @@ def getfilenames(path):
     tree_data = {
         "id": TREE_ITEM_ID,
         "name": os.path.basename(path),
-        "relativefilename": str(pathlib.Path(*pathlib.Path(path).parts[2:])),
+        "relativefilename": str(pathlib.Path(*pathlib.Path(path).parts[3:])),
     }
     if TREE_ITEM_ID == "root":
         TREE_ITEM_ID = 0
@@ -103,7 +105,7 @@ def downloadfile(relative_path_name):
         )
     raise HTTPException(
         status_code=404,
-        detail=f"File with name {relative_path_name} not found",
+        detail=f"File with name {persistant_file_path} not found",
     )
 
 
