@@ -35,6 +35,16 @@ class FileUrl(BaseModel):
     relativeFileName: str
 
 
+class DataProductIndex:
+    """This class contains the list of data products with their file names,
+    paths and an ID for each"
+    """
+
+    def __init__(self, root_tree_item_id, tree_data):
+        self.tree_item_id = root_tree_item_id
+        self.tree_data = tree_data
+
+
 app = FastAPI()
 
 origins = [
@@ -54,28 +64,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-TREE_ITEM_ID = "root"
 
-
-def getfilenames(path):
+def getfilenames(path, data_product_index: DataProductIndex):
     """getfilenames itterates through a folder specified with the path
     parameter, and returns a list of files and their relative paths as
     well as an index used.
     """
-    # pylint: disable=global-statement
-    global TREE_ITEM_ID
     tree_data = {
-        "id": TREE_ITEM_ID,
+        "id": data_product_index.tree_item_id,
         "name": os.path.basename(path),
         "relativefilename": str(pathlib.Path(*pathlib.Path(path).parts[3:])),
     }
-    if TREE_ITEM_ID == "root":
-        TREE_ITEM_ID = 0
-    TREE_ITEM_ID = TREE_ITEM_ID + 1
+    if data_product_index.tree_item_id == "root":
+        data_product_index.tree_item_id = 0
+    data_product_index.tree_item_id = data_product_index.tree_item_id + 1
     if os.path.isdir(path):
         tree_data["type"] = "directory"
         tree_data["children"] = [
-            getfilenames(os.path.join(path, x)) for x in os.listdir(path)
+            getfilenames(os.path.join(path, x), data_product_index)
+            for x in os.listdir(path)
         ]
     else:
         tree_data["type"] = "file"
@@ -122,10 +129,13 @@ def index():
     [{"id":0,"filename":"file1.extentions"},{"id":1,"filename":"
     Subfolder1/SubSubFolder/file2.extentions"}]}
     """
-    # pylint: disable=global-statement
-    global TREE_ITEM_ID
-    TREE_ITEM_ID = "root"
-    return getfilenames(PERSISTANT_STORAGE_PATH)
+    data_product_index = DataProductIndex(
+        root_tree_item_id="root", tree_data={}
+    )
+    data_product_index.tree_data = getfilenames(
+        PERSISTANT_STORAGE_PATH, data_product_index
+    )
+    return data_product_index.tree_data
 
 
 @app.post("/download")
