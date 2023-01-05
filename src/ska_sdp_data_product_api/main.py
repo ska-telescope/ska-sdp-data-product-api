@@ -6,33 +6,18 @@ import pathlib
 import zipfile
 
 from fastapi import FastAPI, HTTPException, Response
-from fastapi.middleware.cors import CORSMiddleware
 
 # pylint: disable=no-name-in-module
 from pydantic import BaseModel
-from starlette.config import Config
 from starlette.responses import FileResponse
 
-config = Config(".env")
-PERSISTANT_STORAGE_PATH: str = config(
-    "PERSISTANT_STORAGE_PATH",
-    default="./tests/test_files",
-)
-REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL: str = config(
-    "REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL",
-    default="http://localhost",
-)
-REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT: str = config(
-    "REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT",
-    default="8100",
-)
+from core.settings import app, PERSISTANT_STORAGE_PATH
 
 # pylint: disable=too-few-public-methods
 
 
 class FileUrl(BaseModel):
     """Relative path and file name"""
-
     relativeFileName: str
 
 
@@ -40,30 +25,9 @@ class DataProductIndex:
     """This class contains the list of data products with their file names,
     paths and an ID for each"
     """
-
     def __init__(self, root_tree_item_id, tree_data):
         self.tree_item_id = root_tree_item_id
         self.tree_data = tree_data
-
-
-app = FastAPI()
-
-origins = [
-    "http://localhost",
-    "http://localhost" + ":" + REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT,
-    REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL,
-    REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL
-    + ":"
-    + REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT,
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 
 def getfilenames(
