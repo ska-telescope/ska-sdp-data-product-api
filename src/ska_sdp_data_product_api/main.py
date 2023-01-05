@@ -5,7 +5,7 @@ import io
 import pathlib
 import zipfile
 
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import HTTPException, Response
 
 # pylint: disable=no-name-in-module
 from pydantic import BaseModel
