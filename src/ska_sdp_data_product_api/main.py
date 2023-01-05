@@ -65,24 +65,37 @@ app.add_middleware(
 )
 
 
-def getfilenames(path, data_product_index: DataProductIndex):
+def getfilenames(
+    persistent_storage_path, data_product_index: DataProductIndex
+):
     """getfilenames itterates through a folder specified with the path
     parameter, and returns a list of files and their relative paths as
     well as an index used.
     """
+
+    if not os.path.exists(persistent_storage_path):
+        raise HTTPException(
+            status_code=404,
+            detail=f"File path: {persistent_storage_path} not found",
+        )
+
     tree_data = {
         "id": data_product_index.tree_item_id,
-        "name": os.path.basename(path),
-        "relativefilename": str(pathlib.Path(*pathlib.Path(path).parts[3:])),
+        "name": os.path.basename(persistent_storage_path),
+        "relativefilename": str(
+            pathlib.Path(*pathlib.Path(persistent_storage_path).parts[3:])
+        ),
     }
     if data_product_index.tree_item_id == "root":
         data_product_index.tree_item_id = 0
     data_product_index.tree_item_id = data_product_index.tree_item_id + 1
-    if os.path.isdir(path):
+    if os.path.isdir(persistent_storage_path):
         tree_data["type"] = "directory"
         tree_data["children"] = [
-            getfilenames(os.path.join(path, x), data_product_index)
-            for x in os.listdir(path)
+            getfilenames(
+                os.path.join(persistent_storage_path, x), data_product_index
+            )
+            for x in os.listdir(persistent_storage_path)
         ]
     else:
         tree_data["type"] = "file"
@@ -95,24 +108,23 @@ def downloadfile(relative_path_name):
         PERSISTANT_STORAGE_PATH, relative_path_name
     )
 
-    if os.path.exists(persistant_file_path):
-        if os.path.isdir(persistant_file_path):
-            shutil.make_archive(
-                persistant_file_path, "zip", persistant_file_path
-            )
-            return FileResponse(
-                persistant_file_path + ".zip",
-                media_type="application/zip",
-                filename=relative_path_name,
-            )
+    if not os.path.exists(persistant_file_path):
+        raise HTTPException(
+            status_code=404,
+            detail=f"File: {persistant_file_path} not found",
+        )
+
+    if os.path.isdir(persistant_file_path):
+        shutil.make_archive(persistant_file_path, "zip", persistant_file_path)
         return FileResponse(
-            persistant_file_path,
-            media_type="application/octet-stream",
+            persistant_file_path + ".zip",
+            media_type="application/zip",
             filename=relative_path_name,
         )
-    raise HTTPException(
-        status_code=404,
-        detail=f"File with name {persistant_file_path} not found",
+    return FileResponse(
+        persistant_file_path,
+        media_type="application/octet-stream",
+        filename=relative_path_name,
     )
 
 
