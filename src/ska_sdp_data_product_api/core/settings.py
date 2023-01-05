@@ -1,6 +1,7 @@
 """API SDP Settings"""
 
 from starlette.config import Config
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 config = Config(".env")
