@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 """Basic test for the ska_sdp_qa_data_api fastapi module."""
+import pytest
+from fastapi import HTTPException
+
+from ska_sdp_data_product_api.main import DataProductIndex, getfilenames
 
 
 def test_ping_main(test_app):
@@ -13,3 +17,16 @@ def test_filelist(test_app):
     """Test to see if a file list can be retrieved"""
     response = test_app.get("/filelist")
     assert response.status_code == 200
+
+
+def test_getfilenames_unhappy_path():
+    """This tests the expected error of 404 if a non existing path is passed
+    to the getfilenames function"""
+
+    data_product_index = DataProductIndex(
+        root_tree_item_id="root", tree_data={}
+    )
+    with pytest.raises(HTTPException) as exc_info:
+        _ = getfilenames("Non_existing_path", data_product_index)
+    assert isinstance(exc_info.value, HTTPException)
+    assert exc_info.value.status_code == 404
