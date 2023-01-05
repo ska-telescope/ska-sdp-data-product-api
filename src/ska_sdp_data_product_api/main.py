@@ -32,6 +32,15 @@ class DataProductIndex:
         self.tree_data = tree_data
 
 
+def verify_file_path(file_path):
+    """Test if the file path exists"""
+    if not os.path.exists(file_path):
+        raise HTTPException(
+            status_code=404,
+            detail=f"File path with name {file_path} not found",
+        )
+
+
 def getfilenames(
     persistent_storage_path, data_product_index: DataProductIndex
 ):
@@ -39,12 +48,7 @@ def getfilenames(
     parameter, and returns a list of files and their relative paths as
     well as an index used.
     """
-
-    if not os.path.exists(persistent_storage_path):
-        raise HTTPException(
-            status_code=404,
-            detail=f"File path: {persistent_storage_path} not found",
-        )
+    verify_file_path(persistent_storage_path)
 
     tree_data = {
         "id": data_product_index.tree_item_id,
@@ -75,11 +79,7 @@ def downloadfile(relative_path_name):
         PERSISTANT_STORAGE_PATH, relative_path_name
     )
     # Not found
-    if not os.path.exists(persistant_file_path):
-        raise HTTPException(
-            status_code=404,
-            detail=f"File with name {persistant_file_path} not found",
-        )
+    verify_file_path(persistant_file_path)
     # File
     if not os.path.isdir(persistant_file_path):
         return FileResponse(
