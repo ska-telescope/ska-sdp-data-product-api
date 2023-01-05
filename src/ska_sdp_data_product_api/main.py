@@ -20,6 +20,7 @@ class FileUrl(BaseModel):
     """Relative path and file name"""
 
     relativeFileName: str
+    fileName: str
 
 
 class DataProductIndex:
@@ -76,7 +77,7 @@ def getfilenames(
 def downloadfile(relative_path_name):
     """Work in progress"""
     persistant_file_path = os.path.join(
-        PERSISTANT_STORAGE_PATH, relative_path_name
+        PERSISTANT_STORAGE_PATH, relative_path_name.relativeFileName
     )
     # Not found
     verify_file_path(persistant_file_path)
@@ -85,19 +86,20 @@ def downloadfile(relative_path_name):
         return FileResponse(
             persistant_file_path,
             media_type="application/octet-stream",
-            filename=relative_path_name,
+            filename=relative_path_name.relativeFileName,
         )
     # Directory
     zip_file_buffer = io.BytesIO()
     with zipfile.ZipFile(
         zip_file_buffer, "a", zipfile.ZIP_DEFLATED, False
     ) as zip_file:
-        for dir_name, files in os.walk(persistant_file_path):
+        for dir_name, _, files in os.walk(persistant_file_path):
             zip_file.write(dir_name)
             for filename in files:
                 zip_file.write(os.path.join(dir_name, filename))
     headers = {
-        "Content-Disposition": f'attachment; filename="{relative_path_name}"'
+        "Content-Disposition": f'attachment; filename="\
+            {relative_path_name.relativeFileName}"'
     }
     return Response(
         zip_file_buffer.getvalue(),
@@ -132,4 +134,4 @@ def index():
 async def download(relative_file_name: FileUrl):
     """This API endpoint returns a FileResponse that is used by a
     frontend to download a file"""
-    return downloadfile(relative_file_name.relativeFileName)
+    return downloadfile(relative_file_name)

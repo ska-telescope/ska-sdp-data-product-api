@@ -30,3 +30,19 @@ def test_getfilenames_unhappy_path():
         _ = getfilenames("Non_existing_path", data_product_index)
     assert isinstance(exc_info.value, HTTPException)
     assert exc_info.value.status_code == 404
+
+
+def test_download_file(test_app):
+    """Test if a file can be downloaded from the test files"""
+    data = '{"fileName": "TestDataFile1.txt","relativeFileName": \
+        "product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/TestDataFile1.txt"}'
+    response = test_app.post("/download", data=data)
+    assert response.status_code == 200
+
+
+def test_download_folder(test_app):
+    """Test if a folder can be downloaded from the test files"""
+    data = '{"fileName": "eb_id_1","relativeFileName": \
+        "product/eb_id_1/"}'
+    response = test_app.post("/download", data=data)
+    assert response.status_code == 200
