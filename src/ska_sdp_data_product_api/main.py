@@ -1,7 +1,7 @@
 """This API exposes SDP Data Products to the SDP Data Product Dashboard."""
 
-import os
 import io
+import os
 import pathlib
 import zipfile
 
@@ -11,13 +11,14 @@ from fastapi import HTTPException, Response
 from pydantic import BaseModel
 from starlette.responses import FileResponse
 
-from core.settings import app, PERSISTANT_STORAGE_PATH
+from ska_sdp_data_product_api.core.settings import PERSISTANT_STORAGE_PATH, app
 
 # pylint: disable=too-few-public-methods
 
 
 class FileUrl(BaseModel):
     """Relative path and file name"""
+
     relativeFileName: str
 
 
@@ -25,6 +26,7 @@ class DataProductIndex:
     """This class contains the list of data products with their file names,
     paths and an ID for each"
     """
+
     def __init__(self, root_tree_item_id, tree_data):
         self.tree_item_id = root_tree_item_id
         self.tree_data = tree_data
@@ -87,16 +89,21 @@ def downloadfile(relative_path_name):
         )
     # Directory
     zip_file_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_file_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
-        for dir_name, sub_dirs, files in os.walk(persistant_file_path):
+    with zipfile.ZipFile(
+        zip_file_buffer, "a", zipfile.ZIP_DEFLATED, False
+    ) as zip_file:
+        for dir_name, files in os.walk(persistant_file_path):
             zip_file.write(dir_name)
             for filename in files:
                 zip_file.write(os.path.join(dir_name, filename))
-    headers = {'Content-Disposition': f'attachment; filename="{relative_path_name}"'}
+    headers = {
+        "Content-Disposition": f'attachment; filename="{relative_path_name}"'
+    }
     return Response(
         zip_file_buffer.getvalue(),
         media_type="application/zip",
-        headers=headers)
+        headers=headers,
+    )
 
 
 @app.get("/ping")

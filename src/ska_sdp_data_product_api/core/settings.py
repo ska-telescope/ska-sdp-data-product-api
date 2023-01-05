@@ -1,8 +1,8 @@
 """API SDP Settings"""
 
-from starlette.config import Config
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.config import Config
 
 config = Config(".env")
 PERSISTANT_STORAGE_PATH: str = config(
