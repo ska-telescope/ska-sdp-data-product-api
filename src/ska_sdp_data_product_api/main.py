@@ -1,10 +1,11 @@
 """This API exposes SDP Data Products to the SDP Data Product Dashboard."""
 
 import os
+import io
 import pathlib
-import shutil
+import zipfile
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 # pylint: disable=no-name-in-module
@@ -107,25 +108,31 @@ def downloadfile(relative_path_name):
     persistant_file_path = os.path.join(
         PERSISTANT_STORAGE_PATH, relative_path_name
     )
-
+    # Not found
     if not os.path.exists(persistant_file_path):
         raise HTTPException(
             status_code=404,
-            detail=f"File: {persistant_file_path} not found",
+            detail=f"File with name {persistant_file_path} not found",
         )
-
-    if os.path.isdir(persistant_file_path):
-        shutil.make_archive(persistant_file_path, "zip", persistant_file_path)
+    # File
+    if not os.path.isdir(persistant_file_path):
         return FileResponse(
-            persistant_file_path + ".zip",
-            media_type="application/zip",
+            persistant_file_path,
+            media_type="application/octet-stream",
             filename=relative_path_name,
         )
-    return FileResponse(
-        persistant_file_path,
-        media_type="application/octet-stream",
-        filename=relative_path_name,
-    )
+    # Directory
+    zip_file_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_file_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+        for dir_name, sub_dirs, files in os.walk(persistant_file_path):
+            zip_file.write(dir_name)
+            for filename in files:
+                zip_file.write(os.path.join(dir_name, filename))
+    headers = {'Content-Disposition': f'attachment; filename="{relative_path_name}"'}
+    return Response(
+        zip_file_buffer.getvalue(),
+        media_type="application/zip",
+        headers=headers)
 
 
 @app.get("/ping")
