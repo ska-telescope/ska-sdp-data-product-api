@@ -1,37 +1,23 @@
 """This API exposes SDP Data Products to the SDP Data Product Dashboard."""
 
 import os
+import io
 import pathlib
-import shutil
+import zipfile
 
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, HTTPException, Response
 
 # pylint: disable=no-name-in-module
 from pydantic import BaseModel
-from starlette.config import Config
 from starlette.responses import FileResponse
 
-config = Config(".env")
-PERSISTANT_STORAGE_PATH: str = config(
-    "PERSISTANT_STORAGE_PATH",
-    default="./tests/test_files",
-)
-REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL: str = config(
-    "REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL",
-    default="http://localhost",
-)
-REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT: str = config(
-    "REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT",
-    default="8100",
-)
+from core.settings import app, PERSISTANT_STORAGE_PATH
 
 # pylint: disable=too-few-public-methods
 
 
 class FileUrl(BaseModel):
     """Relative path and file name"""
-
     relativeFileName: str
 
 
@@ -39,30 +25,9 @@ class DataProductIndex:
     """This class contains the list of data products with their file names,
     paths and an ID for each"
     """
-
     def __init__(self, root_tree_item_id, tree_data):
         self.tree_item_id = root_tree_item_id
         self.tree_data = tree_data
-
-
-app = FastAPI()
-
-origins = [
-    "http://localhost",
-    "http://localhost" + ":" + REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT,
-    REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL,
-    REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL
-    + ":"
-    + REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT,
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 
 def getfilenames(
@@ -107,25 +72,31 @@ def downloadfile(relative_path_name):
     persistant_file_path = os.path.join(
         PERSISTANT_STORAGE_PATH, relative_path_name
     )
-
+    # Not found
     if not os.path.exists(persistant_file_path):
         raise HTTPException(
             status_code=404,
-            detail=f"File: {persistant_file_path} not found",
+            detail=f"File with name {persistant_file_path} not found",
         )
-
-    if os.path.isdir(persistant_file_path):
-        shutil.make_archive(persistant_file_path, "zip", persistant_file_path)
+    # File
+    if not os.path.isdir(persistant_file_path):
         return FileResponse(
-            persistant_file_path + ".zip",
-            media_type="application/zip",
+            persistant_file_path,
+            media_type="application/octet-stream",
             filename=relative_path_name,
         )
-    return FileResponse(
-        persistant_file_path,
-        media_type="application/octet-stream",
-        filename=relative_path_name,
-    )
+    # Directory
+    zip_file_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_file_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+        for dir_name, sub_dirs, files in os.walk(persistant_file_path):
+            zip_file.write(dir_name)
+            for filename in files:
+                zip_file.write(os.path.join(dir_name, filename))
+    headers = {'Content-Disposition': f'attachment; filename="{relative_path_name}"'}
+    return Response(
+        zip_file_buffer.getvalue(),
+        media_type="application/zip",
+        headers=headers)
 
 
 @app.get("/ping")
