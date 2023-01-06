@@ -3,6 +3,7 @@
 import io
 import os
 import pathlib
+from pathlib import Path
 import zipfile
 
 from fastapi import HTTPException, Response
@@ -94,12 +95,13 @@ def downloadfile(relative_path_name):
         zip_file_buffer, "a", zipfile.ZIP_DEFLATED, False
     ) as zip_file:
         for dir_name, _, files in os.walk(persistant_file_path):
-            zip_file.write(dir_name)
             for filename in files:
-                zip_file.write(os.path.join(dir_name, filename))
+                file = os.path.join(dir_name, filename)
+                relative_file = Path(str(file)).relative_to(Path(persistant_file_path))
+                zip_file.write(file, arcname=relative_file)
     headers = {
         "Content-Disposition": f'attachment; filename="\
-            {relative_path_name.relativeFileName}"'
+            {relative_path_name.relativeFileName}.zip"'
     }
     return Response(
         zip_file_buffer.getvalue(),
