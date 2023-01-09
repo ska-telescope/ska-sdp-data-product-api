@@ -114,8 +114,9 @@ def downloadfile(relative_path_name):
 
 @app.get("/ping")
 async def root():
-    """An enpoint that just returns ping live"""
-    return {"ping": "live"}
+    """An enpoint that just returns confirmation that the 
+    application is running"""
+    return {"ping": "The application is running"}
 
 
 @app.get("/filelist")

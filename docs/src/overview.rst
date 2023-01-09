@@ -1,58 +1,114 @@
 SDP Data Product API Overview
 =============
 
-This is the documentation for the SKA SDP Data Product API.
+This API is used to provide a list of SDP data products (files) that are hosted at a configurable storage location <PERSISTANT_STORAGE_PATH>.
 
-This API is used to provide a list of SDP data products (files) that is hosted at a persistent storage or other orchestrated location and make them available to download.
 
-Usage
+Deployment
 -----
 
-This usage will assume that you have the repo and submodules checked out.
-
-Basic Usage
+Local Deployment
 ~~~~~~~~~~~
+**Tooling Pre-requisites**
+Below are some tools that will be required to work with the data product API:
 
-1. Set the storage path environmental variable in a .env file or export the variable with the path to your Data Products:
+- Python 3.10 or later versions: Install page URL: https://www.python.org/downloads/
+- Poetry 1.2 or later versions: Install page URL: https://python-poetry.org/docs/#installation
+- GNU make 4.2 or later versions: Install page URL: https://www.gnu.org/software/make/
+
+**Installation**
+
+Clone the repository and its submodules:
 
 .. code-block:: bash
 
-    PERSISTANT_STORAGE_PATH=/path/to/your/data/
+    git clone git@gitlab.com:ska-telescope/sdp/ska-sdp-data-product-api.git
+    git submodule update --init --recursive
 
-2. Enter a Poetry virtual environment, install dependencies and run the code with Uvicorn: 
+**Running the application**
+
+Configure the environmental variables in the .evn file under the root folder according to your requirements and environment. The default values are:
 
 .. code-block:: bash
 
+    REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL=http://localhost
+    REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT=8100
+    PERSISTANT_STORAGE_PATH=./tests/test_files
+
+*To run the application directly on your host machine:*
+
+.. code-block:: bash
+
+    cd ska-sdp-data-product-api
     poetry shell
     poetry install
     uvicorn src.ska_sdp_data_product_api.main:app --reload
 
-3. You should now be able to test the API with 
+*To run the application inside a docker container on your host machine:*
 
-3.1 Test the API
+NOTE: When running the application in a docker container, the <PERSISTANT_STORAGE_PATH> needs to be accessible from within  the container. This is not configured automatically.
 
-http://127.0.0.1:8000/
+.. code-block:: bash
 
-{"message":"Hello World"}
+    docker build -t api-docker .
+    docker run -p 8000:8000 api-docker
 
-3.2 Return the file list
+Uvicorn should then be running on http://127.0.0.1:8000
 
-http://127.0.0.1:8000/filelist
+Kuberneties Deployment
+~~~~~~~~~~~
 
-{"filelist":[{"id":0,"filename":"Chicken.jpg"},{"id":1,"filename":"Cow.jpg"},{"id":2,"filename":"Duck.jpg"},{"id":3,"filename":"Pig.jpg"},{"id":4,"filename":"Rabbit.jpg"},{"id":5,"filename":"Subfolder1"},{"id":6,"filename":"Subfolder1/Orange.jpg"},{"id":7,"filename":"Subfolder1/Peach.jpg"},{"id":8,"filename":"Subfolder1/Popo.jpg"},{"id":9,"filename":"Subfolder1/SubSubFolder"},{"id":10,"filename":"Subfolder1/SubSubFolder/New Text Document.txt"}]}
+The SDP Data Product API is deployed as part of the helm chart of the SDP Data Product Dashboard (https://gitlab.com/ska-telescope/sdp/ska-sdp-data-product-dashboard). In the Kubernetes deployment, the environmental variables is updated from the values files of the deployment and not the .env file in the project. Please see the chart and other documentation of the SDP Data Product Dashboard for more information (https://developer.skao.int/projects/ska-sdp-data-product-dashboard/en/latest/?badge=latest).
 
-3.3 Download a file
 
-http://127.0.0.1:8000/download/{filename}
+Automatic API Documentation
+-----
+For detailed documentation of the API, see the FastAPI Swagger UI documentation. This interactive API documentation can be accessed at http://127.0.0.1:8000/docs after running the application.
 
-Will return a FileResponse object to download the file.
+Basic Usage
+-----
 
-Running the application inside a container
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Test endpoint
+~~~~~~~~~~~
 
-To run the application using docker, build the docker file in the root directory and run the container exposing port 8000.
 
-```
- docker build -t api-docker .
- docker run -p 8000:8000 api-docker
-```
+To test if your instance of the API is up and running, you can send a get request to the ping endpoint and you should get the following reply:
+
+.. code-block:: bash
+
+    GET /ping
+
+    {"ping": "The application is running"}
+
+File list endpoint
+~~~~~~~~~~~
+
+Sending a get request to the file list endpoint should return a list of all the files in the specified <PERSISTANT_STORAGE_PATH>
+
+.. code-block:: bash
+
+    GET /filelist
+
+    {"filelist":[{"id":0,"filename":"Chicken.jpg"},{"id":1,"filename":"Cow.jpg"},{"id":2,"filename":"Duck.jpg"},{"id":3,"filename":"Pig.jpg"},{"id":4,"filename":"Rabbit.jpg"},{"id":5,"filename":"Subfolder1"},{"id":6,"filename":"Subfolder1/Orange.jpg"},{"id":7,"filename":"Subfolder1/Peach.jpg"},{"id":8,"filename":"Subfolder1/Popo.jpg"},{"id":9,"filename":"Subfolder1/SubSubFolder"},{"id":10,"filename":"Subfolder1/SubSubFolder/New Text Document.txt"}]}
+
+Download data product endpoint
+~~~~~~~~~~~
+
+Sending a post request to that download endpoint will return either a FileResponse with the requested file, or a Response with an in-memory zip file.
+
+The body of the post request must contain the name of the file and the relative path of the file you want to download as listed in the file list response above. 
+
+For example the post request body:
+
+.. code-block:: bash
+
+    {
+        "fileName": "eb_id_2",
+        "relativeFileName": "product/eb_id_2/"
+    }
+
+The post request endpoint: 
+
+.. code-block:: bash
+
+    POST /download
