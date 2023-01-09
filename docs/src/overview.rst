@@ -89,7 +89,7 @@ Sending a get request to the file list endpoint should return a list of all the 
 
     GET /filelist
 
-    {"filelist":[{"id":0,"filename":"Chicken.jpg"},{"id":1,"filename":"Cow.jpg"},{"id":2,"filename":"Duck.jpg"},{"id":3,"filename":"Pig.jpg"},{"id":4,"filename":"Rabbit.jpg"},{"id":5,"filename":"Subfolder1"},{"id":6,"filename":"Subfolder1/Orange.jpg"},{"id":7,"filename":"Subfolder1/Peach.jpg"},{"id":8,"filename":"Subfolder1/Popo.jpg"},{"id":9,"filename":"Subfolder1/SubSubFolder"},{"id":10,"filename":"Subfolder1/SubSubFolder/New Text Document.txt"}]}
+    {"id":"root","name":"test_files","relativefilename":".","type":"directory","children":[{"id":1,"name":"product","relativefilename":".","type":"directory","children":[...]}]}
 
 Download data product endpoint
 ~~~~~~~~~~~
