@@ -10,7 +10,7 @@ def test_ping_main(test_app):
     """Can we hit the ping endpoint"""
     response = test_app.get("/ping")
     assert response.status_code == 200
-    assert response.json() == {"ping": "live"}
+    assert response.json() == {"ping": "The application is running"}
 
 
 def test_filelist(test_app):
