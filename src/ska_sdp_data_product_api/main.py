@@ -56,7 +56,7 @@ def getfilenames(
         "id": data_product_index.tree_item_id,
         "name": os.path.basename(persistent_storage_path),
         "relativefilename": str(
-            pathlib.Path(*pathlib.Path(persistent_storage_path).parts[3:])
+            pathlib.Path(*pathlib.Path(persistent_storage_path).parts[2:])
         ),
     }
     if data_product_index.tree_item_id == "root":
