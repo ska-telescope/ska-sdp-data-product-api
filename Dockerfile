@@ -1,12 +1,12 @@
 # Using multi stage build to update the requirements.txt from the project.toml.
-FROM python:3.10 as builder
+FROM python:3.10-slim as builder
 WORKDIR /usr/src/app
 RUN pip install --no-cache-dir poetry==1.1.13
 COPY pyproject.toml poetry.lock ./
 RUN poetry export --format requirements.txt --without-hashes > requirements.txt
 
 # pull the base image
-FROM python:3.10
+FROM python:3.10-slim
 
 # set the working direction
 WORKDIR /usr/src/ska_sdp_data_product_api
