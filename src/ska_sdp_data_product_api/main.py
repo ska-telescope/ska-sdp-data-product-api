@@ -12,7 +12,11 @@ from fastapi import HTTPException, Response
 from pydantic import BaseModel
 from starlette.responses import FileResponse
 
-from ska_sdp_data_product_api.core.settings import PERSISTANT_STORAGE_PATH, app
+from ska_sdp_data_product_api.core.settings import (
+    METADATE_FILE_NAME,
+    PERSISTANT_STORAGE_PATH,
+    app,
+)
 
 # pylint: disable=too-few-public-methods
 
@@ -24,9 +28,10 @@ class FileUrl(BaseModel):
     fileName: str
 
 
-class DataProductIndex:
-    """This class contains the list of data products with their file names,
-    paths and an ID for each"
+class TreeIndex:
+    """This class contains tree_item_id; an ID field, indicating the next
+    tree item id to use, and tree_data dictionary, containing a json object
+    that represens a tree structure that can easily be rendered in JS.
     """
 
     def __init__(self, root_tree_item_id, tree_data):
@@ -50,28 +55,33 @@ def verify_file_path(file_path):
         )
 
 
-def getfilenames(persistent_storage_path, file_index: DataProductIndex):
-    """getfilenames itterates through a folder specified with the path
+def getfilenames(storage_path, file_index: TreeIndex):
+    """getfilenames itterates through a folder specified with the storage_path
     parameter, and returns a list of files and their relative paths as
     well as an index used.
     """
-    verify_file_path(persistent_storage_path)
+    verify_file_path(storage_path)
 
+    # Add the details of the current storage_path to the tree data
     tree_data = {
         "id": file_index.tree_item_id,
-        "name": os.path.basename(persistent_storage_path),
+        "name": os.path.basename(storage_path),
         "relativefilename": str(
-            pathlib.Path(*pathlib.Path(persistent_storage_path).parts[2:])
+            pathlib.Path(*pathlib.Path(storage_path).parts[2:])
         ),
     }
+    # The first entry in the tree indicates it is the root of the tree (usd to
+    # render in JS), there after, incriment the index numericaly.
     if file_index.tree_item_id == "root":
         file_index.tree_item_id = 0
     file_index.tree_item_id = file_index.tree_item_id + 1
-    if os.path.isdir(persistent_storage_path):
+    # If the current storage_path is a directory, add its details and children
+    # by calling this funcion (getfilenames) with the path to the children
+    if os.path.isdir(storage_path):
         tree_data["type"] = "directory"
         tree_data["children"] = [
-            getfilenames(os.path.join(persistent_storage_path, x), file_index)
-            for x in os.listdir(persistent_storage_path)
+            getfilenames(os.path.join(storage_path, x), file_index)
+            for x in os.listdir(storage_path)
         ]
     else:
         tree_data["type"] = "file"
@@ -79,34 +89,34 @@ def getfilenames(persistent_storage_path, file_index: DataProductIndex):
 
 
 def getdataproductlist(
-    persistent_storage_path,
-    file_index: DataProductIndex,
+    storage_path,
+    file_index: TreeIndex,
     data_product_tree_index,
 ):
     """getdataproductlist itterates through a folder specified with the path
-    parameter, and returns a list of all the data products and a relative
+    parameter, and returns a list of all the data products and their relative
     paths and adds an index to the list.
     A folder is considred a data product if the folder contains a
-    file named 'ska-data-product.yaml'
+    file named specified in the env variable METADATE_FILE_NAME.
     """
-    verify_file_path(persistent_storage_path)
-    metadata_file_name = "ska-data-product.yaml"
+    verify_file_path(storage_path)
 
-    # If the path points to a directory
-    if os.path.isdir(persistent_storage_path):
-        # for each directory in the persistent_storage_path
-        for file in os.listdir(persistent_storage_path):
-            # if the directory contains a metadatafile
-            if file == metadata_file_name:
-                if os.path.isdir(persistent_storage_path):
-                    file_index.add_tree_data(
-                        getfilenames(
-                            persistent_storage_path, data_product_tree_index
-                        )
-                    )
+    # Test if the path points to a directory
+    if os.path.isdir(storage_path):
+        # For each file in the directory,
+        for file in os.listdir(storage_path):
+            # test if the directory contains a metadatafile
+            if file == METADATE_FILE_NAME:
+                # If it contains the metadata file, create a new child
+                # element for the data product dict.
+                file_index.add_tree_data(
+                    getfilenames(storage_path, data_product_tree_index)
+                )
             else:
+                # If it is not a data product, enter the folder and repeat
+                # this test.
                 getdataproductlist(
-                    os.path.join(persistent_storage_path, file),
+                    os.path.join(storage_path, file),
                     file_index,
                     data_product_tree_index,
                 )
@@ -115,20 +125,22 @@ def getdataproductlist(
 
 
 def downloadfile(relative_path_name):
-    """Work in progress"""
+    """This function returns a response that can be used to download a file
+    pointed to by the relative_path_name"""
     persistant_file_path = os.path.join(
         PERSISTANT_STORAGE_PATH, relative_path_name.relativeFileName
     )
     # Not found
     verify_file_path(persistant_file_path)
-    # File
+    # If relative_path_name points to a file, return a FileResponse
     if not os.path.isdir(persistant_file_path):
         return FileResponse(
             persistant_file_path,
             media_type="application/octet-stream",
             filename=relative_path_name.relativeFileName,
         )
-    # Directory
+    # If relative_path_name points to a directory, retrun a zipfile data
+    # stream response
     zip_file_buffer = io.BytesIO()
     with zipfile.ZipFile(
         zip_file_buffer, "a", zipfile.ZIP_DEFLATED, False
@@ -161,12 +173,9 @@ async def root():
 @app.get("/filelist")
 def index_files():
     """This API endpoint returns a list of all the files in the
-    PERSISTANT_STORAGE_PATH in the following format {"id":"root",
-    "name":"test_files","relativefilename":".","type":"directory",
-    "children":[{"id":1,"name":"product","relativefilename":".",
-    "type":"directory","children":[...]}]}
+    PERSISTANT_STORAGE_PATH
     """
-    file_index = DataProductIndex(root_tree_item_id="root", tree_data={})
+    file_index = TreeIndex(root_tree_item_id="root", tree_data={})
     file_index.tree_data = getfilenames(PERSISTANT_STORAGE_PATH, file_index)
     return file_index.tree_data
 
@@ -174,12 +183,10 @@ def index_files():
 @app.get("/dataproductlist")
 def index_data_products():
     """This API endpoint returns a list of all the data products
-    in the PERSISTANT_STORAGE_PATH in the following format
-    {"dataproductlist":[{"id":0,"filename":"file1.extentions"},{"id":1,
-    "filename":"Subfolder1/SubSubFolder/file2.extentions"}]}
+    in the PERSISTANT_STORAGE_PATH
     """
 
-    file_index = DataProductIndex(
+    file_index = TreeIndex(
         root_tree_item_id="root",
         tree_data={
             "id": "root",
@@ -190,9 +197,7 @@ def index_data_products():
         },
     )
 
-    data_product_tree_index = DataProductIndex(
-        root_tree_item_id=1, tree_data={}
-    )
+    data_product_tree_index = TreeIndex(root_tree_item_id=1, tree_data={})
     file_index.tree_data = getdataproductlist(
         PERSISTANT_STORAGE_PATH, file_index, data_product_tree_index
     )

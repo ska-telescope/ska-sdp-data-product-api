@@ -18,6 +18,11 @@ REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT: str = config(
     default="8100",
 )
 
+METADATE_FILE_NAME: str = config(
+    "METADATE_FILE_NAME",
+    default="ska-data-product.yaml",
+)
+
 app = FastAPI()
 
 origins = [
