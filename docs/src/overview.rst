@@ -53,7 +53,7 @@ NOTE: When running the application in a docker container, the <PERSISTANT_STORAG
     docker build -t api-docker .
     docker run -p 8000:8000 api-docker
 
-Uvicorn should then be running on http://127.0.0.1:8000
+Uvicorn will then be running on http://127.0.0.1:8000
 
 Kuberneties Deployment
 ~~~~~~~~~~~
@@ -72,7 +72,7 @@ Test endpoint
 ~~~~~~~~~~~
 
 
-To test if your instance of the API is up and running, you can send a get request to the ping endpoint and you should get the following reply:
+To test if your instance of the API is up and running, you can send a get request to the ping endpoint and you will get the following reply:
 
 .. code-block:: bash
 
@@ -83,13 +83,223 @@ To test if your instance of the API is up and running, you can send a get reques
 File list endpoint
 ~~~~~~~~~~~
 
-Sending a get request to the file list endpoint should return a list of all the files in the specified <PERSISTANT_STORAGE_PATH>
+Sending a get request to the file list endpoint returns a list of all the files in the <PERSISTANT_STORAGE_PATH>
 
 .. code-block:: bash
 
     GET /filelist
 
-    {"id":"root","name":"test_files","relativefilename":".","type":"directory","children":[{"id":1,"name":"product","relativefilename":".","type":"directory","children":[...]}]}
+    {
+        "id": "root",
+        "name": "test_files",
+        "relativefilename": ".",
+        "type": "directory",
+        "children": [
+            {
+                "id": 1,
+                "name": "product",
+                "relativefilename": "product",
+                "type": "directory",
+                "children": [
+                    {
+                        "id": 2,
+                        "name": "eb_id_2",
+                        "relativefilename": "product/eb_id_2",
+                        "type": "directory",
+                        "children": [
+                            {
+                                "id": 3,
+                                "name": "ska-sub-system",  # noqa
+                                "relativefilename": "product/eb_id_2/ska-sub-system",  # noqa
+                                "type": "directory",
+                                "children": [
+                                    {
+                                        "id": 4,
+                                        "name": "scan_id_2",
+                                        "relativefilename": "product/eb_id_2/ska-sub-system/scan_id_2",  # noqa
+                                        "type": "directory",
+                                        "children": [
+                                            {
+                                                "id": 5,
+                                                "name": "pb_id_2",
+                                                "relativefilename": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2",  # noqa
+                                                "type": "directory",
+                                                "children": [
+                                                    {
+                                                        "id": 6,
+                                                        "name": "ska-data-product.yaml",  # noqa
+                                                        "relativefilename": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml",  # noqa
+                                                        "type": "file",
+                                                    },
+                                                    {
+                                                        "id": 7,
+                                                        "name": "TestDataFile4.txt",  # noqa
+                                                        "relativefilename": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/TestDataFile4.txt",  # noqa
+                                                        "type": "file",
+                                                    },
+                                                    {
+                                                        "id": 8,
+                                                        "name": "TestDataFile6.txt",  # noqa
+                                                        "relativefilename": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/TestDataFile6.txt",  # noqa
+                                                        "type": "file",
+                                                    },
+                                                    {
+                                                        "id": 9,
+                                                        "name": "TestDataFile5.txt",  # noqa
+                                                        "relativefilename": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/TestDataFile5.txt",  # noqa
+                                                        "type": "file",
+                                                    },
+                                                ],
+                                            }
+                                        ],
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                    {
+                        "id": 10,
+                        "name": "eb_id_1",
+                        "relativefilename": "product/eb_id_1",
+                        "type": "directory",
+                        "children": [
+                            {
+                                "id": 11,
+                                "name": "ska-sub-system",
+                                "relativefilename": "product/eb_id_1/ska-sub-system",  # noqa
+                                "type": "directory",
+                                "children": [
+                                    {
+                                        "id": 12,
+                                        "name": "scan_id_1",
+                                        "relativefilename": "product/eb_id_1/ska-sub-system/scan_id_1",  # noqa
+                                        "type": "directory",
+                                        "children": [
+                                            {
+                                                "id": 13,
+                                                "name": "pb_id_1",
+                                                "relativefilename": "product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1",  # noqa
+                                                "type": "directory",
+                                                "children": [
+                                                    {
+                                                        "id": 14,
+                                                        "name": "TestDataFile2.txt",  # noqa
+                                                        "relativefilename": "product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/TestDataFile2.txt",  # noqa
+                                                        "type": "file",
+                                                    },
+                                                    {
+                                                        "id": 15,
+                                                        "name": "TestDataFile3.txt",  # noqa
+                                                        "relativefilename": "product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/TestDataFile3.txt",  # noqa
+                                                        "type": "file",
+                                                    },
+                                                    {
+                                                        "id": 16,
+                                                        "name": "ska-data-product.yaml",  # noqa
+                                                        "relativefilename": "product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/ska-data-product.yaml",  # noqa
+                                                        "type": "file",
+                                                    },
+                                                    {
+                                                        "id": 17,
+                                                        "name": "TestDataFile1.txt",  # noqa
+                                                        "relativefilename": "product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/TestDataFile1.txt",  # noqa
+                                                        "type": "file",
+                                                    },
+                                                ],
+                                            }
+                                        ],
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                ],
+            }
+        ],
+}
+
+Data product list endpoint
+~~~~~~~~~~~
+A folder is considred a data product if the folder contains a file named <METADATE_FILE_NAME>.
+Sending a get request to the data product list endpoint returns a list of all the data products in the path <PERSISTANT_STORAGE_PATH>
+
+.. code-block:: bash
+
+    GET /dataproductlist
+
+    {
+        "id": "root",
+        "name": "Data Products",
+        "relativefilename": "",
+        "type": "directory",
+        "children": [
+            {
+                "id": 1,
+                "name": "pb_id_2",
+                "relativefilename": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2",  # noqa
+                "type": "directory",
+                "children": [
+                    {
+                        "id": 2,
+                        "name": "ska-data-product.yaml",
+                        "relativefilename": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml",  # noqa
+                        "type": "file",
+                    },
+                    {
+                        "id": 3,
+                        "name": "TestDataFile4.txt",
+                        "relativefilename": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/TestDataFile4.txt",  # noqa
+                        "type": "file",
+                    },
+                    {
+                        "id": 4,
+                        "name": "TestDataFile6.txt",
+                        "relativefilename": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/TestDataFile6.txt",  # noqa
+                        "type": "file",
+                    },
+                    {
+                        "id": 5,
+                        "name": "TestDataFile5.txt",
+                        "relativefilename": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/TestDataFile5.txt",  # noqa
+                        "type": "file",
+                    },
+                ],
+            },
+            {
+                "id": 6,
+                "name": "pb_id_1",
+                "relativefilename": "product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1",  # noqa
+                "type": "directory",
+                "children": [
+                    {
+                        "id": 7,
+                        "name": "TestDataFile2.txt",
+                        "relativefilename": "product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/TestDataFile2.txt",  # noqa
+                        "type": "file",
+                    },
+                    {
+                        "id": 8,
+                        "name": "TestDataFile3.txt",
+                        "relativefilename": "product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/TestDataFile3.txt",  # noqa
+                        "type": "file",
+                    },
+                    {
+                        "id": 9,
+                        "name": "ska-data-product.yaml",
+                        "relativefilename": "product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/ska-data-product.yaml",  # noqa
+                        "type": "file",
+                    },
+                    {
+                        "id": 10,
+                        "name": "TestDataFile1.txt",
+                        "relativefilename": "product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/TestDataFile1.txt",  # noqa
+                        "type": "file",
+                    },
+                ],
+            },
+        ],
+    }
+
 
 Download data product endpoint
 ~~~~~~~~~~~

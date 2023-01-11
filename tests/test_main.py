@@ -4,7 +4,7 @@ import pytest
 from fastapi import HTTPException
 
 from ska_sdp_data_product_api.main import TreeIndex, getfilenames
-from tests.expectedresuls import dataproductlist, filelist
+from tests.expectedresults import dataproductlist, filelist
 
 
 def test_ping_main(test_app):
