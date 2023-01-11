@@ -55,10 +55,13 @@ NOTE: When running the application in a docker container, the <PERSISTANT_STORAG
 
 Uvicorn will then be running on http://127.0.0.1:8000
 
-Kuberneties Deployment
+Kubernetes Deployment
 ~~~~~~~~~~~
 
-The SDP Data Product API is deployed as part of the helm chart of the SDP Data Product Dashboard (https://gitlab.com/ska-telescope/sdp/ska-sdp-data-product-dashboard). In the Kubernetes deployment, the environmental variables is updated from the values files of the deployment and not the .env file in the project. Please see the chart and other documentation of the SDP Data Product Dashboard for more information (https://developer.skao.int/projects/ska-sdp-data-product-dashboard/en/latest/?badge=latest).
+
+
+The SDP Data Product API is deployed as part of the helm chart of the `SDP Data Product Dashboard <https://gitlab.com/ska-telescope/sdp/ska-sdp-data-product-dashboard>`_. In the Kubernetes deployment, the environmental variables is updated from the values files of the deployment and not the .env file in the project. Please see the documentation in the `SDP Data Product Dashboard documentation <https://developer.skao.int/projects/ska-sdp-data-product-dashboard/en/latest/?badge=latest>`_ for more information.
+
 
 
 Automatic API Documentation
