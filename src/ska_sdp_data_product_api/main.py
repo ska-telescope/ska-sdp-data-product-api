@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from starlette.responses import FileResponse
 
 from ska_sdp_data_product_api.core.settings import (
-    METADATE_FILE_NAME,
+    METADATA_FILE_NAME,
     PERSISTANT_STORAGE_PATH,
     app,
 )
@@ -97,7 +97,7 @@ def getdataproductlist(
     parameter, and returns a list of all the data products and their relative
     paths and adds an index to the list.
     A folder is considred a data product if the folder contains a
-    file named specified in the env variable METADATE_FILE_NAME.
+    file named specified in the env variable METADATA_FILE_NAME.
     """
     verify_file_path(storage_path)
 
@@ -106,7 +106,7 @@ def getdataproductlist(
         # For each file in the directory,
         for file in os.listdir(storage_path):
             # test if the directory contains a metadatafile
-            if file == METADATE_FILE_NAME:
+            if file == METADATA_FILE_NAME:
                 # If it contains the metadata file, create a new child
                 # element for the data product dict.
                 file_index.add_tree_data(

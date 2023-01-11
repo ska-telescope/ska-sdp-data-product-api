@@ -220,7 +220,7 @@ Sending a get request to the file list endpoint returns a list of all the files 
 
 Data product list endpoint
 ~~~~~~~~~~~
-A folder is considred a data product if the folder contains a file named <METADATE_FILE_NAME>.
+A folder is considred a data product if the folder contains a file named <METADATA_FILE_NAME>.
 Sending a get request to the data product list endpoint returns a list of all the data products in the path <PERSISTANT_STORAGE_PATH>
 
 .. code-block:: bash
