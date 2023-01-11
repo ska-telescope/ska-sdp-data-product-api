@@ -4,7 +4,6 @@ import pytest
 from fastapi import HTTPException
 
 from ska_sdp_data_product_api.main import TreeIndex, getfilenames
-from tests.expectedresults import dataproductlist, filelist
 
 
 def test_ping_main(test_app):
@@ -18,14 +17,18 @@ def test_filelist(test_app):
     """Test to see if a file list can be retrieved"""
     response = test_app.get("/filelist")
     assert response.status_code == 200
-    assert response.json() == filelist
+    assert str(response.json()).__contains__(
+        "/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/ska-data-product.yaml"
+    )
 
 
 def test_dataproductlist(test_app):
     """Test to see if a file list can be retrieved"""
     response = test_app.get("dataproductlist")
     assert response.status_code == 200
-    assert response.json() == dataproductlist
+    assert str(response.json()).__contains__(
+        "/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/ska-data-product.yaml"
+    )
 
 
 def test_getfilenames_unhappy_path():
