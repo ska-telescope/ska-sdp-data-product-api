@@ -166,16 +166,6 @@ async def root():
     return {"ping": "The application is running"}
 
 
-@app.get("/filelist")
-def index_files():
-    """This API endpoint returns a list of all the files in the
-    PERSISTANT_STORAGE_PATH
-    """
-    file_index = TreeIndex(root_tree_item_id="root", tree_data={})
-    file_index.tree_data = getfilenames(PERSISTANT_STORAGE_PATH, file_index)
-    return file_index.tree_data
-
-
 @app.get("/dataproductlist")
 def index_data_products():
     """This API endpoint returns a list of all the data products

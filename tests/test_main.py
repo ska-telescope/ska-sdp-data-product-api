@@ -13,15 +13,6 @@ def test_ping_main(test_app):
     assert response.json() == {"ping": "The application is running"}
 
 
-def test_filelist(test_app):
-    """Test to see if a file list can be retrieved"""
-    response = test_app.get("/filelist")
-    assert response.status_code == 200
-    assert str(response.json()).__contains__(
-        "/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/ska-data-product.yaml"
-    )
-
-
 def test_dataproductlist(test_app):
     """Test to see if a file list can be retrieved"""
     response = test_app.get("dataproductlist")
