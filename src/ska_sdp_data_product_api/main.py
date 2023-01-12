@@ -37,13 +37,12 @@ class TreeIndex:
     def __init__(self, root_tree_item_id, tree_data):
         self.tree_item_id = root_tree_item_id
         self.tree_data: dict = tree_data
+        self.data_product_list: list = []
 
-    def add_tree_data(self, new_data):
+    def append_children(self, new_data):
         """Merge current dict with new data"""
-        if self.tree_data["children"] == []:
-            self.tree_data["children"] = new_data
-        else:
-            self.tree_data["children"] = self.tree_data["children"], new_data
+        self.data_product_list.append(new_data)
+        self.tree_data["children"] = self.data_product_list
 
 
 def verify_file_path(file_path):
@@ -88,11 +87,7 @@ def getfilenames(storage_path, file_index: TreeIndex):
     return tree_data
 
 
-def getdataproductlist(
-    storage_path,
-    file_index: TreeIndex,
-    data_product_tree_index,
-):
+def getdataproductlist(storage_path, file_index: TreeIndex):
     """getdataproductlist itterates through a folder specified with the path
     parameter, and returns a list of all the data products and their relative
     paths and adds an index to the list.
@@ -109,16 +104,17 @@ def getdataproductlist(
             if file == METADATA_FILE_NAME:
                 # If it contains the metadata file, create a new child
                 # element for the data product dict.
-                file_index.add_tree_data(
-                    getfilenames(storage_path, data_product_tree_index)
+
+                if file_index.tree_item_id == "root":
+                    file_index.tree_item_id = 0
+                file_index.append_children(
+                    getfilenames(storage_path, file_index)
                 )
             else:
                 # If it is not a data product, enter the folder and repeat
                 # this test.
                 getdataproductlist(
-                    os.path.join(storage_path, file),
-                    file_index,
-                    data_product_tree_index,
+                    os.path.join(storage_path, file), file_index
                 )
 
     return file_index.tree_data
@@ -197,9 +193,8 @@ def index_data_products():
         },
     )
 
-    data_product_tree_index = TreeIndex(root_tree_item_id=1, tree_data={})
     file_index.tree_data = getdataproductlist(
-        PERSISTANT_STORAGE_PATH, file_index, data_product_tree_index
+        PERSISTANT_STORAGE_PATH, file_index
     )
 
     return file_index.tree_data
