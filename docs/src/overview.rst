@@ -50,8 +50,8 @@ NOTE: When running the application in a docker container, the <PERSISTANT_STORAG
 
 .. code-block:: bash
 
-    docker build -t api-docker .
-    docker run -p 8000:8000 api-docker
+    docker build -t ska-sdp-data-product-api .
+    docker run -p 8000:8000 ska-sdp-data-product-api
 
 Uvicorn will then be running on http://127.0.0.1:8000
 
