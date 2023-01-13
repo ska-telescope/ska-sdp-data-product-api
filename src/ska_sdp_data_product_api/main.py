@@ -105,21 +105,21 @@ def getdataproductlist(storage_path, file_index: TreeIndex):
     # Test if the path points to a directory
     if os.path.isdir(storage_path):
         # For each file in the directory,
-        for file in os.listdir(storage_path):
-            # test if the directory contains a metadatafile
-            if file == METADATA_FILE_NAME:
-                # If it contains the metadata file, create a new child
-                # element for the data product dict.
-                metadata_file = Path(storage_path).joinpath(METADATA_FILE_NAME)
-
-                if file_index.tree_item_id == "root":
-                    file_index.tree_item_id = 0
-                file_index.append_children(
-                    getfilenames(storage_path, file_index, metadata_file)
-                )
-            else:
-                # If it is not a data product, enter the folder and repeat
-                # this test.
+        files = os.listdir(storage_path)
+        # test if the directory contains a metadatafile
+        if METADATA_FILE_NAME in files:
+            # If it contains the metadata file, create a new child
+            # element for the data product dict.
+            metadata_file = Path(storage_path).joinpath(METADATA_FILE_NAME)
+            if file_index.tree_item_id == "root":
+                file_index.tree_item_id = 0
+            file_index.append_children(
+                getfilenames(storage_path, file_index, metadata_file)
+            )
+        else:
+            # If it is not a data product, enter the folder and repeat
+            # this test.
+            for file in os.listdir(storage_path):
                 getdataproductlist(
                     os.path.join(storage_path, file), file_index
                 )
