@@ -27,8 +27,11 @@ def test_getfilenames_unhappy_path():
     to the getfilenames function"""
 
     data_product_index = TreeIndex(root_tree_item_id="root", tree_data={})
+    metadata_file = ""
     with pytest.raises(HTTPException) as exc_info:
-        _ = getfilenames("Non_existing_path", data_product_index)
+        _ = getfilenames(
+            "Non_existing_path", data_product_index, metadata_file
+        )
     assert isinstance(exc_info.value, HTTPException)
     assert exc_info.value.status_code == 404
 
