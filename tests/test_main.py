@@ -3,7 +3,7 @@
 import pytest
 from fastapi import HTTPException
 
-from ska_sdp_data_product_api.main import DataProductIndex, getfilenames
+from ska_sdp_data_product_api.main import TreeIndex, getfilenames
 
 
 def test_ping_main(test_app):
@@ -13,19 +13,20 @@ def test_ping_main(test_app):
     assert response.json() == {"ping": "The application is running"}
 
 
-def test_filelist(test_app):
+def test_dataproductlist(test_app):
     """Test to see if a file list can be retrieved"""
-    response = test_app.get("/filelist")
+    response = test_app.get("dataproductlist")
     assert response.status_code == 200
+    assert str(response.json()).__contains__(
+        "/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/ska-data-product.yaml"
+    )
 
 
 def test_getfilenames_unhappy_path():
     """This tests the expected error of 404 if a non existing path is passed
     to the getfilenames function"""
 
-    data_product_index = DataProductIndex(
-        root_tree_item_id="root", tree_data={}
-    )
+    data_product_index = TreeIndex(root_tree_item_id="root", tree_data={})
     with pytest.raises(HTTPException) as exc_info:
         _ = getfilenames("Non_existing_path", data_product_index)
     assert isinstance(exc_info.value, HTTPException)

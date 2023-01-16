@@ -50,15 +50,18 @@ NOTE: When running the application in a docker container, the <PERSISTANT_STORAG
 
 .. code-block:: bash
 
-    docker build -t api-docker .
-    docker run -p 8000:8000 api-docker
+    docker build -t ska-sdp-data-product-api .
+    docker run -p 8000:8000 ska-sdp-data-product-api
 
-Uvicorn should then be running on http://127.0.0.1:8000
+Uvicorn will then be running on http://127.0.0.1:8000
 
-Kuberneties Deployment
+Kubernetes Deployment
 ~~~~~~~~~~~
 
-The SDP Data Product API is deployed as part of the helm chart of the SDP Data Product Dashboard (https://gitlab.com/ska-telescope/sdp/ska-sdp-data-product-dashboard). In the Kubernetes deployment, the environmental variables is updated from the values files of the deployment and not the .env file in the project. Please see the chart and other documentation of the SDP Data Product Dashboard for more information (https://developer.skao.int/projects/ska-sdp-data-product-dashboard/en/latest/?badge=latest).
+
+
+The SDP Data Product API is deployed as part of the helm chart of the `SDP Data Product Dashboard <https://gitlab.com/ska-telescope/sdp/ska-sdp-data-product-dashboard>`_. In the Kubernetes deployment, the environmental variables is updated from the values files of the deployment and not the .env file in the project. Please see the documentation in the `SDP Data Product Dashboard documentation <https://developer.skao.int/projects/ska-sdp-data-product-dashboard/en/latest/?badge=latest>`_ for more information.
+
 
 
 Automatic API Documentation
@@ -72,7 +75,7 @@ Test endpoint
 ~~~~~~~~~~~
 
 
-To test if your instance of the API is up and running, you can send a get request to the ping endpoint and you should get the following reply:
+To test if your instance of the API is up and running, you can send a get request to the ping endpoint and you will get the following reply:
 
 .. code-block:: bash
 
@@ -80,16 +83,89 @@ To test if your instance of the API is up and running, you can send a get reques
 
     {"ping": "The application is running"}
 
-File list endpoint
-~~~~~~~~~~~
 
-Sending a get request to the file list endpoint should return a list of all the files in the specified <PERSISTANT_STORAGE_PATH>
+Data product list endpoint
+~~~~~~~~~~~
+A folder is considred a data product if the folder contains a file named <METADATA_FILE_NAME>.
+Sending a get request to the data product list endpoint returns a list of all the data products in the path <PERSISTANT_STORAGE_PATH>
 
 .. code-block:: bash
 
-    GET /filelist
+    GET /dataproductlist
 
-    {"id":"root","name":"test_files","relativefilename":".","type":"directory","children":[{"id":1,"name":"product","relativefilename":".","type":"directory","children":[...]}]}
+    {
+        "id": "root",
+        "name": "Data Products",
+        "relativefilename": "",
+        "type": "directory",
+        "children": [
+            {
+                "id": 1,
+                "name": "pb_id_2",
+                "relativefilename": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2",  # noqa
+                "type": "directory",
+                "children": [
+                    {
+                        "id": 2,
+                        "name": "ska-data-product.yaml",
+                        "relativefilename": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml",  # noqa
+                        "type": "file",
+                    },
+                    {
+                        "id": 3,
+                        "name": "TestDataFile4.txt",
+                        "relativefilename": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/TestDataFile4.txt",  # noqa
+                        "type": "file",
+                    },
+                    {
+                        "id": 4,
+                        "name": "TestDataFile6.txt",
+                        "relativefilename": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/TestDataFile6.txt",  # noqa
+                        "type": "file",
+                    },
+                    {
+                        "id": 5,
+                        "name": "TestDataFile5.txt",
+                        "relativefilename": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/TestDataFile5.txt",  # noqa
+                        "type": "file",
+                    },
+                ],
+            },
+            {
+                "id": 6,
+                "name": "pb_id_1",
+                "relativefilename": "product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1",  # noqa
+                "type": "directory",
+                "children": [
+                    {
+                        "id": 7,
+                        "name": "TestDataFile2.txt",
+                        "relativefilename": "product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/TestDataFile2.txt",  # noqa
+                        "type": "file",
+                    },
+                    {
+                        "id": 8,
+                        "name": "TestDataFile3.txt",
+                        "relativefilename": "product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/TestDataFile3.txt",  # noqa
+                        "type": "file",
+                    },
+                    {
+                        "id": 9,
+                        "name": "ska-data-product.yaml",
+                        "relativefilename": "product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/ska-data-product.yaml",  # noqa
+                        "type": "file",
+                    },
+                    {
+                        "id": 10,
+                        "name": "TestDataFile1.txt",
+                        "relativefilename": "product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/TestDataFile1.txt",  # noqa
+                        "type": "file",
+                    },
+                ],
+            },
+        ],
+    }
+
 
 Download data product endpoint
 ~~~~~~~~~~~
