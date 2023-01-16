@@ -50,3 +50,13 @@ def test_download_folder(test_app):
         "product/eb_id_1/"}'
     response = test_app.post("/download", data=data)
     assert response.status_code == 200
+
+def test_dataproductmetadata(test_app):
+    """Test if a folder can be downloaded from the test files"""
+    data = '{"fileName": "ska-data-product.yaml",\
+    "relativeFileName": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml"}'
+    response = test_app.post("/dataproductmetadata", data=data)
+    assert response.status_code == 200
+    assert str(response.json()).__contains__(
+        "Experimental run as part of XYZ-123"
+    )
