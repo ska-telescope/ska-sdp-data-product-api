@@ -186,30 +186,6 @@ def loadmetadata(path_to_selected_file):
     return metadata_json
 
 
-def finddataproductmetadatafile(path_to_selected_file):
-    """This function returns the metadata file path that is applicable to
-    the selected data product. This metadata file is either in the same
-    folder as the selected file, or a parent directory that form part of
-    the data product.
-    """
-    persistant_file_path = os.path.join(
-        PERSISTANT_STORAGE_PATH, path_to_selected_file.relativeFileName
-    )
-    # if path_to_selected_file points to metadata file
-    posix_path = Path(persistant_file_path)
-    if posix_path.name == METADATA_FILE_NAME:
-        return posix_path
-    # if the path_to_selected_file points to folder without a metadata file,
-    # go 1 folder up and test again.
-    while verify_file_path(posix_path) and str(posix_path) != ".":
-        metadata_file = posix_path.joinpath(METADATA_FILE_NAME)
-        print("looking for metadata_file: %s", metadata_file)
-        if metadata_file.is_file():
-            print(metadata_file)
-            return metadata_file
-        posix_path = posix_path.parents[0]
-
-
 @app.get("/ping")
 async def root():
     """An enpoint that just returns confirmation that the
