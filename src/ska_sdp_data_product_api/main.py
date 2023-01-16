@@ -166,24 +166,24 @@ def downloadfile(relative_path_name):
     )
 
 
-def loadmetadata(path_to_selected_file):
-    """This function returns a response that can be used to download a file
-    pointed to by the relative_path_name"""
+def loadmetadata(path_to_selected_file: FileUrl):
+    """This function loads the content of a yaml file and return it as
+    json."""
     # Not found
     persistant_file_path = os.path.join(
         PERSISTANT_STORAGE_PATH, path_to_selected_file.relativeFileName
     )
 
-    verify_file_path(persistant_file_path)
-
-    with open(
-        persistant_file_path, "r", encoding="utf-8"
-    ) as metadata_yaml_file:
-        metadata_yaml_object = yaml.safe_load(
-            metadata_yaml_file
-        )  # yaml_object will be a list or a dict
-    metadata_json = json.dumps(metadata_yaml_object)
-    return metadata_json
+    if verify_file_path(persistant_file_path):
+        with open(
+            persistant_file_path, "r", encoding="utf-8"
+        ) as metadata_yaml_file:
+            metadata_yaml_object = yaml.safe_load(
+                metadata_yaml_file
+            )  # yaml_object will be a list or a dict
+        metadata_json = json.dumps(metadata_yaml_object)
+        return metadata_json
+    return {}
 
 
 @app.get("/ping")
