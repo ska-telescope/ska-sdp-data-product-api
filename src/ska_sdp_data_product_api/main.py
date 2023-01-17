@@ -1,11 +1,13 @@
 """This API exposes SDP Data Products to the SDP Data Product Dashboard."""
 
 import io
+import json
 import os
 import pathlib
 import zipfile
 from pathlib import Path
 
+import yaml
 from fastapi import HTTPException, Response
 
 # pylint: disable=no-name-in-module
@@ -24,7 +26,7 @@ from ska_sdp_data_product_api.core.settings import (
 class FileUrl(BaseModel):
     """Relative path and file name"""
 
-    relativeFileName: str
+    relativeFileName: str = "Untitled"
     fileName: str
 
 
@@ -52,9 +54,10 @@ def verify_file_path(file_path):
             status_code=404,
             detail=f"File path with name {file_path} not found",
         )
+    return True
 
 
-def getfilenames(storage_path, file_index: TreeIndex):
+def getfilenames(storage_path, file_index: TreeIndex, metadata_file):
     """getfilenames itterates through a folder specified with the storage_path
     parameter, and returns a list of files and their relative paths as
     well as an index used.
@@ -65,6 +68,7 @@ def getfilenames(storage_path, file_index: TreeIndex):
     tree_data = {
         "id": file_index.tree_item_id,
         "name": os.path.basename(storage_path),
+        "metadatafile": metadata_file,
         "relativefilename": str(
             pathlib.Path(*pathlib.Path(storage_path).parts[2:])
         ),
@@ -79,7 +83,9 @@ def getfilenames(storage_path, file_index: TreeIndex):
     if os.path.isdir(storage_path):
         tree_data["type"] = "directory"
         tree_data["children"] = [
-            getfilenames(os.path.join(storage_path, x), file_index)
+            getfilenames(
+                os.path.join(storage_path, x), file_index, metadata_file
+            )
             for x in os.listdir(storage_path)
         ]
     else:
@@ -104,9 +110,12 @@ def getdataproductlist(storage_path, file_index: TreeIndex):
         if METADATA_FILE_NAME in files:
             # If it contains the metadata file, create a new child
             # element for the data product dict.
+            metadata_file = Path(storage_path).joinpath(METADATA_FILE_NAME)
             if file_index.tree_item_id == "root":
                 file_index.tree_item_id = 0
-            file_index.append_children(getfilenames(storage_path, file_index))
+            file_index.append_children(
+                getfilenames(storage_path, file_index, metadata_file)
+            )
         else:
             # If it is not a data product, enter the folder and repeat
             # this test.
@@ -157,6 +166,26 @@ def downloadfile(relative_path_name):
     )
 
 
+def loadmetadata(path_to_selected_file: FileUrl):
+    """This function loads the content of a yaml file and return it as
+    json."""
+    # Not found
+    persistant_file_path = os.path.join(
+        PERSISTANT_STORAGE_PATH, path_to_selected_file.relativeFileName
+    )
+
+    if verify_file_path(persistant_file_path):
+        with open(
+            persistant_file_path, "r", encoding="utf-8"
+        ) as metadata_yaml_file:
+            metadata_yaml_object = yaml.safe_load(
+                metadata_yaml_file
+            )  # yaml_object will be a list or a dict
+        metadata_json = json.dumps(metadata_yaml_object)
+        return metadata_json
+    return {}
+
+
 @app.get("/ping")
 async def root():
     """An enpoint that just returns confirmation that the
@@ -193,3 +222,10 @@ async def download(relative_file_name: FileUrl):
     """This API endpoint returns a FileResponse that is used by a
     frontend to download a file"""
     return downloadfile(relative_file_name)
+
+
+@app.post("/dataproductmetadata", response_class=Response)
+async def dataproductmetadata(relative_file_name: FileUrl):
+    """This API endpoint returns the data products metadata in json format of
+    a specified data product."""
+    return loadmetadata(relative_file_name)

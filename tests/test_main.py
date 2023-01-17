@@ -27,8 +27,11 @@ def test_getfilenames_unhappy_path():
     to the getfilenames function"""
 
     data_product_index = TreeIndex(root_tree_item_id="root", tree_data={})
+    metadata_file = ""
     with pytest.raises(HTTPException) as exc_info:
-        _ = getfilenames("Non_existing_path", data_product_index)
+        _ = getfilenames(
+            "Non_existing_path", data_product_index, metadata_file
+        )
     assert isinstance(exc_info.value, HTTPException)
     assert exc_info.value.status_code == 404
 
@@ -47,3 +50,14 @@ def test_download_folder(test_app):
         "product/eb_id_1/"}'
     response = test_app.post("/download", data=data)
     assert response.status_code == 200
+
+
+def test_dataproductmetadata(test_app):
+    """Test if metadata can be retrieved for a data product"""
+    data = '{"fileName": "ska-data-product.yaml","relativeFileName": \
+    "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml"}'
+    response = test_app.post("/dataproductmetadata", data=data)
+    assert response.status_code == 200
+    assert str(response.json()).__contains__(
+        "Experimental run as part of XYZ-123"
+    )

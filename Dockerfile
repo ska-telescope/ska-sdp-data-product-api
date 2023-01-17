@@ -1,9 +1,9 @@
 # Using multi stage build to update the requirements.txt from the project.toml.
 FROM python:3.10-slim as builder
 WORKDIR /usr/src/app
-RUN pip install --no-cache-dir poetry==1.1.13
+RUN pip install --no-cache-dir poetry==1.2.0
 COPY pyproject.toml poetry.lock ./
-RUN poetry export --format requirements.txt --without-hashes > requirements.txt
+RUN poetry export -f requirements.txt --without-hashes --output requirements.txt
 
 # pull the base image
 FROM python:3.10-slim

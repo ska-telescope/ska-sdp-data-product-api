@@ -94,83 +94,91 @@ Sending a get request to the data product list endpoint returns a list of all th
     GET /dataproductlist
 
     {
-        "id": "root",
-        "name": "Data Products",
-        "relativefilename": "",
-        "type": "directory",
-        "children": [
+        "id":"root",
+        "name":"Data Products",
+        "relativefilename":"",
+        "type":"directory","children":[
             {
-                "id": 1,
-                "name": "pb_id_2",
-                "relativefilename": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2",  # noqa
-                "type": "directory",
-                "children": [
+                "id":0,
+                "name":"pb_id_2",
+                "metadatafile":"tests/test_files/product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml",
+                "relativefilename":"product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2",
+                "type":"directory",
+                "children":[
                     {
-                        "id": 2,
-                        "name": "ska-data-product.yaml",
-                        "relativefilename": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml",  # noqa
-                        "type": "file",
+                        "id":1,
+                        "name":"ska-data-product.yaml",
+                        "metadatafile":"tests/test_files/product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml",
+                        "relativefilename":"product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml",
+                        "type":"file"
                     },
                     {
-                        "id": 3,
-                        "name": "TestDataFile4.txt",
-                        "relativefilename": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/TestDataFile4.txt",  # noqa
-                        "type": "file",
+                        "id":2,
+                        "name":"TestDataFile4.txt",
+                        "metadatafile":"tests/test_files/product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml",
+                        "relativefilename":"product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/TestDataFile4.txt",
+                        "type":"file"
                     },
                     {
-                        "id": 4,
-                        "name": "TestDataFile6.txt",
-                        "relativefilename": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/TestDataFile6.txt",  # noqa
-                        "type": "file",
+                        "id":3,
+                        "name":"TestDataFile6.txt",
+                        "metadatafile":"tests/test_files/product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml",
+                        "relativefilename":"product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/TestDataFile6.txt",
+                        "type":"file"
                     },
                     {
-                        "id": 5,
-                        "name": "TestDataFile5.txt",
-                        "relativefilename": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/TestDataFile5.txt",  # noqa
-                        "type": "file",
-                    },
-                ],
+                        "id":4,
+                        "name":"TestDataFile5.txt",
+                        "metadatafile":"tests/test_files/product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml",
+                        "relativefilename":"product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/TestDataFile5.txt",
+                        "type":"file"
+                    }
+                ]
             },
             {
-                "id": 6,
-                "name": "pb_id_1",
-                "relativefilename": "product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1",  # noqa
-                "type": "directory",
-                "children": [
+                "id":5,
+                "name":"pb_id_1",
+                "metadatafile":"tests/test_files/product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/ska-data-product.yaml",
+                "relativefilename":"product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1",
+                "type":"directory",
+                "children":[
                     {
-                        "id": 7,
-                        "name": "TestDataFile2.txt",
-                        "relativefilename": "product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/TestDataFile2.txt",  # noqa
-                        "type": "file",
+                        "id":6,
+                        "name":"TestDataFile2.txt",
+                        "metadatafile":"tests/test_files/product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/ska-data-product.yaml",
+                        "relativefilename":"product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/TestDataFile2.txt",
+                        "type":"file"
                     },
                     {
-                        "id": 8,
-                        "name": "TestDataFile3.txt",
-                        "relativefilename": "product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/TestDataFile3.txt",  # noqa
-                        "type": "file",
+                        "id":7,
+                        "name":"TestDataFile3.txt",
+                        "metadatafile":"tests/test_files/product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/ska-data-product.yaml",
+                        "relativefilename":"product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/TestDataFile3.txt",
+                        "type":"file"
                     },
                     {
-                        "id": 9,
-                        "name": "ska-data-product.yaml",
-                        "relativefilename": "product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/ska-data-product.yaml",  # noqa
-                        "type": "file",
+                        "id":8,
+                        "name":"ska-data-product.yaml",
+                        "metadatafile":"tests/test_files/product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/ska-data-product.yaml",
+                        "relativefilename":"product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/ska-data-product.yaml",
+                        "type":"file"
                     },
                     {
-                        "id": 10,
-                        "name": "TestDataFile1.txt",
-                        "relativefilename": "product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/TestDataFile1.txt",  # noqa
-                        "type": "file",
-                    },
-                ],
-            },
-        ],
+                        "id":9,
+                        "name":"TestDataFile1.txt",
+                        "metadatafile":"tests/test_files/product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/ska-data-product.yaml",
+                        "relativefilename":"product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/TestDataFile1.txt",
+                        "type":"file"
+                    }
+                ]
+            }
+        ]
     }
-
 
 Download data product endpoint
 ~~~~~~~~~~~
 
-Sending a post request to that download endpoint will return either a FileResponse with the requested file, or a Response with an in-memory zip file.
+Sending a post request to the download endpoint will return either a FileResponse with the requested file, or a Response with an in-memory zip file.
 
 The body of the post request must contain the name of the file and the relative path of the file you want to download as listed in the file list response above. 
 
@@ -188,3 +196,54 @@ The post request endpoint:
 .. code-block:: bash
 
     POST /download
+
+
+Retrieve metadata of a data product endpoint
+~~~~~~~~~~~
+
+Sending a post request to the dataproductmetadata endpoint will return a Response with the metadata of the data product in a JSON format.
+
+The body of the post request must contain the name of the file "ska-data-product.yaml" and the relative path of the metadata file. 
+
+For example, the post request body:
+
+.. code-block:: bash
+
+    {
+        "fileName": "ska-data-product.yaml",
+        "relativeFileName": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml"
+    }
+
+The post request endpoint: 
+
+.. code-block:: bash
+
+    POST /dataproductmetadata
+
+    {
+        "interface": "http://schema.skao.int/ska-data-product-meta/0.1", 
+        "execution_block": "eb-m001-20191031-12345", 
+        "context": 
+        {
+            "observer": "AIV_person_1", 
+            "intent": "Experimental run as part of XYZ-123", 
+            "notes": "Running that signal from XX/YY/ZZ through again, things seem a bit flaky"
+        }, 
+        "config": 
+        {
+            "processing_block": "pb-m001-20191031-12345", 
+            "processing_script": "receive", 
+            "image": "artefact.skao.int/ska-docker/vis_receive", 
+            "version": "0.1.3", 
+            "commit": "516fb5a693f9dc9aff5d46192f4e055b582fc025", 
+            "cmdline": "-dump /product/eb-m001-20191031-12345/ska-sdp/pb-m001-20191031-12345/vis.ms"
+        }, 
+        "files": 
+        [
+            {
+                "path": "vis.ms", 
+                "status": "working", 
+                "description": "Raw visibility dump from receive"
+            }
+        ]
+    }
