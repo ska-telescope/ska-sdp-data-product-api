@@ -1,0 +1,64 @@
+{
+    "settings": {
+        "number_of_shards": 2,
+        "number_of_replicas": 1
+    },
+    "mappings": {
+        "properties": {
+            "interface": {
+                "type": "text"
+            },
+            "execution_block": {
+                "type": "text"
+            },
+            "context": {
+                "properties": {
+                    "observer": {
+                        "type": "text"
+                    },
+                    "intent": {
+                        "type": "text"
+                    },
+                    "notes": {
+                        "type": "text"
+                    }
+                }
+            },
+            "config": {
+                "properties": {
+                    "processing_block": {
+                        "type": "text"
+                    },
+                    "processing_script": {
+                        "type": "text"
+                    },
+                    "image": {
+                        "type": "text"
+                    },
+                    "version": {
+                        "type": "text"
+                    },
+                    "commit": {
+                        "type": "text"
+                    },
+                    "cmdline": {
+                        "type": "text"
+                    }
+                }
+            },
+            "files": {
+                "properties": {
+                    "path": {
+                        "type": "text"
+                    },
+                    "status": {
+                        "type": "text"
+                    },
+                    "description": {
+                        "type": "text"
+                    }
+                }
+            }
+        }
+    }
+}
