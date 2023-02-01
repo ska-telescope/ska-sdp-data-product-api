@@ -68,7 +68,9 @@ def getfilenames(storage_path, file_index: TreeIndex, metadata_file):
     tree_data = {
         "id": file_index.tree_item_id,
         "name": os.path.basename(storage_path),
-        "metadatafile": metadata_file,
+        "metadatafile": str(
+            pathlib.Path(*pathlib.Path(metadata_file).parts[2:])
+        ),
         "relativefilename": str(
             pathlib.Path(*pathlib.Path(storage_path).parts[2:])
         ),
