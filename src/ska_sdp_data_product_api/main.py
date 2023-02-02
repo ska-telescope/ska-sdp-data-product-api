@@ -6,6 +6,7 @@ import os
 import pathlib
 import zipfile
 from pathlib import Path
+import json
 
 import yaml
 from fastapi import HTTPException, Response
@@ -19,6 +20,7 @@ from ska_sdp_data_product_api.core.settings import (
     PERSISTANT_STORAGE_PATH,
     app,
 )
+from ska_sdp_data_product_api.api.insert_metadata import (ElasticsearchMetadataStore)
 
 # pylint: disable=too-few-public-methods
 
@@ -29,6 +31,11 @@ class FileUrl(BaseModel):
     relativeFileName: str = "Untitled"
     fileName: str
 
+class search_parameters_class(BaseModel):
+    """Class for defining search parameters"""
+    start_date: str = "20200101"
+    end_date: str = "21000101"
+    simple_query_string: str = "*"    
 
 class TreeIndex:
     """This class contains tree_item_id; an ID field, indicating the next
@@ -187,6 +194,8 @@ def loadmetadata(path_to_selected_file: FileUrl):
         return metadata_json
     return {}
 
+metadata_store = ElasticsearchMetadataStore(hosts="http://localhost:9200")
+print(metadata_store.es_client.info())
 
 @app.get("/ping")
 async def root():
@@ -217,6 +226,16 @@ def index_data_products():
     )
 
     return file_index.tree_data
+
+
+@app.get("/dataproductsearch", response_class=Response)
+def data_products_search(search_parameters: search_parameters_class):
+    """This API endpoint returns a list of all the data products
+    in the PERSISTANT_STORAGE_PATH
+    """
+
+    filtered_data_product_list = metadata_store.search_metadata(start_date = search_parameters.start_date, end_date = search_parameters.end_date,simple_query_string = search_parameters.simple_query_string)
+    return filtered_data_product_list
 
 
 @app.post("/download")
