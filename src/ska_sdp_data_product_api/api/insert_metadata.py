@@ -63,8 +63,6 @@ class ElasticsearchMetadataStore:
         value: str = "*",
     ):
         """Metadata Search method"""
-        print(key, value)
-
         # query_body = {
         # "query": {
         #     "simple_query_string" : {
@@ -75,7 +73,7 @@ class ElasticsearchMetadataStore:
         # }
 
         query_body = {
-            "query": {"query_string": {"query": value, "fields": [key]}}
+            "query": {"query_string": {"query": value, "fields": [key], "fuzziness": 0}}
         }
 
         resp = self.es_client.search(
