@@ -6,7 +6,6 @@ import os
 import pathlib
 import zipfile
 from pathlib import Path
-import json
 
 import yaml
 from fastapi import HTTPException, Response
@@ -15,14 +14,19 @@ from fastapi import HTTPException, Response
 from pydantic import BaseModel
 from starlette.responses import FileResponse
 
+from ska_sdp_data_product_api.api.insert_metadata import (
+    ElasticsearchMetadataStore,
+)
 from ska_sdp_data_product_api.core.settings import (
     METADATA_FILE_NAME,
     PERSISTANT_STORAGE_PATH,
     app,
 )
-from ska_sdp_data_product_api.api.insert_metadata import (ElasticsearchMetadataStore)
 
 # pylint: disable=too-few-public-methods
+
+metadata_store = ElasticsearchMetadataStore(hosts="http://localhost:9200")
+print(metadata_store.es_client.info())
 
 
 class FileUrl(BaseModel):
@@ -31,11 +35,14 @@ class FileUrl(BaseModel):
     relativeFileName: str = "Untitled"
     fileName: str
 
-class search_parameters_class(BaseModel):
+
+class SearchParametersClass(BaseModel):
     """Class for defining search parameters"""
+
     start_date: str = "20200101"
     end_date: str = "21000101"
-    simple_query_string: str = "*"    
+    key_pair: str = ""
+
 
 class TreeIndex:
     """This class contains tree_item_id; an ID field, indicating the next
@@ -175,7 +182,9 @@ def downloadfile(relative_path_name):
     )
 
 
-def loadmetadata(path_to_selected_file: FileUrl):
+def loadmetadatafile(
+    path_to_selected_file: FileUrl, metadata_date="", dataproduct_file_name=""
+):
     """This function loads the content of a yaml file and return it as
     json."""
     # Not found
@@ -190,12 +199,51 @@ def loadmetadata(path_to_selected_file: FileUrl):
             metadata_yaml_object = yaml.safe_load(
                 metadata_yaml_file
             )  # yaml_object will be a list or a dict
+        metadata_yaml_object.update({"date_created": metadata_date})
+        metadata_yaml_object.update(
+            {"dataproduct_file": dataproduct_file_name}
+        )
+        metadata_yaml_object.update({"metadata_file": persistant_file_path})
         metadata_json = json.dumps(metadata_yaml_object)
         return metadata_json
     return {}
 
-metadata_store = ElasticsearchMetadataStore(hosts="http://localhost:9200")
-print(metadata_store.es_client.info())
+
+def ingestmetadatafiles(storage_path: str):
+    """This function runs through a volume and add all the data products to the
+    metadata_store."""
+    if verify_file_path(storage_path):
+        # Test if the path points to a directory
+        if os.path.isdir(storage_path):
+            # For each file in the directory,
+            files = os.listdir(storage_path)
+            # test if the directory contains a metadatafile
+            if METADATA_FILE_NAME in files:
+                # If it contains the metadata file add it to the index
+                dataproduct_file_name = storage_path
+                metadata_file = Path(storage_path).joinpath(METADATA_FILE_NAME)
+                metadata_file_name = FileUrl
+                metadata_file_name.relativeFileName = str(
+                    pathlib.Path(*pathlib.Path(metadata_file).parts[2:])
+                )
+                metadata_date = "20230101"
+                metadata_file_json = loadmetadatafile(
+                    metadata_file_name, metadata_date, storage_path
+                )
+                metadata_store.insert_metadata(
+                    metadata_file_name,
+                    metadata_date,
+                    dataproduct_file_name,
+                    metadata_file_json,
+                )
+            else:
+                # If it is not a data product, enter the folder and repeat
+                # this test.
+                for file in os.listdir(storage_path):
+                    ingestmetadatafiles(os.path.join(storage_path, file))
+        return
+    return "Metadata ingested"
+
 
 @app.get("/ping")
 async def root():
@@ -228,25 +276,41 @@ def index_data_products():
     return file_index.tree_data
 
 
+@app.get("/updatesearchindex")
+def update_search_index():
+    """This endpoint triggers the ingestion of metadata"""
+    metadata_store.clear_indecise()
+    return ingestmetadatafiles(PERSISTANT_STORAGE_PATH)
+
+
 @app.get("/dataproductsearch", response_class=Response)
-def data_products_search(search_parameters: search_parameters_class):
+def data_products_search(search_parameters: SearchParametersClass):
     """This API endpoint returns a list of all the data products
     in the PERSISTANT_STORAGE_PATH
     """
+    key = search_parameters.key_pair.split(":")[0]
+    value = search_parameters.key_pair.split(":")[1]
 
-    filtered_data_product_list = metadata_store.search_metadata(start_date = search_parameters.start_date, end_date = search_parameters.end_date,simple_query_string = search_parameters.simple_query_string)
+    filtered_data_product_list = metadata_store.search_metadata(
+        start_date=search_parameters.start_date,
+        end_date=search_parameters.end_date,
+        key=key,
+        value=value,
+    )
     return filtered_data_product_list
 
 
-@app.post("/download")
+@app.post("/download")  # TODO Change to a get?
 async def download(relative_file_name: FileUrl):
     """This API endpoint returns a FileResponse that is used by a
     frontend to download a file"""
     return downloadfile(relative_file_name)
 
 
-@app.post("/dataproductmetadata", response_class=Response)
+@app.post(
+    "/dataproductmetadata", response_class=Response
+)  # TODO Change to a get?
 async def dataproductmetadata(relative_file_name: FileUrl):
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
-    return loadmetadata(relative_file_name)
+    return loadmetadatafile(relative_file_name)

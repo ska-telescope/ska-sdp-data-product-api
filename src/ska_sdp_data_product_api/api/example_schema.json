@@ -58,6 +58,15 @@
                         "type": "text"
                     }
                 }
+            },
+            "date_created": {
+                "type": "text"
+            },
+            "dataproduct_file": {
+                "type": "text"
+            },
+            "metadata_file": {
+                "type": "text"
             }
         }
     }
