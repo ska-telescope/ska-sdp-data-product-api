@@ -26,7 +26,7 @@ class InsertMetadata:
     def insert_metadata(self, index_name: str, document: dict):
         """Method to insert data into Elasticsearch given index.
         It will also create schema if no schema is given."""
-        self.es_client.index(index=index_name, document=json.loads(document))
+        self.es_client.index(index=index_name, document=json.dumps(document))
 
     def retrieve_metadata(self, index_name: str, i_d: int):
         """Basic get data method given index and id."""
