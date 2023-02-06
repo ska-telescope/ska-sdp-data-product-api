@@ -14,7 +14,7 @@ from fastapi import HTTPException, Response
 from pydantic import BaseModel
 from starlette.responses import FileResponse
 
-from ska_sdp_data_product_api.api.insert_metadata import (
+from ska_sdp_data_product_api.elasticsearch.insert_metadata import (
     ElasticsearchMetadataStore,
 )
 from ska_sdp_data_product_api.core.settings import (
