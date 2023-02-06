@@ -296,14 +296,12 @@ def data_products_search(search_parameters: SearchParametersClass):
     """This API endpoint returns a list of all the data products
     in the PERSISTANT_STORAGE_PATH
     """
-    key = search_parameters.key_pair.split(":")[0]
-    value = search_parameters.key_pair.split(":")[1]
 
     filtered_data_product_list = metadata_store.search_metadata(
         start_date=search_parameters.start_date,
         end_date=search_parameters.end_date,
-        key=key,
-        value=value,
+        metadata_key=search_parameters.key_pair.split(":")[0],
+        metadata_value=search_parameters.key_pair.split(":")[1],
     )
     return filtered_data_product_list
 

@@ -21,12 +21,11 @@ class ElasticsearchMetadataStore:
         try:
             _ = self.es_client.indices.get(index=index)
         except elasticsearch.NotFoundError:
-            metadata_schema = open(
-                METADATA_ES_SCHEMA_FILE,
-                encoding="utf-8",
-            )
-            metadata_schema_json = json.load(metadata_schema)
-            self.es_client.indices.create(
+            with open(
+                METADATA_ES_SCHEMA_FILE, "r", encoding="utf-8"
+            ) as metadata_schema:
+                metadata_schema_json = json.load(metadata_schema)
+            self.es_client.indices.create(  # pylint: disable=E1123
                 index=index, ignore=400, body=metadata_schema_json
             )
             print("No index found for schema, creating new: %s", index)
@@ -61,15 +60,15 @@ class ElasticsearchMetadataStore:
         self,
         start_date: str = "20200101",
         end_date: str = "21000101",
-        key: str = "*",
-        value: str = "*",
+        metadata_key: str = "*",
+        metadata_value: str = "*",
     ):
         """Metadata Search method"""
         # query_body = {
         # "query": {
         #     "simple_query_string" : {
-        #         "fields": [ key ],
-        #         "query": value,
+        #         "fields": [ metadata_key ],
+        #         "query": metadata_value,
         #     }
         # }
         # }
@@ -77,38 +76,42 @@ class ElasticsearchMetadataStore:
         query_body = {
             "query": {
                 "query_string": {
-                    "query": value,
-                    "fields": [key],
+                    "query": metadata_value,
+                    "fields": [metadata_key],
                     "fuzziness": 0,
                 }
             }
         }
 
-        resp = self.es_client.search(
+        resp = self.es_client.search(  # pylint: disable=E1123
             index=self.metadata_index, body=query_body
         )
 
         metadata_list = []
-        id = 1
+        list_id = 1
         all_hits = resp["hits"]["hits"]
-        for num, doc in enumerate(all_hits):
+        for _num, doc in enumerate(all_hits):
             # print ("DOC ID:", doc["_id"], "--->", doc, type(doc), "\n")
             for key, value in doc.items():
                 if key == "_source":
                     update_dataproduct_list(
-                        metadata_list=metadata_list, metadata_file=value, id=id
+                        metadata_list=metadata_list,
+                        metadata_file=value,
+                        list_id=list_id,
                     )
-                    id = id + 1
+                    list_id = list_id + 1
 
-        print("Got %d Hits:" % resp["hits"]["total"]["value"])
+        print("Got %d Hits:", int(resp["hits"]["total"]["value"]))
         metadata_json = json.dumps(metadata_list)
         return metadata_json
 
 
-def update_dataproduct_list(metadata_list: list, metadata_file: str, id: int):
+def update_dataproduct_list(
+    metadata_list: list, metadata_file: str, list_id: int
+):
     """Polulate a list of data products and its metadata"""
     data_product_details = {}
-    data_product_details["id"] = id
+    data_product_details["id"] = list_id
     for key, value in metadata_file.items():
         if key in (
             "interface",
