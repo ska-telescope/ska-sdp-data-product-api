@@ -183,7 +183,10 @@ def downloadfile(relative_path_name):
 
 
 def loadmetadatafile(
-    path_to_selected_file: FileUrl, metadata_date="", dataproduct_file_name="", metadata_file_name=""
+    path_to_selected_file: FileUrl,
+    metadata_date="",
+    dataproduct_file_name="",
+    metadata_file_name="",
 ):
     """This function loads the content of a yaml file and return it as
     json."""
@@ -219,16 +222,20 @@ def ingestmetadatafiles(storage_path: str):
             # test if the directory contains a metadatafile
             if METADATA_FILE_NAME in files:
                 # If it contains the metadata file add it to the index
-                dataproduct_file_name = str(pathlib.Path(*pathlib.Path(\
-                    storage_path).parts[2:]))
+                dataproduct_file_name = str(
+                    pathlib.Path(*pathlib.Path(storage_path).parts[2:])
+                )
                 metadata_file = Path(storage_path).joinpath(METADATA_FILE_NAME)
                 metadata_file_name = FileUrl
                 metadata_file_name.relativeFileName = str(
                     pathlib.Path(*pathlib.Path(metadata_file).parts[2:])
                 )
-                metadata_date = "20230101" # TODO insert the actual data in correct format for ES here.
+                metadata_date = "20230101"  # TODO insert the actual data in correct format for ES here.
                 metadata_file_json = loadmetadatafile(
-                    metadata_file_name, metadata_date, dataproduct_file_name,metadata_file_name.relativeFileName
+                    metadata_file_name,
+                    metadata_date,
+                    dataproduct_file_name,
+                    metadata_file_name.relativeFileName,
                 )
                 metadata_store.insert_metadata(
                     metadata_file_name,

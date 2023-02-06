@@ -73,7 +73,13 @@ class ElasticsearchMetadataStore:
         # }
 
         query_body = {
-            "query": {"query_string": {"query": value, "fields": [key], "fuzziness": 0}}
+            "query": {
+                "query_string": {
+                    "query": value,
+                    "fields": [key],
+                    "fuzziness": 0,
+                }
+            }
         }
 
         resp = self.es_client.search(
