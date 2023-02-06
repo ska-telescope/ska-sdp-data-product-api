@@ -2,10 +2,11 @@
 
 import json
 
-from ska_sdp_data_product_api.elasticsearch.insert_metadata import InsertMetadata
-from ska_sdp_data_product_api.core.settings import (
-    METADATA_ES_SCHEMA_FILE,
+from ska_sdp_data_product_api.core.settings import METADATA_ES_SCHEMA_FILE
+from ska_sdp_data_product_api.elasticsearch.insert_metadata import (
+    InsertMetadata,
 )
+
 
 class MockIndices:
     """Mocked Indices."""

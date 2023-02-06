@@ -14,13 +14,13 @@ from fastapi import HTTPException, Response
 from pydantic import BaseModel
 from starlette.responses import FileResponse
 
-from ska_sdp_data_product_api.elasticsearch.insert_metadata import (
-    ElasticsearchMetadataStore,
-)
 from ska_sdp_data_product_api.core.settings import (
     METADATA_FILE_NAME,
     PERSISTANT_STORAGE_PATH,
     app,
+)
+from ska_sdp_data_product_api.elasticsearch.insert_metadata import (
+    ElasticsearchMetadataStore,
 )
 
 # pylint: disable=too-few-public-methods
@@ -230,7 +230,8 @@ def ingestmetadatafiles(storage_path: str):
                 metadata_file_name.relativeFileName = str(
                     pathlib.Path(*pathlib.Path(metadata_file).parts[2:])
                 )
-                metadata_date = "20230101"  # TODO insert the actual data in correct format for ES here.
+                metadata_date = "20230101"  # TODO insert the actual data in
+                # correct format for ES here.
                 metadata_file_json = loadmetadatafile(
                     metadata_file_name,
                     metadata_date,
@@ -248,7 +249,7 @@ def ingestmetadatafiles(storage_path: str):
                 # this test.
                 for file in os.listdir(storage_path):
                     ingestmetadatafiles(os.path.join(storage_path, file))
-        return
+        return ""
     return "Metadata ingested"
 
 
