@@ -19,7 +19,7 @@ from ska_sdp_data_product_api.core.settings import (
     PERSISTANT_STORAGE_PATH,
     app,
 )
-from ska_sdp_data_product_api.elasticsearch.insert_metadata import (
+from ska_sdp_data_product_api.elasticsearch.elasticsearch_api import (
     ElasticsearchMetadataStore,
 )
 
