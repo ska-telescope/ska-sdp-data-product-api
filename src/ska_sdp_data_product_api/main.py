@@ -39,8 +39,8 @@ class FileUrl(BaseModel):
 class SearchParametersClass(BaseModel):
     """Class for defining search parameters"""
 
-    start_date: str = "20200101"
-    end_date: str = "21000101"
+    start_date: str = "2020-01-01"
+    end_date: str = "2100-01-01"
     key_pair: str = ""
 
 
@@ -230,7 +230,7 @@ def ingestmetadatafiles(storage_path: str):
                 metadata_file_name.relativeFileName = str(
                     pathlib.Path(*pathlib.Path(metadata_file).parts[2:])
                 )
-                metadata_date = "20230101"  # TODO insert the actual data in
+                metadata_date = "2023-01-01"  # TODO insert the actual date in
                 # correct format for ES here.
                 metadata_file_json = loadmetadatafile(
                     metadata_file_name,
@@ -239,9 +239,6 @@ def ingestmetadatafiles(storage_path: str):
                     metadata_file_name.relativeFileName,
                 )
                 metadata_store.insert_metadata(
-                    metadata_file_name,
-                    metadata_date,
-                    dataproduct_file_name,
                     metadata_file_json,
                 )
             else:

@@ -38,16 +38,11 @@ class ElasticsearchMetadataStore:
 
     def insert_metadata(
         self,
-        metadata_file_path: str,
-        date: str,
-        dataproduct_file_path: str,
         metadata_file_json,
     ):
         # TODO Tests for file metadata_file exist
         # TODO Tests if data is already in elastic search, if it is, update
         # data
-        # TODO Insert needed metadata fields for dashbaord (Date and
-        # dataproduct_file_path)
         """Method to insert metadata into Elasticsearch."""
         # Add new metadata to es
         result = self.es_client.index(
@@ -58,31 +53,31 @@ class ElasticsearchMetadataStore:
 
     def search_metadata(
         self,
-        start_date: str = "20200101",
-        end_date: str = "21000101",
+        start_date: str = "2020-01-01",
+        end_date: str = "2100-01-01",
         metadata_key: str = "*",
         metadata_value: str = "*",
     ):
         """Metadata Search method"""
-        # query_body = {
-        # "query": {
-        #     "simple_query_string" : {
-        #         "fields": [ metadata_key ],
-        #         "query": metadata_value,
-        #     }
-        # }
-        # }
-
         query_body = {
             "query": {
-                "query_string": {
-                    "query": metadata_value,
-                    "fields": [metadata_key],
-                    "fuzziness": 0,
+                "bool": {
+                    "must": [{"match": {metadata_key: metadata_value}}],
+                    "filter": [
+                        {
+                            "range": {
+                                "date_created": {
+                                    "gte": start_date,
+                                    "lte": end_date,
+                                    "format": "yyyy-MM-dd",
+                                }
+                            }
+                        }
+                    ],
                 }
             }
         }
-
+        print(query_body)
         resp = self.es_client.search(  # pylint: disable=E1123
             index=self.metadata_index, body=query_body
         )
