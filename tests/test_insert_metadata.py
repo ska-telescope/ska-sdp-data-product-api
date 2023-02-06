@@ -3,7 +3,9 @@
 import json
 
 from ska_sdp_data_product_api.elasticsearch.insert_metadata import InsertMetadata
-
+from ska_sdp_data_product_api.core.settings import (
+    METADATA_ES_SCHEMA_FILE,
+)
 
 class MockIndices:
     """Mocked Indices."""
@@ -51,7 +53,7 @@ def test_create_schema():
     insert_metadata.es_client = MockElasticsearch()
 
     with open(
-        "tests/test_files/example_files/example_schema.json",
+        METADATA_ES_SCHEMA_FILE,
         "r",
         encoding="UTF-8",
     ) as schema_file:

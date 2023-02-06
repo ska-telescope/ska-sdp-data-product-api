@@ -3,7 +3,9 @@ import json
 
 import elasticsearch
 from elasticsearch import Elasticsearch
-
+from ska_sdp_data_product_api.core.settings import (
+    METADATA_ES_SCHEMA_FILE,
+)
 
 class ElasticsearchMetadataStore:
     """Class to insert data into Elasticsearch instance."""
@@ -20,9 +22,9 @@ class ElasticsearchMetadataStore:
             _ = self.es_client.indices.get(index=index)
         except elasticsearch.NotFoundError:
             metadata_schema = open(
-                "./src/ska_sdp_data_product_api/api/example_schema.json",
+                METADATA_ES_SCHEMA_FILE,
                 encoding="utf-8",
-            )  # TODO Move to settings
+            )
             metadata_schema_json = json.load(metadata_schema)
             self.es_client.indices.create(
                 index=index, ignore=400, body=metadata_schema_json
