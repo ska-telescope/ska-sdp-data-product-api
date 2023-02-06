@@ -140,3 +140,5 @@ cython_debug/
 PrivateRules.mak
 
 .vscode
+
+*.crt
