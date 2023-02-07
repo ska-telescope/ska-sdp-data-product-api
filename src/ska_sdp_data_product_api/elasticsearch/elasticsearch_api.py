@@ -67,8 +67,8 @@ class ElasticsearchMetadataStore:
                         {
                             "range": {
                                 "date_created": {
-                                    "gte": start_date,
-                                    "lte": end_date,
+                                    "gte": start_date[0:10],
+                                    "lte": end_date[0:10],
                                     "format": "yyyy-MM-dd",
                                 }
                             }

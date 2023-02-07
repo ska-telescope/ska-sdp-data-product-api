@@ -319,16 +319,14 @@ def data_products_search(search_parameters: SearchParametersClass):
     return filtered_data_product_list
 
 
-@app.post("/download")  # TODO Change to a get?
+@app.post("/download")
 async def download(relative_file_name: FileUrl):
     """This API endpoint returns a FileResponse that is used by a
     frontend to download a file"""
     return downloadfile(relative_file_name)
 
 
-@app.post(
-    "/dataproductmetadata", response_class=Response
-)  # TODO Change to a get?
+@app.post("/dataproductmetadata", response_class=Response)
 async def dataproductmetadata(relative_file_name: FileUrl):
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
