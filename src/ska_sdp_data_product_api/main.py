@@ -1,5 +1,6 @@
 """This API exposes SDP Data Products to the SDP Data Product Dashboard."""
 
+import datetime
 import io
 import json
 import os
@@ -182,9 +183,24 @@ def downloadfile(relative_path_name):
     )
 
 
+def getdatefromname(filename: str):
+    """This function extracts the date from the file named according to the
+    following format: type-generatorID-datetime-localSeq.
+    https://confluence.skatelescope.org/display/SWSI/SKA+Unique+Identifiers"""
+    metadata_date_str = filename.split("-")[2]
+    year = metadata_date_str[0:4]
+    month = metadata_date_str[4:6]
+    day = metadata_date_str[6:8]
+    try:
+        datetime.datetime(int(year), int(month), int(day))
+        return year + "-" + month + "-" + day
+    except ValueError:
+        return datetime.date.today().strftime("%Y-%m-%d")  # TODO Maybe rather
+    # not load and make an log entry of failed data product
+
+
 def loadmetadatafile(
     path_to_selected_file: FileUrl,
-    metadata_date="",
     dataproduct_file_name="",
     metadata_file_name="",
 ):
@@ -201,6 +217,9 @@ def loadmetadatafile(
             metadata_yaml_object = yaml.safe_load(
                 metadata_yaml_file
             )  # yaml_object will be a list or a dict
+        metadata_date = getdatefromname(
+            metadata_yaml_object["execution_block"]
+        )
         metadata_yaml_object.update({"date_created": metadata_date})
         metadata_yaml_object.update(
             {"dataproduct_file": dataproduct_file_name}
@@ -230,11 +249,8 @@ def ingestmetadatafiles(storage_path: str):
                 metadata_file_name.relativeFileName = str(
                     pathlib.Path(*pathlib.Path(metadata_file).parts[2:])
                 )
-                metadata_date = "2023-01-01"  # TODO insert the actual date in
-                # correct format for ES here.
                 metadata_file_json = loadmetadatafile(
                     metadata_file_name,
-                    metadata_date,
                     dataproduct_file_name,
                     metadata_file_name.relativeFileName,
                 )
