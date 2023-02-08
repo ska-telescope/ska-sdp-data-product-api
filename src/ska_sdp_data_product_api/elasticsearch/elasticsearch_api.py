@@ -28,7 +28,6 @@ class ElasticsearchMetadataStore:
             self.es_client.indices.create(  # pylint: disable=E1123
                 index=index, ignore=400, body=metadata_schema_json
             )
-            print("No index found for schema, creating new: %s", index)
 
     def clear_indecise(self):
         """Clear ou all indices from elasticsearch instance"""
@@ -48,7 +47,6 @@ class ElasticsearchMetadataStore:
         result = self.es_client.index(
             index=self.metadata_index, document=metadata_file_json
         )
-        print("result: %s", result)
         return result
 
     def search_metadata(
@@ -59,10 +57,15 @@ class ElasticsearchMetadataStore:
         metadata_value: str = "*",
     ):
         """Metadata Search method"""
+        if metadata_key != "*" and metadata_value != "*":
+            match_criteria = {"match": {metadata_key: metadata_value}}
+        else:
+            match_criteria = {"match_all": {}}
+
         query_body = {
             "query": {
                 "bool": {
-                    "must": [{"match": {metadata_key: metadata_value}}],
+                    "must": [match_criteria],
                     "filter": [
                         {
                             "range": {
@@ -77,16 +80,13 @@ class ElasticsearchMetadataStore:
                 }
             }
         }
-        print(query_body)
         resp = self.es_client.search(  # pylint: disable=E1123
             index=self.metadata_index, body=query_body
         )
-
         metadata_list = []
         list_id = 1
         all_hits = resp["hits"]["hits"]
         for _num, doc in enumerate(all_hits):
-            # print ("DOC ID:", doc["_id"], "--->", doc, type(doc), "\n")
             for key, value in doc.items():
                 if key == "_source":
                     update_dataproduct_list(
@@ -95,8 +95,6 @@ class ElasticsearchMetadataStore:
                         list_id=list_id,
                     )
                     list_id = list_id + 1
-
-        print("Got %d Hits:", int(resp["hits"]["total"]["value"]))
         metadata_json = json.dumps(metadata_list)
         return metadata_json
 
@@ -116,5 +114,4 @@ def update_dataproduct_list(
             "metadata_file",
         ):
             data_product_details[key] = value
-
     metadata_list.append(data_product_details)

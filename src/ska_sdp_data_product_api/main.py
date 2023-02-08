@@ -27,7 +27,6 @@ from ska_sdp_data_product_api.elasticsearch.elasticsearch_api import (
 # pylint: disable=too-few-public-methods
 
 metadata_store = ElasticsearchMetadataStore(hosts="http://localhost:9200")
-print(metadata_store.es_client.info())
 
 
 class FileUrl(BaseModel):
@@ -309,7 +308,6 @@ def data_products_search(search_parameters: SearchParametersClass):
     """This API endpoint returns a list of all the data products
     in the PERSISTANT_STORAGE_PATH
     """
-
     filtered_data_product_list = metadata_store.search_metadata(
         start_date=search_parameters.start_date,
         end_date=search_parameters.end_date,
