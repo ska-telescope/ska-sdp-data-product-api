@@ -26,7 +26,8 @@ from ska_sdp_data_product_api.elasticsearch.elasticsearch_api import (
 
 # pylint: disable=too-few-public-methods
 
-metadata_store = ElasticsearchMetadataStore(hosts="http://localhost:9200")
+metadata_store = ElasticsearchMetadataStore()
+metadata_store.connect(hosts="http://localhost:9200")
 
 
 class FileUrl(BaseModel):

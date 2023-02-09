@@ -10,8 +10,12 @@ from ska_sdp_data_product_api.core.settings import METADATA_ES_SCHEMA_FILE
 class ElasticsearchMetadataStore:
     """Class to insert data into Elasticsearch instance."""
 
-    def __init__(self, hosts):
+    def __init__(self):
         self.metadata_index = "sdp_meta_data"
+        self.es_client = None
+
+    def connect(self, hosts):
+        """Connect to Elasticsearch host and create default schema"""
         self.es_client = Elasticsearch(hosts=hosts)
         self.create_schema_if_not_existing(index=self.metadata_index)
 

@@ -54,7 +54,7 @@ class MockElasticsearch:
 
 def test_create_schema():
     """Method to test creation of schema."""
-    metadata_store = ElasticsearchMetadataStore(hosts="http://localhost:9200")
+    metadata_store = ElasticsearchMetadataStore()
     metadata_store.es_client = MockElasticsearch()
 
     with open(
@@ -70,7 +70,7 @@ def test_create_schema():
 
 def test_insert_metadata():
     """Method to test insertion of metadata."""
-    metadata_store = ElasticsearchMetadataStore(hosts="http://localhost:9200")
+    metadata_store = ElasticsearchMetadataStore()
     metadata_store.es_client = MockElasticsearch()
 
     with open(
