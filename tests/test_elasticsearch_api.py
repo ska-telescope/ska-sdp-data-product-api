@@ -7,6 +7,7 @@ import elasticsearch
 from ska_sdp_data_product_api.core.settings import METADATA_ES_SCHEMA_FILE
 from ska_sdp_data_product_api.elasticsearch.elasticsearch_api import (
     ElasticsearchMetadataStore,
+    update_dataproduct_list,
 )
 
 
@@ -84,3 +85,33 @@ def test_insert_metadata():
     response = metadata_store.es_client.get(index="sdp_meta_data", id=1)
 
     assert response == json.loads(document)
+
+
+def test_update_dataproduct_list():
+    """Method to test insertion of metadata."""
+    metadata_list = []
+
+    with open(
+        "tests/test_files/example_files/example_metadata.json",
+        "r",
+        encoding="UTF-8",
+    ) as document_file:
+        metadata_file = json.loads(document_file.read())
+
+    list_id = 1
+
+    update_dataproduct_list(
+        metadata_list=metadata_list,
+        metadata_file=metadata_file,
+        list_id=list_id,
+    )
+
+    expected_value = [
+        {
+            "id": 1,
+            "interface": "http://schema.skao.int/ska-data-product-meta/0.1",
+            "execution_block": "eb-m001-20191031-12345",
+        }
+    ]
+
+    assert metadata_list == expected_value
