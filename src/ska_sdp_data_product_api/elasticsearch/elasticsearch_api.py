@@ -39,9 +39,6 @@ class ElasticsearchMetadataStore:
         self,
         metadata_file_json,
     ):
-        # TODO Tests for file metadata_file exist
-        # TODO Tests if data is already in elastic search, if it is, update
-        # data
         """Method to insert metadata into Elasticsearch."""
         # Add new metadata to es
         result = self.es_client.index(
@@ -95,8 +92,7 @@ class ElasticsearchMetadataStore:
                         list_id=list_id,
                     )
                     list_id = list_id + 1
-        metadata_json = json.dumps(metadata_list)
-        return metadata_json
+        return json.dumps(metadata_list)
 
 
 def update_dataproduct_list(

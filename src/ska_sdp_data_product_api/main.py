@@ -194,8 +194,7 @@ def getdatefromname(filename: str):
         datetime.datetime(int(year), int(month), int(day))
         return year + "-" + month + "-" + day
     except ValueError:
-        return datetime.date.today().strftime("%Y-%m-%d")  # TODO Maybe rather
-    # not load and make an log entry of failed data product
+        return datetime.date.today().strftime("%Y-%m-%d")
 
 
 def loadmetadatafile(

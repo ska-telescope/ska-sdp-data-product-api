@@ -2,9 +2,11 @@
 
 import json
 
+import elasticsearch
+
 from ska_sdp_data_product_api.core.settings import METADATA_ES_SCHEMA_FILE
 from ska_sdp_data_product_api.elasticsearch.elasticsearch_api import (
-    InsertMetadata,
+    ElasticsearchMetadataStore,
 )
 
 
@@ -21,7 +23,9 @@ class MockIndices:
 
     def get(self, index):
         """Retrive Index."""
-        return self.values[index]["schema"]
+        if index in self.values:
+            return self.values[index]["schema"]
+        raise elasticsearch.NotFoundError("message", "meta", "body")
 
 
 class MockElasticsearch:
@@ -50,27 +54,24 @@ class MockElasticsearch:
 
 def test_create_schema():
     """Method to test creation of schema."""
-    insert_metadata = InsertMetadata()
-    insert_metadata.es_client = MockElasticsearch()
+    metadata_store = ElasticsearchMetadataStore(hosts="http://localhost:9200")
+    metadata_store.es_client = MockElasticsearch()
 
     with open(
         METADATA_ES_SCHEMA_FILE,
         "r",
         encoding="UTF-8",
     ) as schema_file:
-        schema = schema_file.read()
-
-    insert_metadata.create_index_from_schema("example_index", schema)
-
-    response = insert_metadata.es_client.indices.get(index="example_index")
-
+        schema = json.loads(schema_file.read())
+    metadata_store.create_schema_if_not_existing(index="sdp_meta_data")
+    response = metadata_store.es_client.indices.get(index="sdp_meta_data")
     assert response == schema
 
 
 def test_insert_metadata():
     """Method to test insertion of metadata."""
-    insert_metadata = InsertMetadata()
-    insert_metadata.es_client = MockElasticsearch()
+    metadata_store = ElasticsearchMetadataStore(hosts="http://localhost:9200")
+    metadata_store.es_client = MockElasticsearch()
 
     with open(
         "tests/test_files/example_files/example_metadata.json",
@@ -79,8 +80,7 @@ def test_insert_metadata():
     ) as document_file:
         document = document_file.read()
 
-    insert_metadata.insert_metadata("example_index", document)
+    metadata_store.insert_metadata(document)
+    response = metadata_store.es_client.get(index="sdp_meta_data", id=1)
 
-    response = insert_metadata.retrieve_metadata("example_index", 1)
-
-    assert response == document
+    assert response == json.loads(document)
