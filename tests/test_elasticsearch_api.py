@@ -49,6 +49,40 @@ class MockElasticsearch:
         """Get a value or None."""
         return self.values[index][id]
 
+    def search(
+        self, index, body
+    ):  # pylint: disable=no-self-use, unused-argument
+        """Mock search results."""
+        mock_results = {
+            "took": 14,
+            "timed_out": False,
+            "_shards": {
+                "total": 1,
+                "successful": 1,
+                "skipped": 0,
+                "failed": 0,
+            },
+            "hits": {
+                "total": {"value": 2, "relation": "eq"},
+                "max_score": 1.7509373,
+                "hits": [
+                    {
+                        "_index": "sdp_meta_data",
+                        "_id": "wRJENYYBOwlRnNXHy2_p",
+                        "_score": 1.7509373,
+                        "_source": {
+                            "interface": "http://schema.skao.int",
+                            "execution_block": "eb-m001-20191031-12345",
+                            "date_created": "2019-10-31",
+                            "dataproduct_file": "product",
+                            "metadata_file": "product",
+                        },
+                    },
+                ],
+            },
+        }
+        return mock_results
+
 
 #############################################################################
 
@@ -115,3 +149,34 @@ def test_update_dataproduct_list():
     ]
 
     assert metadata_list == expected_value
+
+
+def test_search_metadata():
+    """Method to test search of metadata"""
+    metadata_store = ElasticsearchMetadataStore()
+    metadata_store.es_client = MockElasticsearch()
+
+    metadata_list = metadata_store.search_metadata(
+        start_date="2020-01-01",
+        end_date="2100-01-01",
+        metadata_key="*",
+        metadata_value="*",
+    )
+
+    expected_value = [
+        {
+            "id": 1,
+            "interface": "http://schema.skao.int",
+            "execution_block": "eb-m001-20191031-12345",
+            "date_created": "2019-10-31",
+            "dataproduct_file": "product",
+            "metadata_file": "product",
+        }
+    ]
+
+    print("metadata_list_json")
+    print(json.loads(metadata_list))
+    print("expected_value")
+    print(expected_value)
+
+    assert json.loads(metadata_list) == expected_value
