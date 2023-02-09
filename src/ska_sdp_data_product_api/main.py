@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from starlette.responses import FileResponse
 
 from ska_sdp_data_product_api.core.settings import (
+    ES_HOST,
     METADATA_FILE_NAME,
     PERSISTANT_STORAGE_PATH,
     app,
@@ -27,7 +28,7 @@ from ska_sdp_data_product_api.elasticsearch.elasticsearch_api import (
 # pylint: disable=too-few-public-methods
 
 metadata_store = ElasticsearchMetadataStore()
-metadata_store.connect(hosts="http://localhost:9200")
+metadata_store.connect(hosts=ES_HOST)
 
 
 class FileUrl(BaseModel):

@@ -29,6 +29,11 @@ METADATA_ES_SCHEMA_FILE: str = config(
         data_product_metadata_schema.json",
 )
 
+ES_HOST: str = config(
+    "ES_HOST",
+    default="http://localhost:9200",
+)
+
 app = FastAPI()
 
 origins = [

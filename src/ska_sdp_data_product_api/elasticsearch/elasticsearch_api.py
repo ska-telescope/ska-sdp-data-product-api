@@ -13,11 +13,16 @@ class ElasticsearchMetadataStore:
     def __init__(self):
         self.metadata_index = "sdp_meta_data"
         self.es_client = None
+        self.es_search_enabled = True
 
     def connect(self, hosts):
         """Connect to Elasticsearch host and create default schema"""
-        self.es_client = Elasticsearch(hosts=hosts)
-        self.create_schema_if_not_existing(index=self.metadata_index)
+        try:
+            self.es_client = Elasticsearch(hosts=hosts)
+            self.create_schema_if_not_existing(index=self.metadata_index)
+        except elasticsearch.exceptions.ConnectionError:
+            # If now connection is available, disable search.
+            self.es_search_enabled = False
 
     def create_schema_if_not_existing(self, index: str):
         """Method to create a Schema from schema and index if it does not yet
