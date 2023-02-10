@@ -12,6 +12,8 @@ class ElasticsearchMetadataStore:
 
     def __init__(self):
         self.metadata_index = "sdp_meta_data"
+        self.metadata_list = []
+        self.metadata_list_id = 1
         self.es_client = None
         self.es_search_enabled = True
 
@@ -55,6 +57,11 @@ class ElasticsearchMetadataStore:
         )
         return result
 
+    def list_all_dataproducts(self):
+        """When search is not avialable, this endpoint will return all the
+        dataproducts so it can be listed in the table on the dashboard."""
+        return json.dumps(self.metadata_list)
+
     def search_metadata(
         self,
         start_date: str = "2020-01-01",
@@ -89,34 +96,28 @@ class ElasticsearchMetadataStore:
         resp = self.es_client.search(  # pylint: disable=E1123
             index=self.metadata_index, body=query_body
         )
-        metadata_list = []
-        list_id = 1
         all_hits = resp["hits"]["hits"]
+        self.metadata_list = []
         for _num, doc in enumerate(all_hits):
             for key, value in doc.items():
                 if key == "_source":
-                    update_dataproduct_list(
-                        metadata_list=metadata_list,
+                    self.update_dataproduct_list(
                         metadata_file=value,
-                        list_id=list_id,
                     )
-                    list_id = list_id + 1
-        return json.dumps(metadata_list)
+        return json.dumps(self.metadata_list)
 
-
-def update_dataproduct_list(
-    metadata_list: list, metadata_file: str, list_id: int
-):
-    """Polulate a list of data products and its metadata"""
-    data_product_details = {}
-    data_product_details["id"] = list_id
-    for key, value in metadata_file.items():
-        if key in (
-            "interface",
-            "execution_block",
-            "date_created",
-            "dataproduct_file",
-            "metadata_file",
-        ):
-            data_product_details[key] = value
-    metadata_list.append(data_product_details)
+    def update_dataproduct_list(self, metadata_file: str):
+        """Polulate a list of data products and its metadata"""
+        data_product_details = {}
+        data_product_details["id"] = self.metadata_list_id
+        for key, value in metadata_file.items():
+            if key in (
+                "interface",
+                "execution_block",
+                "date_created",
+                "dataproduct_file",
+                "metadata_file",
+            ):
+                data_product_details[key] = value
+        self.metadata_list.append(data_product_details)
+        self.metadata_list_id = self.metadata_list_id + 1

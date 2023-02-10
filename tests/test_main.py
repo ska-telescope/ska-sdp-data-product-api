@@ -8,15 +8,16 @@ from ska_sdp_data_product_api.main import TreeIndex, getfilenames
 
 def test_ping_main(test_app):
     """Can we hit the ping endpoint"""
-    response = test_app.get("/ping")
+    response = test_app.get("/status")
     assert response.status_code == 200
-    assert response.json() == {"ping": "The application is running"}
+    assert response.json() == {"API_running": True, "Search_enabled": True}
 
 
 def test_dataproductlist(test_app):
     """Test to see if a file list can be retrieved"""
-    response = test_app.get("dataproductlist")
+    response = test_app.get("/dataproductlist")
     assert response.status_code == 200
+    print(response.json())
     assert str(response.json()).__contains__(
         "product/eb-m001-20221212-12345/ska-data-product.yaml"
     )

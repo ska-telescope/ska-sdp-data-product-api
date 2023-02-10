@@ -230,9 +230,24 @@ def loadmetadatafile(
     return {}
 
 
+def createmetadatafilelist(
+    metadata_file_json,
+):
+    """Create the metadata list"""
+    if metadata_store.es_search_enabled:
+        metadata_store.insert_metadata(
+            metadata_file_json,
+        )
+    else:
+        metadata_store.update_dataproduct_list(
+            metadata_file=json.loads(metadata_file_json)
+        )
+
+
 def ingestmetadatafiles(storage_path: str):
     """This function runs through a volume and add all the data products to the
-    metadata_store."""
+    metadata_store or ."""
+
     if verify_file_path(storage_path):
         # Test if the path points to a directory
         if os.path.isdir(storage_path):
@@ -254,9 +269,7 @@ def ingestmetadatafiles(storage_path: str):
                     dataproduct_file_name,
                     metadata_file_name.relativeFileName,
                 )
-                metadata_store.insert_metadata(
-                    metadata_file_json,
-                )
+                createmetadatafilelist(metadata_file_json)
             else:
                 # If it is not a data product, enter the folder and repeat
                 # this test.
@@ -266,41 +279,23 @@ def ingestmetadatafiles(storage_path: str):
     return "Metadata ingested"
 
 
-@app.get("/ping")
+@app.get("/status")
 async def root():
     """An enpoint that just returns confirmation that the
     application is running"""
-    return {"ping": "The application is running"}
-
-
-@app.get("/dataproductlist")
-def index_data_products():
-    """This API endpoint returns a list of all the data products
-    in the PERSISTANT_STORAGE_PATH
-    """
-
-    file_index = TreeIndex(
-        root_tree_item_id="root",
-        tree_data={
-            "id": "root",
-            "name": "Data Products",
-            "relativefilename": "",
-            "type": "directory",
-            "children": [],
-        },
-    )
-
-    file_index.tree_data = getdataproductlist(
-        PERSISTANT_STORAGE_PATH, file_index
-    )
-
-    return file_index.tree_data
+    status = {
+        "API_running": True,
+        "Search_enabled": metadata_store.es_search_enabled,
+    }
+    return status
 
 
 @app.get("/updatesearchindex")
 def update_search_index():
     """This endpoint triggers the ingestion of metadata"""
     metadata_store.clear_indecise()
+    metadata_store.metadata_list = []
+    metadata_store.metadata_list_id = 1
     return ingestmetadatafiles(PERSISTANT_STORAGE_PATH)
 
 
@@ -309,13 +304,29 @@ def data_products_search(search_parameters: SearchParametersClass):
     """This API endpoint returns a list of all the data products
     in the PERSISTANT_STORAGE_PATH
     """
-    filtered_data_product_list = metadata_store.search_metadata(
-        start_date=search_parameters.start_date,
-        end_date=search_parameters.end_date,
-        metadata_key=search_parameters.key_pair.split(":")[0],
-        metadata_value=search_parameters.key_pair.split(":")[1],
-    )
-    return filtered_data_product_list
+    metadata_store.metadata_list = []
+    metadata_store.metadata_list_id = 1
+    if metadata_store.es_search_enabled:
+        filtered_data_product_list = metadata_store.search_metadata(
+            start_date=search_parameters.start_date,
+            end_date=search_parameters.end_date,
+            metadata_key=search_parameters.key_pair.split(":")[0],
+            metadata_value=search_parameters.key_pair.split(":")[1],
+        )
+        return filtered_data_product_list
+    raise HTTPException(status_code=503, detail="Elasticsearch not found")
+
+
+@app.get("/dataproductlist", response_class=Response)
+def data_products_list():
+    """This API endpoint returns a list of all the data products
+    in the PERSISTANT_STORAGE_PATH
+    """
+    metadata_store.metadata_list = []
+    metadata_store.metadata_list_id = 1
+    if not metadata_store.es_search_enabled:
+        ingestmetadatafiles(PERSISTANT_STORAGE_PATH)
+    return json.dumps(metadata_store.metadata_list)
 
 
 @app.post("/download")
