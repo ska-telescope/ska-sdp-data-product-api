@@ -73,78 +73,6 @@ def verify_file_path(file_path):
     return True
 
 
-def getfilenames(storage_path, file_index: TreeIndex, metadata_file):
-    """getfilenames itterates through a folder specified with the storage_path
-    parameter, and returns a list of files and their relative paths as
-    well as an index used.
-    """
-    verify_file_path(storage_path)
-
-    # Add the details of the current storage_path to the tree data
-    tree_data = {
-        "id": file_index.tree_item_id,
-        "name": os.path.basename(storage_path),
-        "metadatafile": str(
-            pathlib.Path(*pathlib.Path(metadata_file).parts[2:])
-        ),
-        "relativefilename": str(
-            pathlib.Path(*pathlib.Path(storage_path).parts[2:])
-        ),
-    }
-    # The first entry in the tree indicates it is the root of the tree (usd to
-    # render in JS), there after, incriment the index numericaly.
-    if file_index.tree_item_id == "root":
-        file_index.tree_item_id = 0
-    file_index.tree_item_id = file_index.tree_item_id + 1
-    # If the current storage_path is a directory, add its details and children
-    # by calling this funcion (getfilenames) with the path to the children
-    if os.path.isdir(storage_path):
-        tree_data["type"] = "directory"
-        tree_data["children"] = [
-            getfilenames(
-                os.path.join(storage_path, x), file_index, metadata_file
-            )
-            for x in os.listdir(storage_path)
-        ]
-    else:
-        tree_data["type"] = "file"
-    return tree_data
-
-
-def getdataproductlist(storage_path, file_index: TreeIndex):
-    """getdataproductlist itterates through a folder specified with the path
-    parameter, and returns a list of all the data products and their relative
-    paths and adds an index to the list.
-    A folder is considred a data product if the folder contains a
-    file named specified in the env variable METADATA_FILE_NAME.
-    """
-    verify_file_path(storage_path)
-
-    # Test if the path points to a directory
-    if os.path.isdir(storage_path):
-        # For each file in the directory,
-        files = os.listdir(storage_path)
-        # test if the directory contains a metadatafile
-        if METADATA_FILE_NAME in files:
-            # If it contains the metadata file, create a new child
-            # element for the data product dict.
-            metadata_file = Path(storage_path).joinpath(METADATA_FILE_NAME)
-            if file_index.tree_item_id == "root":
-                file_index.tree_item_id = 0
-            file_index.append_children(
-                getfilenames(storage_path, file_index, metadata_file)
-            )
-        else:
-            # If it is not a data product, enter the folder and repeat
-            # this test.
-            for file in os.listdir(storage_path):
-                getdataproductlist(
-                    os.path.join(storage_path, file), file_index
-                )
-
-    return file_index.tree_data
-
-
 def downloadfile(relative_path_name):
     """This function returns a response that can be used to download a file
     pointed to by the relative_path_name"""
@@ -304,17 +232,17 @@ def data_products_search(search_parameters: SearchParametersClass):
     """This API endpoint returns a list of all the data products
     in the PERSISTANT_STORAGE_PATH
     """
+    if not metadata_store.es_search_enabled:
+        raise HTTPException(status_code=503, detail="Elasticsearch not found")
     metadata_store.metadata_list = []
     metadata_store.metadata_list_id = 1
-    if metadata_store.es_search_enabled:
-        filtered_data_product_list = metadata_store.search_metadata(
-            start_date=search_parameters.start_date,
-            end_date=search_parameters.end_date,
-            metadata_key=search_parameters.key_pair.split(":")[0],
-            metadata_value=search_parameters.key_pair.split(":")[1],
-        )
-        return filtered_data_product_list
-    raise HTTPException(status_code=503, detail="Elasticsearch not found")
+    filtered_data_product_list = metadata_store.search_metadata(
+        start_date=search_parameters.start_date,
+        end_date=search_parameters.end_date,
+        metadata_key=search_parameters.key_pair.split(":")[0],
+        metadata_value=search_parameters.key_pair.split(":")[1],
+    )
+    return filtered_data_product_list
 
 
 @app.get("/dataproductlist", response_class=Response)
