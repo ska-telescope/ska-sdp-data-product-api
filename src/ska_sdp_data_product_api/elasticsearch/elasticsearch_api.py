@@ -94,7 +94,7 @@ class ElasticsearchMetadataStore:
                 }
             }
         }
-        resp = self.es_client.search(  # pylint: disable=E1123
+        resp = self.es_client.search(  # pylint: disable=unexpected-keyword-arg
             index=self.metadata_index, body=query_body
         )
         all_hits = resp["hits"]["hits"]
