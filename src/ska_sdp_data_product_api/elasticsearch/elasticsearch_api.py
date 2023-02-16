@@ -65,7 +65,7 @@ class ElasticsearchMetadataStore:
 
     def search_metadata(
         self,
-        start_date: str = "2020-01-01",
+        start_date: str = "1970-01-01",
         end_date: str = "2100-01-01",
         metadata_key: str = "*",
         metadata_value: str = "*",
