@@ -1,0 +1,14 @@
+config:
+  cmdline: null
+  commit: null
+  image: artefact.skao.int/ska-sdp-script-vis-receive
+  processing_block: pb-test-20200425-00000
+  processing_script: vis-receive
+  version: 0.6.0
+context: {}
+execution_block: eb-test-20200325-00001
+files:
+- description: raw visibilities
+  path: vis.ms
+  status: working
+interface: http://schema.skao.int/ska-data-product-meta/0.1

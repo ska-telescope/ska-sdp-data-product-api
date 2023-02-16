@@ -233,7 +233,11 @@ def data_products_search(search_parameters: SearchParametersClass):
     in the PERSISTANT_STORAGE_PATH
     """
     if not metadata_store.es_search_enabled:
-        raise HTTPException(status_code=503, detail="Elasticsearch not found")
+        metadata_store.connect(hosts=ES_HOST)
+        if not metadata_store.es_search_enabled:
+            raise HTTPException(
+                status_code=503, detail="Elasticsearch not found"
+            )
     metadata_store.metadata_list = []
     metadata_store.metadata_list_id = 1
     filtered_data_product_list = metadata_store.search_metadata(

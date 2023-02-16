@@ -25,8 +25,7 @@ METADATA_FILE_NAME: str = config(
 
 METADATA_ES_SCHEMA_FILE: str = config(
     "METADATA_ES_SCHEMA_FILE",
-    default="./src/ska_sdp_data_product_api/elasticsearch/\
-        data_product_metadata_schema.json",
+    default="./elasticsearch/data_product_metadata_schema.json",
 )
 
 ES_HOST: str = config(

@@ -22,6 +22,7 @@ class ElasticsearchMetadataStore:
         try:
             self.es_client = Elasticsearch(hosts=hosts)
             self.create_schema_if_not_existing(index=self.metadata_index)
+            self.es_search_enabled = True
         except elasticsearch.exceptions.ConnectionError:
             # If now connection is available, disable search.
             self.es_search_enabled = False
