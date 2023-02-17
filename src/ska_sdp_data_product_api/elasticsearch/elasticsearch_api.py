@@ -13,7 +13,6 @@ class ElasticsearchMetadataStore:
     def __init__(self):
         self.metadata_index = "sdp_meta_data"
         self.metadata_list = []
-        self.metadata_list_id = 1
         self.es_client = None
         self.es_search_enabled = True
 
@@ -94,9 +93,12 @@ class ElasticsearchMetadataStore:
                 }
             }
         }
-        resp = self.es_client.search(  # pylint: disable=unexpected-keyword-arg
-            index=self.metadata_index, body=query_body
-        )
+        try:
+            resp = self.es_client.search(  # pylint: disable=E1123
+                index=self.metadata_index, body=query_body
+            )
+        except elasticsearch.exceptions.ConnectionError:
+            self.es_search_enabled = False
         all_hits = resp["hits"]["hits"]
         self.metadata_list = []
         for _num, doc in enumerate(all_hits):
@@ -110,7 +112,7 @@ class ElasticsearchMetadataStore:
     def update_dataproduct_list(self, metadata_file: str):
         """Populate a list of data products and its metadata"""
         data_product_details = {}
-        data_product_details["id"] = self.metadata_list_id
+        data_product_details["id"] = len(self.metadata_list) + 1
         for key, value in metadata_file.items():
             if key in (
                 "interface",
@@ -121,4 +123,3 @@ class ElasticsearchMetadataStore:
             ):
                 data_product_details[key] = value
         self.metadata_list.append(data_product_details)
-        self.metadata_list_id = self.metadata_list_id + 1

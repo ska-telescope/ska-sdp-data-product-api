@@ -223,7 +223,6 @@ def update_search_index():
     """This endpoint triggers the ingestion of metadata"""
     metadata_store.clear_indecise()
     metadata_store.metadata_list = []
-    metadata_store.metadata_list_id = 1
     return ingestmetadatafiles(PERSISTANT_STORAGE_PATH)
 
 
@@ -239,7 +238,6 @@ def data_products_search(search_parameters: SearchParametersClass):
                 status_code=503, detail="Elasticsearch not found"
             )
     metadata_store.metadata_list = []
-    metadata_store.metadata_list_id = 1
     filtered_data_product_list = metadata_store.search_metadata(
         start_date=search_parameters.start_date,
         end_date=search_parameters.end_date,
@@ -255,7 +253,6 @@ def data_products_list():
     in the PERSISTANT_STORAGE_PATH
     """
     metadata_store.metadata_list = []
-    metadata_store.metadata_list_id = 1
     if not metadata_store.es_search_enabled:
         ingestmetadatafiles(PERSISTANT_STORAGE_PATH)
     return json.dumps(metadata_store.metadata_list)
