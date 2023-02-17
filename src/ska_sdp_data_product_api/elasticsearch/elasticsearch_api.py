@@ -45,6 +45,7 @@ class ElasticsearchMetadataStore:
         self.es_client.options(ignore_status=[400, 404]).indices.delete(
             index=self.metadata_index
         )
+        self.metadata_list = []
 
     def insert_metadata(
         self,

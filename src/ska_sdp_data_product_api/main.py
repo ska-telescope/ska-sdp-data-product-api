@@ -174,7 +174,7 @@ def createmetadatafilelist(
 
 def ingestmetadatafiles(storage_path: str):
     """This function runs through a volume and add all the data products to the
-    metadata_store or ."""
+    metadata_store or into the metadata_list if the store is not available"""
 
     if verify_file_path(storage_path):
         # Test if the path points to a directory
@@ -222,7 +222,6 @@ async def root():
 def update_search_index():
     """This endpoint triggers the ingestion of metadata"""
     metadata_store.clear_indecise()
-    metadata_store.metadata_list = []
     return ingestmetadatafiles(PERSISTANT_STORAGE_PATH)
 
 
@@ -237,7 +236,6 @@ def data_products_search(search_parameters: SearchParametersClass):
             raise HTTPException(
                 status_code=503, detail="Elasticsearch not found"
             )
-    metadata_store.metadata_list = []
     filtered_data_product_list = metadata_store.search_metadata(
         start_date=search_parameters.start_date,
         end_date=search_parameters.end_date,
@@ -252,8 +250,8 @@ def data_products_list():
     """This API endpoint returns a list of all the data products
     in the PERSISTANT_STORAGE_PATH
     """
-    metadata_store.metadata_list = []
     if not metadata_store.es_search_enabled:
+        metadata_store.metadata_list = []
         ingestmetadatafiles(PERSISTANT_STORAGE_PATH)
     return json.dumps(metadata_store.metadata_list)
 
