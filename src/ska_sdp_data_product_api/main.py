@@ -1,5 +1,6 @@
 """This API exposes SDP Data Products to the SDP Data Product Dashboard."""
 
+import datetime
 import io
 import json
 import os
@@ -15,12 +16,19 @@ from pydantic import BaseModel
 from starlette.responses import FileResponse
 
 from ska_sdp_data_product_api.core.settings import (
+    ES_HOST,
     METADATA_FILE_NAME,
     PERSISTANT_STORAGE_PATH,
     app,
 )
+from ska_sdp_data_product_api.elasticsearch.elasticsearch_api import (
+    ElasticsearchMetadataStore,
+)
 
 # pylint: disable=too-few-public-methods
+
+metadata_store = ElasticsearchMetadataStore()
+metadata_store.connect(hosts=ES_HOST)
 
 
 class FileUrl(BaseModel):
@@ -28,6 +36,14 @@ class FileUrl(BaseModel):
 
     relativeFileName: str = "Untitled"
     fileName: str
+
+
+class SearchParametersClass(BaseModel):
+    """Class for defining search parameters"""
+
+    start_date: str = "2020-01-01"
+    end_date: str = "2100-01-01"
+    key_pair: str = ""
 
 
 class TreeIndex:
@@ -57,85 +73,13 @@ def verify_file_path(file_path):
     return True
 
 
-def getfilenames(storage_path, file_index: TreeIndex, metadata_file):
-    """getfilenames itterates through a folder specified with the storage_path
-    parameter, and returns a list of files and their relative paths as
-    well as an index used.
-    """
-    verify_file_path(storage_path)
-
-    # Add the details of the current storage_path to the tree data
-    tree_data = {
-        "id": file_index.tree_item_id,
-        "name": os.path.basename(storage_path),
-        "metadatafile": str(
-            pathlib.Path(*pathlib.Path(metadata_file).parts[2:])
-        ),
-        "relativefilename": str(
-            pathlib.Path(*pathlib.Path(storage_path).parts[2:])
-        ),
-    }
-    # The first entry in the tree indicates it is the root of the tree (usd to
-    # render in JS), there after, incriment the index numericaly.
-    if file_index.tree_item_id == "root":
-        file_index.tree_item_id = 0
-    file_index.tree_item_id = file_index.tree_item_id + 1
-    # If the current storage_path is a directory, add its details and children
-    # by calling this funcion (getfilenames) with the path to the children
-    if os.path.isdir(storage_path):
-        tree_data["type"] = "directory"
-        tree_data["children"] = [
-            getfilenames(
-                os.path.join(storage_path, x), file_index, metadata_file
-            )
-            for x in os.listdir(storage_path)
-        ]
-    else:
-        tree_data["type"] = "file"
-    return tree_data
-
-
-def getdataproductlist(storage_path, file_index: TreeIndex):
-    """getdataproductlist itterates through a folder specified with the path
-    parameter, and returns a list of all the data products and their relative
-    paths and adds an index to the list.
-    A folder is considred a data product if the folder contains a
-    file named specified in the env variable METADATA_FILE_NAME.
-    """
-    verify_file_path(storage_path)
-
-    # Test if the path points to a directory
-    if os.path.isdir(storage_path):
-        # For each file in the directory,
-        files = os.listdir(storage_path)
-        # test if the directory contains a metadatafile
-        if METADATA_FILE_NAME in files:
-            # If it contains the metadata file, create a new child
-            # element for the data product dict.
-            metadata_file = Path(storage_path).joinpath(METADATA_FILE_NAME)
-            if file_index.tree_item_id == "root":
-                file_index.tree_item_id = 0
-            file_index.append_children(
-                getfilenames(storage_path, file_index, metadata_file)
-            )
-        else:
-            # If it is not a data product, enter the folder and repeat
-            # this test.
-            for file in os.listdir(storage_path):
-                getdataproductlist(
-                    os.path.join(storage_path, file), file_index
-                )
-
-    return file_index.tree_data
-
-
 def downloadfile(relative_path_name):
     """This function returns a response that can be used to download a file
     pointed to by the relative_path_name"""
     persistant_file_path = os.path.join(
         PERSISTANT_STORAGE_PATH, relative_path_name.relativeFileName
     )
-    # Not found
+    # Test is not found
     verify_file_path(persistant_file_path)
     # If relative_path_name points to a file, return a FileResponse
     if not os.path.isdir(persistant_file_path):
@@ -168,55 +112,149 @@ def downloadfile(relative_path_name):
     )
 
 
-def loadmetadata(path_to_selected_file: FileUrl):
+def getdatefromname(filename: str):
+    """This function extracts the date from the file named according to the
+    following format: type-generatorID-datetime-localSeq.
+    https://confluence.skatelescope.org/display/SWSI/SKA+Unique+Identifiers"""
+    metadata_date_str = filename.split("-")[2]
+    year = metadata_date_str[0:4]
+    month = metadata_date_str[4:6]
+    day = metadata_date_str[6:8]
+    try:
+        datetime.datetime(int(year), int(month), int(day))
+        return year + "-" + month + "-" + day
+    except ValueError:
+        return datetime.date.today().strftime("%Y-%m-%d")
+
+
+def loadmetadatafile(
+    path_to_selected_file: FileUrl,
+    dataproduct_file_name="",
+    metadata_file_name="",
+):
     """This function loads the content of a yaml file and return it as
     json."""
-    # Not found
     persistant_file_path = os.path.join(
         PERSISTANT_STORAGE_PATH, path_to_selected_file.relativeFileName
     )
-
-    if verify_file_path(persistant_file_path):
+    if verify_file_path(
+        persistant_file_path
+    ) and persistant_file_path.endswith(METADATA_FILE_NAME):
         with open(
             persistant_file_path, "r", encoding="utf-8"
         ) as metadata_yaml_file:
             metadata_yaml_object = yaml.safe_load(
                 metadata_yaml_file
             )  # yaml_object will be a list or a dict
+        metadata_date = getdatefromname(
+            metadata_yaml_object["execution_block"]
+        )
+        metadata_yaml_object.update({"date_created": metadata_date})
+        metadata_yaml_object.update(
+            {"dataproduct_file": dataproduct_file_name}
+        )
+        metadata_yaml_object.update({"metadata_file": metadata_file_name})
         metadata_json = json.dumps(metadata_yaml_object)
         return metadata_json
     return {}
 
 
-@app.get("/ping")
+def createmetadatafilelist(
+    metadata_file_json,
+):
+    """Create the metadata list"""
+    if metadata_store.es_search_enabled:
+        metadata_store.insert_metadata(
+            metadata_file_json,
+        )
+    else:
+        metadata_store.update_dataproduct_list(
+            metadata_file=json.loads(metadata_file_json)
+        )
+
+
+def ingestmetadatafiles(storage_path: str):
+    """This function runs through a volume and add all the data products to the
+    metadata_store or into the metadata_list if the store is not available"""
+
+    if verify_file_path(storage_path):
+        # Test if the path points to a directory
+        if os.path.isdir(storage_path):
+            # For each file in the directory,
+            files = os.listdir(storage_path)
+            # test if the directory contains a metadatafile
+            if METADATA_FILE_NAME in files:
+                # If it contains the metadata file add it to the index
+                dataproduct_file_name = str(
+                    pathlib.Path(*pathlib.Path(storage_path).parts[2:])
+                )
+                metadata_file = Path(storage_path).joinpath(METADATA_FILE_NAME)
+                metadata_file_name = FileUrl
+                metadata_file_name.relativeFileName = str(
+                    pathlib.Path(*pathlib.Path(metadata_file).parts[2:])
+                )
+                metadata_file_json = loadmetadatafile(
+                    metadata_file_name,
+                    dataproduct_file_name,
+                    metadata_file_name.relativeFileName,
+                )
+                createmetadatafilelist(metadata_file_json)
+            else:
+                # If it is not a data product, enter the folder and repeat
+                # this test.
+                for file in os.listdir(storage_path):
+                    ingestmetadatafiles(os.path.join(storage_path, file))
+        return ""
+    return "Metadata ingested"
+
+
+@app.get("/status")
 async def root():
     """An enpoint that just returns confirmation that the
     application is running"""
-    return {"ping": "The application is running"}
+    status = {
+        "API_running": True,
+        "Search_enabled": metadata_store.es_search_enabled,
+    }
+    return status
 
 
-@app.get("/dataproductlist")
-def index_data_products():
+@app.get("/updatesearchindex")
+def update_search_index():
+    """This endpoint triggers the ingestion of metadata"""
+    metadata_store.clear_indecise()
+    return ingestmetadatafiles(PERSISTANT_STORAGE_PATH)
+
+
+@app.post("/dataproductsearch", response_class=Response)
+def data_products_search(search_parameters: SearchParametersClass):
     """This API endpoint returns a list of all the data products
     in the PERSISTANT_STORAGE_PATH
     """
-
-    file_index = TreeIndex(
-        root_tree_item_id="root",
-        tree_data={
-            "id": "root",
-            "name": "Data Products",
-            "relativefilename": "",
-            "type": "directory",
-            "children": [],
-        },
+    if not metadata_store.es_search_enabled:
+        metadata_store.connect(hosts=ES_HOST)
+        if not metadata_store.es_search_enabled:
+            raise HTTPException(
+                status_code=503, detail="Elasticsearch not found"
+            )
+    filtered_data_product_list = metadata_store.search_metadata(
+        start_date=search_parameters.start_date,
+        end_date=search_parameters.end_date,
+        metadata_key=search_parameters.key_pair.split(":")[0],
+        metadata_value=search_parameters.key_pair.split(":")[1],
     )
+    return filtered_data_product_list
 
-    file_index.tree_data = getdataproductlist(
-        PERSISTANT_STORAGE_PATH, file_index
-    )
 
-    return file_index.tree_data
+@app.get("/dataproductlist", response_class=Response)
+def data_products_list():
+    """This API endpoint returns a list of all the data products
+    in the PERSISTANT_STORAGE_PATH
+    """
+    if not metadata_store.es_search_enabled:
+        metadata_store.metadata_list = []
+        ingestmetadatafiles(PERSISTANT_STORAGE_PATH)
+    return json.dumps(metadata_store.metadata_list)
 
 
 @app.post("/download")
@@ -230,4 +268,4 @@ async def download(relative_file_name: FileUrl):
 async def dataproductmetadata(relative_file_name: FileUrl):
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
-    return loadmetadata(relative_file_name)
+    return loadmetadatafile(relative_file_name)

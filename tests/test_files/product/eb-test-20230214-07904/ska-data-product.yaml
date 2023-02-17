@@ -1,0 +1,17 @@
+config:
+  cmdline: null
+  commit: null
+  image: registry.gitlab.com/ska-telescope/sdp/ska-sdp-script/ska-sdp-script-vis-receive
+  processing_block: pb-test-20230214-05876
+  processing_script: vis-receive
+  version: 0.8.0
+context: {}
+execution_block: eb-test-20230214-07904
+files:
+- description: MS for scan 1
+  path: ./output.scan-1.ms
+  status: working
+- description: MS for scan 2
+  path: ./output.scan-2.ms
+  status: finished
+interface: http://schema.skao.int/ska-data-product-meta/0.1

@@ -15,6 +15,7 @@ Below are some tools that will be required to work with the data product API:
 - Python 3.10 or later versions: Install page URL: https://www.python.org/downloads/
 - Poetry 1.2 or later versions: Install page URL: https://python-poetry.org/docs/#installation
 - GNU make 4.2 or later versions: Install page URL: https://www.gnu.org/software/make/
+- Elasticsearch 8.6.0 or later versions: (optional)
 
 **Installation**
 
@@ -34,6 +35,9 @@ Configure the environmental variables in the .evn file under the root folder acc
     REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL=http://localhost
     REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT=8100
     PERSISTANT_STORAGE_PATH=./tests/test_files
+    METADATE_FILE_NAME=ska-data-product.yaml
+    METADATA_ES_SCHEMA_FILE=./src/ska_sdp_data_product_api/elasticsearch/data_product_metadata_schema.json
+    ES_HOST=http://localhost:9200
 
 *To run the application directly on your host machine:*
 
@@ -46,12 +50,12 @@ Configure the environmental variables in the .evn file under the root folder acc
 
 *To run the application inside a docker container on your host machine:*
 
-NOTE: When running the application in a docker container, the <PERSISTANT_STORAGE_PATH> needs to be accessible from within  the container. This is not configured automatically.
+NOTE: When running the application in a docker container, the <PERSISTANT_STORAGE_PATH> needs to be accessible from within the container. You can mount the test folder into this location as done below:
 
 .. code-block:: bash
 
     docker build -t ska-sdp-data-product-api .
-    docker run -p 8000:8000 ska-sdp-data-product-api
+    docker run -p 8000:8000 -v <YOUR_PROJECT_DIR>/ska-sdp-data-product-api/tests:/usr/src/ska_sdp_data_product_api/tests ska-sdp-data-product-api
 
 Uvicorn will then be running on http://127.0.0.1:8000
 
@@ -60,7 +64,7 @@ Kubernetes Deployment
 
 
 
-The SDP Data Product API is deployed as part of the helm chart of the `SDP Data Product Dashboard <https://gitlab.com/ska-telescope/sdp/ska-sdp-data-product-dashboard>`_. In the Kubernetes deployment, the environmental variables is updated from the values files of the deployment and not the .env file in the project. Please see the documentation in the `SDP Data Product Dashboard documentation <https://developer.skao.int/projects/ska-sdp-data-product-dashboard/en/latest/?badge=latest>`_ for more information.
+The SDP Data Product API is deployed as part of the helm chart of the `SDP Data Product Dashboard <https://gitlab.com/ska-telescope/sdp/ska-sdp-data-product-dashboard>`_. In the Kubernetes deployment, the environmental variables are updated from the values files of the deployment and not the .env file in the project. Please see the documentation in the `SDP Data Product Dashboard documentation <https://developer.skao.int/projects/ska-sdp-data-product-dashboard/en/latest/?badge=latest>`_ for more information.
 
 
 
@@ -75,105 +79,56 @@ Test endpoint
 ~~~~~~~~~~~
 
 
-To test if your instance of the API is up and running, you can send a get request to the ping endpoint and you will get the following reply:
+To retrieve the status of the API, you can send a get request to the status endpoint and you will get a reply indicating the status of the API and the Search:
 
 .. code-block:: bash
 
-    GET /ping
+    GET /status
 
-    {"ping": "The application is running"}
+    {"API_running":true,"Search_enabled":false}
 
 
-Data product list endpoint
+Update the search index endpoint
 ~~~~~~~~~~~
-A folder is considred a data product if the folder contains a file named <METADATA_FILE_NAME>.
-Sending a get request to the data product list endpoint returns a list of all the data products in the path <PERSISTANT_STORAGE_PATH>
+
+To initialise or re-initialise the data products metadata list, a get request can be sent to the updatesearchindex endpoint. This will clear the metadata store indices and the metadata_list in memory, and then ingest all the metadate files from disc.
+
+.. code-block:: bash
+
+    GET /updatesearchindex
+
+
+Metadata search endpoint
+~~~~~~~~~~~
+
+When an Elasticsearch backend endpoint is available, the dataproductsearch will query the Elasticsearch datastore with the search criteria passed to the API (start_date, end_date and key_pair). The search results will then be returned as a list of data products, with key metadata attributes.
+
+.. code-block:: bash
+
+    GET /dataproductsearch
+
+    {
+    "start_date": "2001-12-12",
+    "end_date": "2032-12-12",
+    "key_pair": "execution_block:eb-m001-20191031-12345"
+    }
+
+
+    [{"id": 1, "interface": "http://schema.skao.int/ska-data-product-meta/0.1", "execution_block": "eb-m001-20191031-12345", "date_created": "2019-10-31", "dataproduct_file": "product/eb-m001-20221212-12345", "metadata_file": "product/eb-m001-20221212-12345/ska-data-product.yaml"}, {"id": 2, "interface": "http://schema.skao.int/ska-data-product-meta/0.1", "execution_block": "eb-m002-20221212-12345", "date_created": "2022-12-12", "dataproduct_file": "product/eb-m002-20221212-12345", "metadata_file": "product/eb-m002-20221212-12345/ska-data-product.yaml"}]
+
+
+Metadata list endpoint
+~~~~~~~~~~~
+
+When an Elasticsearch backend endpoint is not available, the dataproductlist can be used to return all the data products as a list of data products, with key metadata attributes.
 
 .. code-block:: bash
 
     GET /dataproductlist
 
-    {
-        "id":"root",
-        "name":"Data Products",
-        "relativefilename":"",
-        "type":"directory","children":[
-            {
-                "id":0,
-                "name":"pb_id_2",
-                "metadatafile":"tests/test_files/product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml",
-                "relativefilename":"product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2",
-                "type":"directory",
-                "children":[
-                    {
-                        "id":1,
-                        "name":"ska-data-product.yaml",
-                        "metadatafile":"tests/test_files/product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml",
-                        "relativefilename":"product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml",
-                        "type":"file"
-                    },
-                    {
-                        "id":2,
-                        "name":"TestDataFile4.txt",
-                        "metadatafile":"tests/test_files/product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml",
-                        "relativefilename":"product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/TestDataFile4.txt",
-                        "type":"file"
-                    },
-                    {
-                        "id":3,
-                        "name":"TestDataFile6.txt",
-                        "metadatafile":"tests/test_files/product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml",
-                        "relativefilename":"product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/TestDataFile6.txt",
-                        "type":"file"
-                    },
-                    {
-                        "id":4,
-                        "name":"TestDataFile5.txt",
-                        "metadatafile":"tests/test_files/product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml",
-                        "relativefilename":"product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/TestDataFile5.txt",
-                        "type":"file"
-                    }
-                ]
-            },
-            {
-                "id":5,
-                "name":"pb_id_1",
-                "metadatafile":"tests/test_files/product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/ska-data-product.yaml",
-                "relativefilename":"product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1",
-                "type":"directory",
-                "children":[
-                    {
-                        "id":6,
-                        "name":"TestDataFile2.txt",
-                        "metadatafile":"tests/test_files/product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/ska-data-product.yaml",
-                        "relativefilename":"product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/TestDataFile2.txt",
-                        "type":"file"
-                    },
-                    {
-                        "id":7,
-                        "name":"TestDataFile3.txt",
-                        "metadatafile":"tests/test_files/product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/ska-data-product.yaml",
-                        "relativefilename":"product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/TestDataFile3.txt",
-                        "type":"file"
-                    },
-                    {
-                        "id":8,
-                        "name":"ska-data-product.yaml",
-                        "metadatafile":"tests/test_files/product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/ska-data-product.yaml",
-                        "relativefilename":"product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/ska-data-product.yaml",
-                        "type":"file"
-                    },
-                    {
-                        "id":9,
-                        "name":"TestDataFile1.txt",
-                        "metadatafile":"tests/test_files/product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/ska-data-product.yaml",
-                        "relativefilename":"product/eb_id_1/ska-sub-system/scan_id_1/pb_id_1/TestDataFile1.txt",
-                        "type":"file"
-                    }
-                ]
-            }
-        ]
-    }
+
+    [{"id": 1, "interface": "http://schema.skao.int/ska-data-product-meta/0.1", "execution_block": "eb-m001-20191031-12345", "date_created": "2019-10-31", "dataproduct_file": "product/eb-m001-20221212-12345", "metadata_file": "product/eb-m001-20221212-12345/ska-data-product.yaml"}, {"id": 2, "interface": "http://schema.skao.int/ska-data-product-meta/0.1", "execution_block": "eb-m002-20221212-12345", "date_created": "2022-12-12", "dataproduct_file": "product/eb-m002-20221212-12345", "metadata_file": "product/eb-m002-20221212-12345/ska-data-product.yaml"}]
+
 
 Download data product endpoint
 ~~~~~~~~~~~
@@ -182,7 +137,7 @@ Sending a post request to the download endpoint will return either a FileRespons
 
 The body of the post request must contain the name of the file and the relative path of the file you want to download as listed in the file list response above. 
 
-For example the post request body:
+For example, the post request body:
 
 .. code-block:: bash
 

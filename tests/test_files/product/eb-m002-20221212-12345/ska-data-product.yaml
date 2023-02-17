@@ -1,0 +1,27 @@
+interface: http://schema.skao.int/ska-data-product-meta/0.1
+ 
+execution_block: eb-m002-20221212-12345
+ 
+ 
+context: # Free-form data provided by OET.
+  observer: AIV_person_2
+  intent: "Experimental run as part of XYZ-456"
+  notes: "Running that signal from XX/YY/ZZ through again, things seem a bit wonkey"
+ 
+config: # Configuration of generating software
+  processing_block: pb-m002-20221212-12345
+  processing_script: receive
+  image: artefact.skao.int/ska-docker/vis_receive
+  version: 0.1.4
+  commit: 516fb5a693f9dc9aff5d46192f4e055b582fc026
+  cmdline: -dump /product/eb-m002-20221212-12345/ska-sdp/pb-m002-20221212-12345/vis.ms
+ 
+files:
+  - # Path to files. Can be a directory, in which case it applies to all nested files.
+    path: vis.ms
+    # Indicate current file status
+    # * working = processes still running, files might be missing or incomplete
+    # * done = processes finished, files should be complete
+    # * failure = not finished sucessfully, files might be incomplete or corrupt
+    status: working
+    description: "Raw visibility dump from receive"

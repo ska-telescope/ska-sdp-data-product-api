@@ -23,6 +23,16 @@ METADATA_FILE_NAME: str = config(
     default="ska-data-product.yaml",
 )
 
+METADATA_ES_SCHEMA_FILE: str = config(
+    "METADATA_ES_SCHEMA_FILE",
+    default="./elasticsearch/data_product_metadata_schema.json",
+)
+
+ES_HOST: str = config(
+    "ES_HOST",
+    default="http://localhost:9200",
+)
+
 app = FastAPI()
 
 origins = [
