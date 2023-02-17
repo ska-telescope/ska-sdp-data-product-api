@@ -79,7 +79,7 @@ def downloadfile(relative_path_name):
     persistant_file_path = os.path.join(
         PERSISTANT_STORAGE_PATH, relative_path_name.relativeFileName
     )
-    # Not found
+    # Test is not found
     verify_file_path(persistant_file_path)
     # If relative_path_name points to a file, return a FileResponse
     if not os.path.isdir(persistant_file_path):
@@ -134,11 +134,12 @@ def loadmetadatafile(
 ):
     """This function loads the content of a yaml file and return it as
     json."""
-    # Not found
     persistant_file_path = os.path.join(
         PERSISTANT_STORAGE_PATH, path_to_selected_file.relativeFileName
     )
-    if verify_file_path(persistant_file_path):
+    if verify_file_path(
+        persistant_file_path
+    ) and persistant_file_path.endswith(METADATA_FILE_NAME):
         with open(
             persistant_file_path, "r", encoding="utf-8"
         ) as metadata_yaml_file:
