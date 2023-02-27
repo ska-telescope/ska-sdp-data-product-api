@@ -173,25 +173,34 @@ def createmetadatafilelist(
         )
 
 
+def relativepath(absolute_path):
+    """This function returs the relative path of an absolute path where the
+    absolute path = PERSISTANT_STORAGE_PATH + relative_path"""
+    persistant_storage_path_len = len(Path(PERSISTANT_STORAGE_PATH).parts)
+    relative_path = str(
+        pathlib.Path(
+            *pathlib.Path(absolute_path).parts[(persistant_storage_path_len):]
+        )
+    )
+    return relative_path
+
+
 def ingestmetadatafiles(storage_path: str):
     """This function runs through a volume and add all the data products to the
     metadata_store or into the metadata_list if the store is not available"""
-
     if verify_file_path(storage_path):
         # Test if the path points to a directory
-        if os.path.isdir(storage_path):
+        if os.path.isdir(storage_path) and not os.path.islink(storage_path):
             # For each file in the directory,
             files = os.listdir(storage_path)
             # test if the directory contains a metadatafile
             if METADATA_FILE_NAME in files:
                 # If it contains the metadata file add it to the index
-                dataproduct_file_name = str(
-                    pathlib.Path(*pathlib.Path(storage_path).parts[2:])
-                )
+                dataproduct_file_name = relativepath(storage_path)
                 metadata_file = Path(storage_path).joinpath(METADATA_FILE_NAME)
                 metadata_file_name = FileUrl
-                metadata_file_name.relativeFileName = str(
-                    pathlib.Path(*pathlib.Path(metadata_file).parts[2:])
+                metadata_file_name.relativeFileName = relativepath(
+                    metadata_file
                 )
                 metadata_file_json = loadmetadatafile(
                     metadata_file_name,
