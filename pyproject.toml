@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ska-sdp-data-product-api"
-version = "0.2.1"
+version = "0.2.2"
 description = "This repository contain the API that exposes SDP Data Products to the SDP Data Product Dashboard"
 authors = ["Andre Odendaal <andre@vivosa.co.za>"]
 license = "BSD-3-Clause"
