@@ -174,7 +174,7 @@ def createmetadatafilelist(
 
 
 def relativepath(absolute_path):
-    """This function returs the relative path of an absolute path where the
+    """This function returns the relative path of an absolute path where the
     absolute path = PERSISTANT_STORAGE_PATH + relative_path"""
     persistant_storage_path_len = len(Path(PERSISTANT_STORAGE_PATH).parts)
     relative_path = str(
