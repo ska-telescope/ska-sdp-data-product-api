@@ -2,8 +2,8 @@
 
 import json
 
-from ska_sdp_data_product_api.core.settings import METADATA_ES_SCHEMA_FILE
-from ska_sdp_data_product_api.elasticsearch.elasticsearch_api import (
+from ska_sdp_dataproduct_api.core.settings import METADATA_ES_SCHEMA_FILE
+from ska_sdp_dataproduct_api.elasticsearch.elasticsearch_api import (
     ElasticsearchMetadataStore,
 )
 from tests.mock_elasticsearch_api import MockElasticsearch

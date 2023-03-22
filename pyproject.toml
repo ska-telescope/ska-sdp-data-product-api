@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "ska-sdp-data-product-api"
+name = "ska-sdp-dataproduct-api"
 version = "0.2.2"
 description = "This repository contain the API that exposes SDP Data Products to the SDP Data Product Dashboard"
 authors = ["Andre Odendaal <andre@vivosa.co.za>"]
 license = "BSD-3-Clause"
 packages = [
-    { include = "ska_sdp_data_product_api", from = "src" },
+    { include = "ska_sdp_dataproduct_api", from = "src" },
 ]
 
 [[tool.poetry.source]]

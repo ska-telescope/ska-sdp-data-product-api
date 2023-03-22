@@ -23,7 +23,7 @@ Clone the repository and its submodules:
 
 .. code-block:: bash
 
-    git clone git@gitlab.com:ska-telescope/sdp/ska-sdp-data-product-api.git
+    git clone git@gitlab.com:ska-telescope/sdp/ska-sdp-dataproduct-api.git
     git submodule update --init --recursive
 
 **Running the application**
@@ -32,21 +32,21 @@ Configure the environmental variables in the .evn file under the root folder acc
 
 .. code-block:: bash
 
-    REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL=http://localhost
-    REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT=8100
+    REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL=http://localhost
+    REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_PORT=8100
     PERSISTANT_STORAGE_PATH=./tests/test_files
     METADATE_FILE_NAME=ska-data-product.yaml
-    METADATA_ES_SCHEMA_FILE=./src/ska_sdp_data_product_api/elasticsearch/data_product_metadata_schema.json
+    METADATA_ES_SCHEMA_FILE=./src/ska_sdp_dataproduct_api/elasticsearch/data_product_metadata_schema.json
     ES_HOST=http://localhost:9200
 
 *To run the application directly on your host machine:*
 
 .. code-block:: bash
 
-    cd ska-sdp-data-product-api
+    cd ska-sdp-dataproduct-api
     poetry shell
     poetry install
-    uvicorn src.ska_sdp_data_product_api.main:app --reload
+    uvicorn src.ska_sdp_dataproduct_api.main:app --reload
 
 *To run the application inside a docker container on your host machine:*
 
@@ -54,8 +54,8 @@ NOTE: When running the application in a docker container, the <PERSISTANT_STORAG
 
 .. code-block:: bash
 
-    docker build -t ska-sdp-data-product-api .
-    docker run -p 8000:8000 -v <YOUR_PROJECT_DIR>/ska-sdp-data-product-api/tests:/usr/src/ska_sdp_data_product_api/tests ska-sdp-data-product-api
+    docker build -t ska-sdp-dataproduct-api .
+    docker run -p 8000:8000 -v <YOUR_PROJECT_DIR>/ska-sdp-dataproduct-api/tests:/usr/src/ska_sdp_dataproduct_api/tests ska-sdp-dataproduct-api
 
 Uvicorn will then be running on http://127.0.0.1:8000
 
@@ -64,7 +64,7 @@ Kubernetes Deployment
 
 
 
-The SDP Data Product API is deployed as part of the helm chart of the `SDP Data Product Dashboard <https://gitlab.com/ska-telescope/sdp/ska-sdp-data-product-dashboard>`_. In the Kubernetes deployment, the environmental variables are updated from the values files of the deployment and not the .env file in the project. Please see the documentation in the `SDP Data Product Dashboard documentation <https://developer.skao.int/projects/ska-sdp-data-product-dashboard/en/latest/?badge=latest>`_ for more information.
+The SDP Data Product API is deployed as part of the helm chart of the `SDP Data Product Dashboard <https://gitlab.com/ska-telescope/sdp/ska-sdp-dataproduct-dashboard>`_. In the Kubernetes deployment, the environmental variables are updated from the values files of the deployment and not the .env file in the project. Please see the documentation in the `SDP Data Product Dashboard documentation <https://developer.skao.int/projects/ska-sdp-dataproduct-dashboard/en/latest/?badge=latest>`_ for more information.
 
 
 

@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'ska-sdp-data-product-api'
+project = 'ska-sdp-dataproduct-api'
 copyright = '2022, SKA Organisation'
 author = 'Andre Odendaal'
 
@@ -123,7 +123,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'ska-sdp-data-product-apidoc'
+htmlhelp_basename = 'ska-sdp-dataproduct-apidoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -150,7 +150,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'ska-sdp-data-product-api.tex', 'ska-sdp-data-product-api Documentation',
+    (master_doc, 'ska-sdp-dataproduct-api.tex', 'ska-sdp-dataproduct-api Documentation',
      'Snehal Valame', 'manual'),
 ]
 
@@ -160,7 +160,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'ska-sdp-data-product-api', 'ska-sdp-data-product-api Documentation',
+    (master_doc, 'ska-sdp-dataproduct-api', 'ska-sdp-dataproduct-api Documentation',
      [author], 1)
 ]
 
@@ -171,8 +171,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'ska-sdp-data-product-api', 'ska-sdp-data-product-api Documentation',
-     author, 'ska-sdp-data-product-api', 'One line description of project.',
+    (master_doc, 'ska-sdp-dataproduct-api', 'ska-sdp-dataproduct-api Documentation',
+     author, 'ska-sdp-dataproduct-api', 'One line description of project.',
      'Miscellaneous'),
 ]
 

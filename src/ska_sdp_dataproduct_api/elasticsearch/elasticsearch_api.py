@@ -4,7 +4,7 @@ import json
 import elasticsearch
 from elasticsearch import Elasticsearch
 
-from ska_sdp_data_product_api.core.settings import METADATA_ES_SCHEMA_FILE
+from ska_sdp_dataproduct_api.core.settings import METADATA_ES_SCHEMA_FILE
 
 
 class ElasticsearchMetadataStore:
