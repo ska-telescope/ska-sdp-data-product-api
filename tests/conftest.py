@@ -3,7 +3,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from ska_sdp_data_product_api.main import app
+from ska_sdp_dataproduct_api.main import app
 
 
 @pytest.fixture(scope="module")

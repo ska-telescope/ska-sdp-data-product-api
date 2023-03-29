@@ -15,13 +15,13 @@ from fastapi import HTTPException, Response
 from pydantic import BaseModel
 from starlette.responses import FileResponse
 
-from ska_sdp_data_product_api.core.settings import (
+from ska_sdp_dataproduct_api.core.settings import (
     ES_HOST,
     METADATA_FILE_NAME,
     PERSISTANT_STORAGE_PATH,
     app,
 )
-from ska_sdp_data_product_api.elasticsearch.elasticsearch_api import (
+from ska_sdp_dataproduct_api.elasticsearch.elasticsearch_api import (
     ElasticsearchMetadataStore,
 )
 

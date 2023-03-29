@@ -9,10 +9,10 @@ RUN poetry export -f requirements.txt --without-hashes --output requirements.txt
 FROM python:3.10-slim
 
 # set the working direction
-WORKDIR /usr/src/ska_sdp_data_product_api
+WORKDIR /usr/src/ska_sdp_dataproduct_api
 
 # add app
-COPY src/ska_sdp_data_product_api/ .
+COPY src/ska_sdp_dataproduct_api/ .
 
 # install app dependencies
 COPY --from=builder /usr/src/app/requirements.txt .
@@ -21,4 +21,4 @@ RUN set -eux \
     && rm -rf /root/.cache/pip
 
 # start app
-CMD ["uvicorn", "ska_sdp_data_product_api.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000", "--app-dir", "/usr/src"]
+CMD ["uvicorn", "ska_sdp_dataproduct_api.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000", "--app-dir", "/usr/src"]
