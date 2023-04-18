@@ -1,0 +1,38 @@
+config:
+  cmdline: "-dump /product/eb-test-20230401-12345/ska-sdp/pb-test-20230401-12345/vis.ms"
+  commit: 516fb5a693f9dc9aff5d46192f4e055b582fc025
+  image: registry.gitlab.com/ska-telescope/sdp/ska-sdp-script/ska-sdp-script-vis-receive
+  processing_block: pb-test-20230401-12345
+  processing_script: vis-receive
+  version: 0.8.0
+context:
+  observer: AIV_person_1
+  intent: Experimental run as part of XYZ-123
+  notes: Running that signal from XX/YY/ZZ through again, things seem a bit flaky
+execution_block: eb-test-20230401-12345
+files:
+- description: MS for scan 1
+  path: ./output.scan-1.ms
+  status: working
+- description: MS for scan 2
+  path: ./output.scan-2.ms
+  status: finished
+interface: http://schema.skao.int/ska-data-product-meta/0.1
+obscore:
+  dataproduct_type: MS
+  dataproduct_subtype: vis_table
+  calib_level: raw
+  obs_collection: AIV-tests-20230401
+  obs_id: pb-test-20230401-12345
+  obs_title: Experimental run as part of XYZ-123
+  access_url: https://archive.skatelescope.org/pb-test-20230401-12345/retrieve
+  access_format: application/octet-stream
+  access_estsize: 1234567890
+  target_name: None
+  s_ra: 10.20304
+  s_dec: -26.70312
+  t_min: 19304.508625
+  t_max: 19340.509625
+  t_exptime: 86.4
+  facility_name: SKA-Observatory
+  instrument_name: SKA-LOW
