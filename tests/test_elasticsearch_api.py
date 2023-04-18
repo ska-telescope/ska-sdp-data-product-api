@@ -56,7 +56,7 @@ def test_update_dataproduct_list():
         metadata_file = json.loads(document_file.read())
 
     metadata_store.update_dataproduct_list(
-        metadata_file=metadata_file,
+        metadata_file=metadata_file, query_key_list=[]
     )
 
     expected_value = [
