@@ -105,7 +105,7 @@ When an Elasticsearch backend endpoint is available, the dataproductsearch will 
 
 .. code-block:: bash
 
-    GET /dataproductsearch
+    POST /dataproductsearch
 
     {
     "start_date": "2001-12-12",
