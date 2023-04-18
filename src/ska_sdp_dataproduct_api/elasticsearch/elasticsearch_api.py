@@ -128,7 +128,7 @@ class ElasticsearchMetadataStore:
         # NOTE: at present users can only query using a single metadata_key,
         #       but update_dataproduct_list supports multiple query keys
         for query_key in query_key_list:
-            query_metadata = self.find_metadata(metadata_file, query_key)
+            query_metadata = find_metadata(metadata_file, query_key)
             if query_metadata is not None:
                 data_product_details[query_metadata["key"]] = query_metadata[
                     "value"
@@ -136,18 +136,19 @@ class ElasticsearchMetadataStore:
 
         self.metadata_list.append(data_product_details)
 
-    def find_metadata(self, metadata, query_key):
-        """Given a dict of metadata, and a period-separated hierarchy of keys,
-        return the key and the value found within the dict.
-        For example: Given a dict and the key a.b.c,
-        return the key (a.b.c) and the value dict[a][b][c]"""
-        keys = query_key.split(".")
 
-        subsection = metadata
-        for key in keys:
-            if key in subsection:
-                subsection = subsection[key]
-            else:
-                return None
+def find_metadata(metadata, query_key):
+    """Given a dict of metadata, and a period-separated hierarchy of keys,
+    return the key and the value found within the dict.
+    For example: Given a dict and the key a.b.c,
+    return the key (a.b.c) and the value dict[a][b][c]"""
+    keys = query_key.split(".")
 
-        return {"key": query_key, "value": subsection}
+    subsection = metadata
+    for key in keys:
+        if key in subsection:
+            subsection = subsection[key]
+        else:
+            return None
+
+    return {"key": query_key, "value": subsection}
