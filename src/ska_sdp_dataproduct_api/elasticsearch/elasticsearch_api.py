@@ -106,8 +106,7 @@ class ElasticsearchMetadataStore:
             for key, value in doc.items():
                 if key == "_source":
                     self.update_dataproduct_list(
-                        metadata_file=value,
-                        query_key_list=[metadata_key]
+                        metadata_file=value, query_key_list=[metadata_key]
                     )
         return json.dumps(self.metadata_list)
 
@@ -131,17 +130,18 @@ class ElasticsearchMetadataStore:
         for query_key in query_key_list:
             query_metadata = self.find_metadata(metadata_file, query_key)
             if query_metadata is not None:
-                data_product_details[query_metadata['key']] = query_metadata['value']
+                data_product_details[query_metadata["key"]] = query_metadata[
+                    "value"
+                ]
 
         self.metadata_list.append(data_product_details)
 
-
     def find_metadata(self, metadata, query_key):
-        """ Given a dict of metadata, and a period-separated hierarchy of keys,
-            return the key and the value found within the dict.
-            For example: Given a dict and the key a.b.c,
-            return the key (a.b.c) and the value dict[a][b][c] """
-        keys = query_key.split('.')
+        """Given a dict of metadata, and a period-separated hierarchy of keys,
+        return the key and the value found within the dict.
+        For example: Given a dict and the key a.b.c,
+        return the key (a.b.c) and the value dict[a][b][c]"""
+        keys = query_key.split(".")
 
         subsection = metadata
         for key in keys:
@@ -150,4 +150,4 @@ class ElasticsearchMetadataStore:
             else:
                 return None
 
-        return {'key': query_key, 'value': subsection}
+        return {"key": query_key, "value": subsection}
