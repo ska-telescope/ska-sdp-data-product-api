@@ -160,16 +160,14 @@ def loadmetadatafile(
     return {}
 
 
-def generatemetadatakeyslist(d, parent_key="", sep="_", ignore_keys=[]):
+def generatemetadatakeyslist(metadata, ignore_keys, parent_key="", sep="_"):
     """Given a nested dict, return the flattened list of keys"""
     items = []
-    for k, v in d.items():
-        new_key = parent_key + sep + k if parent_key else k
-        if isinstance(v, MutableMapping):
+    for key, value in metadata.items():
+        new_key = parent_key + sep + key if parent_key else key
+        if isinstance(value, MutableMapping):
             items.extend(
-                generatemetadatakeyslist(
-                    v, new_key, sep=sep, ignore_keys=ignore_keys
-                )
+                generatemetadatakeyslist(value, ignore_keys, new_key, sep=sep)
             )
         else:
             if new_key not in ignore_keys:
@@ -191,7 +189,7 @@ def createmetadatafilelist(
 
         # generate a list of keys from this object
         query_key_list = generatemetadatakeyslist(
-            metadata_file, "", ".", ["files"]
+            metadata_file, ["files"], "", "."
         )
 
         metadata_store.update_dataproduct_list(
