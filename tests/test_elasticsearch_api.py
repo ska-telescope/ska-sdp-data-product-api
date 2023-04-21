@@ -62,7 +62,6 @@ def test_update_dataproduct_list():
     expected_value = [
         {
             "id": 1,
-            "interface": "http://schema.skao.int/ska-data-product-meta/0.1",
             "execution_block": "eb-m001-20191031-12345",
         }
     ]
@@ -85,7 +84,6 @@ def test_search_metadata():
     expected_value = [
         {
             "id": 1,
-            "interface": "http://schema.skao.int",
             "execution_block": "eb-m001-20191031-12345",
             "date_created": "2019-10-31",
             "dataproduct_file": "product",
