@@ -116,7 +116,6 @@ class ElasticsearchMetadataStore:
         data_product_details["id"] = len(self.metadata_list) + 1
         for key, value in metadata_file.items():
             if key in (
-                "interface",
                 "execution_block",
                 "date_created",
                 "dataproduct_file",
