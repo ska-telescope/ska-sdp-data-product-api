@@ -159,14 +159,19 @@ def loadmetadatafile(
         return metadata_json
     return {}
 
+
 # derived from: https://stackoverflow.com/questions/6027558/flatten-nested-dictionaries-compressing-keys
-def generatemetadatakeyslist(d, parent_key='', sep='_', ignore_keys=[]):
+def generatemetadatakeyslist(d, parent_key="", sep="_", ignore_keys=[]):
     """Given a nested dict, return the flattened list of keys"""
     items = []
     for k, v in d.items():
         new_key = parent_key + sep + k if parent_key else k
         if isinstance(v, MutableMapping):
-            items.extend(generatemetadatakeyslist(v, new_key, sep=sep, ignore_keys=ignore_keys))
+            items.extend(
+                generatemetadatakeyslist(
+                    v, new_key, sep=sep, ignore_keys=ignore_keys
+                )
+            )
         else:
             if new_key not in ignore_keys:
                 items.append(new_key)
@@ -186,7 +191,9 @@ def createmetadatafilelist(
         metadata_file = json.loads(metadata_file_json)
 
         # generate a list of keys from this object
-        query_key_list = generatemetadatakeyslist(metadata_file, '', '.', ["files"])
+        query_key_list = generatemetadatakeyslist(
+            metadata_file, "", ".", ["files"]
+        )
 
         metadata_store.update_dataproduct_list(
             metadata_file=metadata_file, query_key_list=query_key_list
