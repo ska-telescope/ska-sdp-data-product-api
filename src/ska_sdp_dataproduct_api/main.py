@@ -160,7 +160,6 @@ def loadmetadatafile(
     return {}
 
 
-# derived from: https://stackoverflow.com/questions/6027558/flatten-nested-dictionaries-compressing-keys
 def generatemetadatakeyslist(d, parent_key="", sep="_", ignore_keys=[]):
     """Given a nested dict, return the flattened list of keys"""
     items = []
