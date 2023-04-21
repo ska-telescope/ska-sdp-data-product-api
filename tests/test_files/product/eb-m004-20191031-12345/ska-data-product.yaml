@@ -28,13 +28,12 @@ files:
  
 obscore: # ObsCore minimal set
   dataproduct_type: MS
-  dataproduct_subtype: vis_table
   calib_level: raw
   obs_collection: AIV-tests-20191031
   obs_id: pb-m004-20191031-12345
   obs_title: "Experimental run as part of XYZ-123"
   access_url: https://archive.skatelescope.org/pb-m004-20191031-12345/retrieve
-  access_format: application/octet-stream
+  access_format: application/x-tar-gzip
   access_estsize: 1234567890
   target_name: None
   s_ra: 10.203040
@@ -42,5 +41,8 @@ obscore: # ObsCore minimal set
   t_min: 19304.508625
   t_max: 19340.509625
   t_exptime: 86.4
+  o_ucd: stat.fourier
+  pol_states: /XX/XY/YX/YY/
+  pol_xel: 4
   facility_name: "SKA-Observatory"
   instrument_name: "SKA-LOW"
