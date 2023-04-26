@@ -169,7 +169,7 @@ def createmetadatafilelist(
         )
     else:
         metadata_store.update_dataproduct_list(
-            metadata_file=json.loads(metadata_file_json)
+            metadata_file=json.loads(metadata_file_json), query_key_list=[]
         )
 
 
