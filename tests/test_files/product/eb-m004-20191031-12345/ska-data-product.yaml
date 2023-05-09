@@ -31,7 +31,6 @@ obscore: # ObsCore minimal set
   calib_level: raw
   obs_collection: AIV-tests-20191031
   obs_id: pb-m004-20191031-12345
-  obs_title: "Experimental run as part of XYZ-123"
   access_url: https://archive.skatelescope.org/pb-m004-20191031-12345/retrieve
   access_format: application/x-tar-gzip
   access_estsize: 1234567890

@@ -23,7 +23,6 @@ obscore:
   calib_level: raw
   obs_collection: AIV-tests-20230401
   obs_id: pb-test-20230401-12345
-  obs_title: Experimental run as part of XYZ-123
   access_url: https://archive.skatelescope.org/pb-test-20230401-12345/retrieve
   access_format: application/x-tar-gzip
   access_estsize: 1234567890
