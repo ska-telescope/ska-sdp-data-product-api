@@ -1,26 +1,23 @@
 """Module to insert data into Elasticsearch instance."""
 import datetime
-import io
 import json
 import os
 import pathlib
-import zipfile
-from collections.abc import MutableMapping
 from pathlib import Path
 
 import yaml
-from fastapi import HTTPException, Response
+from fastapi import HTTPException
 
 # pylint: disable=no-name-in-module
 from pydantic import BaseModel
-from starlette.responses import FileResponse
 
 from ska_sdp_dataproduct_api.core.settings import (
-    ES_HOST,
     METADATA_FILE_NAME,
     PERSISTANT_STORAGE_PATH,
-    app,
 )
+
+# pylint: disable=too-few-public-methods
+
 
 class FileUrl(BaseModel):
     """Relative path and file name"""
@@ -37,22 +34,6 @@ class SearchParametersClass(BaseModel):
     key_pair: str = ""
 
 
-class TreeIndex:
-    """This class contains tree_item_id; an ID field, indicating the next
-    tree item id to use, and tree_data dictionary, containing a json object
-    that represens a tree structure that can easily be rendered in JS.
-    """
-
-    def __init__(self, root_tree_item_id, tree_data):
-        self.tree_item_id = root_tree_item_id
-        self.tree_data: dict = tree_data
-        self.data_product_list: list = []
-
-    def append_children(self, new_data):
-        """Merge current dict with new data"""
-        self.data_product_list.append(new_data)
-        self.tree_data["children"] = self.data_product_list
-
 def verify_file_path(file_path):
     """Test if the file path exists"""
     if not os.path.exists(file_path):
@@ -61,6 +42,7 @@ def verify_file_path(file_path):
             detail=f"File path with name {file_path} not found",
         )
     return True
+
 
 def relativepath(absolute_path):
     """This function returns the relative path of an absolute path where the
@@ -72,6 +54,7 @@ def relativepath(absolute_path):
         )
     )
     return relative_path
+
 
 def getdatefromname(filename: str):
     """This function extracts the date from the file named according to the
@@ -86,6 +69,7 @@ def getdatefromname(filename: str):
         return year + "-" + month + "-" + day
     except ValueError:
         return datetime.date.today().strftime("%Y-%m-%d")
+
 
 def loadmetadatafile(
     path_to_selected_file: FileUrl,
@@ -118,3 +102,45 @@ def loadmetadatafile(
         return metadata_json
     return {}
 
+
+def find_metadata(metadata, query_key):
+    """Given a dict of metadata, and a period-separated hierarchy of keys,
+    return the key and the value found within the dict.
+    For example: Given a dict and the key a.b.c,
+    return the key (a.b.c) and the value dict[a][b][c]"""
+    keys = query_key.split(".")
+
+    subsection = metadata
+    for key in keys:
+        if key in subsection:
+            subsection = subsection[key]
+        else:
+            return None
+
+    return {"key": query_key, "value": subsection}
+
+
+def update_dataproduct_list(metadata_list, metadata_file: str, query_key_list):
+    """Populate a list of data products and its metadata"""
+    data_product_details = {}
+    data_product_details["id"] = len(metadata_list) + 1
+    for key, value in metadata_file.items():
+        if key in (
+            "execution_block",
+            "date_created",
+            "dataproduct_file",
+            "metadata_file",
+        ):
+            data_product_details[key] = value
+
+    # add additional keys based on the query
+    # NOTE: at present users can only query using a single metadata_key,
+    #       but update_dataproduct_list supports multiple query keys
+    for query_key in query_key_list:
+        query_metadata = find_metadata(metadata_file, query_key)
+        if query_metadata is not None:
+            data_product_details[query_metadata["key"]] = query_metadata[
+                "value"
+            ]
+
+    metadata_list.append(data_product_details)

@@ -1,24 +1,24 @@
 """This API exposes SDP Data Products to the SDP Data Product Dashboard."""
 
-import datetime
 import io
 import json
 import os
-import pathlib
 import zipfile
-from collections.abc import MutableMapping
 from pathlib import Path
 
-import yaml
 from fastapi import HTTPException, Response
 
 # pylint: disable=no-name-in-module
-from pydantic import BaseModel
 from starlette.responses import FileResponse
 
+from ska_sdp_dataproduct_api.core.helperfunctions import (
+    FileUrl,
+    SearchParametersClass,
+    loadmetadatafile,
+    verify_file_path,
+)
 from ska_sdp_dataproduct_api.core.settings import (
     ES_HOST,
-    METADATA_FILE_NAME,
     PERSISTANT_STORAGE_PATH,
     app,
 )
@@ -28,21 +28,13 @@ from ska_sdp_dataproduct_api.elasticsearch.elasticsearch_api import (
 from ska_sdp_dataproduct_api.inmemorystore.inmemorystore import (
     InMemoryDataproductIndex,
 )
-from ska_sdp_dataproduct_api.core.helperfunctions import (
-    verify_file_path,
-    FileUrl,
-    loadmetadatafile,
-    SearchParametersClass,
-)
-
-# pylint: disable=too-few-public-methods
 
 elk_metadata_store = ElasticsearchMetadataStore()
 elk_metadata_store.connect(hosts=ES_HOST)
 
 in_memory_metadata_store = InMemoryDataproductIndex(
     elk_metadata_store.es_search_enabled,
-    )
+)
 
 
 def downloadfile(relative_path_name):
@@ -83,6 +75,7 @@ def downloadfile(relative_path_name):
         headers=headers,
     )
 
+
 @app.get("/status")
 async def root():
     """An enpoint that just returns confirmation that the
@@ -98,14 +91,18 @@ async def root():
 def update_search_index():
     """This endpoint triggers the ingestion of metadata"""
     elk_metadata_store.clear_indecise()
-    return in_memory_metadata_store.ingestmetadatafiles(PERSISTANT_STORAGE_PATH)
+    return in_memory_metadata_store.ingestmetadatafiles(
+        PERSISTANT_STORAGE_PATH
+    )
+
 
 @app.get("/reindexdataproductlist")
-def update_search_index():
-    """This endpoint clears the list of data products from memory and 
+def reindex_data_product_list():
+    """This endpoint clears the list of data products from memory and
     re-ingest the metadata of all data products found"""
     in_memory_metadata_store.reindex()
     return json.dumps(in_memory_metadata_store.metadata_list)
+
 
 @app.post("/dataproductsearch", response_class=Response)
 def data_products_search(search_parameters: SearchParametersClass):

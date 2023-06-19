@@ -2,6 +2,9 @@
 
 import json
 
+from ska_sdp_dataproduct_api.core.helperfunctions import (
+    update_dataproduct_list,
+)
 from ska_sdp_dataproduct_api.core.settings import METADATA_ES_SCHEMA_FILE
 from ska_sdp_dataproduct_api.elasticsearch.elasticsearch_api import (
     ElasticsearchMetadataStore,
@@ -55,8 +58,10 @@ def test_update_dataproduct_list():
     ) as document_file:
         metadata_file = json.loads(document_file.read())
 
-    metadata_store.update_dataproduct_list(
-        metadata_file=metadata_file, query_key_list=[]
+    update_dataproduct_list(
+        metadata_store.metadata_list,
+        metadata_file=metadata_file,
+        query_key_list=[],
     )
 
     expected_value = [

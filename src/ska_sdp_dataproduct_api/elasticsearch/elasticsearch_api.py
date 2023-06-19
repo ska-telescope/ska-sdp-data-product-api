@@ -4,6 +4,9 @@ import json
 import elasticsearch
 from elasticsearch import Elasticsearch
 
+from ska_sdp_dataproduct_api.core.helperfunctions import (
+    update_dataproduct_list,
+)
 from ska_sdp_dataproduct_api.core.settings import METADATA_ES_SCHEMA_FILE
 
 
@@ -105,49 +108,9 @@ class ElasticsearchMetadataStore:
         for _num, doc in enumerate(all_hits):
             for key, value in doc.items():
                 if key == "_source":
-                    self.update_dataproduct_list(
-                        metadata_file=value, query_key_list=[metadata_key]
+                    update_dataproduct_list(
+                        self.metadata_list,
+                        metadata_file=value,
+                        query_key_list=[metadata_key],
                     )
         return json.dumps(self.metadata_list)
-
-    def update_dataproduct_list(self, metadata_file: str, query_key_list):
-        """Populate a list of data products and its metadata"""
-        data_product_details = {}
-        data_product_details["id"] = len(self.metadata_list) + 1
-        for key, value in metadata_file.items():
-            if key in (
-                "execution_block",
-                "date_created",
-                "dataproduct_file",
-                "metadata_file",
-            ):
-                data_product_details[key] = value
-
-        # add additional keys based on the query
-        # NOTE: at present users can only query using a single metadata_key,
-        #       but update_dataproduct_list supports multiple query keys
-        for query_key in query_key_list:
-            query_metadata = find_metadata(metadata_file, query_key)
-            if query_metadata is not None:
-                data_product_details[query_metadata["key"]] = query_metadata[
-                    "value"
-                ]
-
-        self.metadata_list.append(data_product_details)
-
-
-def find_metadata(metadata, query_key):
-    """Given a dict of metadata, and a period-separated hierarchy of keys,
-    return the key and the value found within the dict.
-    For example: Given a dict and the key a.b.c,
-    return the key (a.b.c) and the value dict[a][b][c]"""
-    keys = query_key.split(".")
-
-    subsection = metadata
-    for key in keys:
-        if key in subsection:
-            subsection = subsection[key]
-        else:
-            return None
-
-    return {"key": query_key, "value": subsection}
