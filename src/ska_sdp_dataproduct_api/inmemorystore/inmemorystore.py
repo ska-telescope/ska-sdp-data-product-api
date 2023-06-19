@@ -30,12 +30,10 @@ class InMemoryDataproductIndex:
         self.metadata_list = []
         if not es_search_enabled:
             self.ingestmetadatafiles(PERSISTANT_STORAGE_PATH)
-            print("ingesting data")
 
     def ingestmetadatafiles(self, storage_path: str):
         """This method runs through a volume and add all the data products to
-        the elk_metadata_store or into the metadata_list if the store is not
-        available"""
+        the metadata_list if the store"""
         if verify_file_path(storage_path):
             # Test if the path points to a directory
             if os.path.isdir(storage_path) and not os.path.islink(
@@ -75,7 +73,6 @@ class InMemoryDataproductIndex:
         to enable the user to reindex if the data products were changed or
         appended since the initial load of the data"""
         self.metadata_list.clear()
-        print("Reinexing")
         self.ingestmetadatafiles(PERSISTANT_STORAGE_PATH)
 
     def insert_metadata(self, metadata_file_json):
