@@ -87,21 +87,15 @@ async def root():
     return status
 
 
-@app.get("/updatesearchindex")
-def update_search_index():
-    """This endpoint triggers the ingestion of metadata"""
-    elk_metadata_store.clear_indecise()
-    return in_memory_metadata_store.ingestmetadatafiles(
-        PERSISTANT_STORAGE_PATH
-    )
-
-
-@app.get("/reindexdataproductlist")
-def reindex_data_product_list():
+@app.get("/reindexdataproducts")
+def reindex_data_products():
     """This endpoint clears the list of data products from memory and
     re-ingest the metadata of all data products found"""
-    in_memory_metadata_store.reindex()
-    return json.dumps(in_memory_metadata_store.metadata_list)
+    if elk_metadata_store.es_search_enabled:
+        elk_metadata_store.reindex()
+    else:
+        in_memory_metadata_store.reindex()
+    return "Metadata store cleared and re-indexed"
 
 
 @app.post("/dataproductsearch", response_class=Response)

@@ -5,9 +5,13 @@ import elasticsearch
 from elasticsearch import Elasticsearch
 
 from ska_sdp_dataproduct_api.core.helperfunctions import (
+    ingestmetadatafiles,
     update_dataproduct_list,
 )
-from ska_sdp_dataproduct_api.core.settings import METADATA_ES_SCHEMA_FILE
+from ska_sdp_dataproduct_api.core.settings import (
+    METADATA_ES_SCHEMA_FILE,
+    PERSISTANT_STORAGE_PATH,
+)
 
 
 class ElasticsearchMetadataStore:
@@ -50,6 +54,13 @@ class ElasticsearchMetadataStore:
         )
         self.metadata_list = []
 
+    def reindex(self):
+        """This methods resets and recreates the metadata_list. This is added
+        to enable the user to reindex if the data products were changed or
+        appended since the initial load of the data"""
+        self.clear_indecise()
+        ingestmetadatafiles(self, PERSISTANT_STORAGE_PATH)
+
     def insert_metadata(
         self,
         metadata_file_json,
@@ -60,11 +71,6 @@ class ElasticsearchMetadataStore:
             index=self.metadata_index, document=metadata_file_json
         )
         return result
-
-    def list_all_dataproducts(self):
-        """When search is not available, this endpoint will return all the
-        dataproducts so it can be listed in the table on the dashboard."""
-        return json.dumps(self.metadata_list)
 
     def search_metadata(
         self,

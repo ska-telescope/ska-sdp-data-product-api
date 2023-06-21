@@ -144,3 +144,37 @@ def update_dataproduct_list(metadata_list, metadata_file: str, query_key_list):
             ]
 
     metadata_list.append(data_product_details)
+
+
+def ingestmetadatafiles(metadata_store_object, storage_path: str):
+    """This method runs through a volume and add all the data products to
+    the metadata_list if the store"""
+    if verify_file_path(storage_path):
+        # Test if the path points to a directory
+        if os.path.isdir(storage_path) and not os.path.islink(storage_path):
+            # For each file in the directory,
+            files = os.listdir(storage_path)
+            # test if the directory contains a metadatafile
+            if METADATA_FILE_NAME in files:
+                # If it contains the metadata file add it to the index
+                dataproduct_file_name = relativepath(storage_path)
+                metadata_file = Path(storage_path).joinpath(METADATA_FILE_NAME)
+                metadata_file_name = FileUrl
+                metadata_file_name.relativeFileName = relativepath(
+                    metadata_file
+                )
+                metadata_file_json = loadmetadatafile(
+                    metadata_file_name,
+                    dataproduct_file_name,
+                    metadata_file_name.relativeFileName,
+                )
+                metadata_store_object.insert_metadata(metadata_file_json)
+            else:
+                # If it is not a data product, enter the folder and repeat
+                # this test.
+                for file in os.listdir(storage_path):
+                    ingestmetadatafiles(
+                        metadata_store_object, os.path.join(storage_path, file)
+                    )
+        return ""
+    return "Metadata ingested"

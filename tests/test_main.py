@@ -9,12 +9,12 @@ def test_ping_main(test_app):
     assert response.json() == {"API_running": True, "Search_enabled": False}
 
 
-def test_reindexdataproductlist(test_app):
+def test_reindexdataproducts(test_app):
     """Test to see if a file list can be retrieved"""
-    response = test_app.get("/reindexdataproductlist")
+    response = test_app.get("/reindexdataproducts")
     assert response.status_code == 200
     assert str(response.json()).__contains__(
-        "product/eb-m001-20221212-12345/ska-data-product.yaml"
+        "Metadata store cleared and re-indexed"
     )
 
 
