@@ -9,6 +9,15 @@ def test_ping_main(test_app):
     assert response.json() == {"API_running": True, "Search_enabled": False}
 
 
+def test_reindexdataproducts(test_app):
+    """Test to see if a file list can be retrieved"""
+    response = test_app.get("/reindexdataproducts")
+    assert response.status_code == 200
+    assert str(response.json()).__contains__(
+        "Metadata store cleared and re-indexed"
+    )
+
+
 def test_dataproductlist(test_app):
     """Test to see if a file list can be retrieved"""
     response = test_app.get("/dataproductlist")

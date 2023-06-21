@@ -88,15 +88,6 @@ To retrieve the status of the API, you can send a get request to the status endp
     {"API_running":true,"Search_enabled":false}
 
 
-Update the search index endpoint
-~~~~~~~~~~~
-
-To initialise or re-initialise the data products metadata list, a get request can be sent to the updatesearchindex endpoint. This will clear the metadata store indices and the metadata_list in memory, and then ingest all the metadate files from disc.
-
-.. code-block:: bash
-
-    GET /updatesearchindex
-
 
 Metadata search endpoint
 ~~~~~~~~~~~
@@ -128,6 +119,18 @@ When an Elasticsearch backend endpoint is not available, the dataproductlist can
 
     [{"id": 1, "interface": "http://schema.skao.int/ska-data-product-meta/0.1", "execution_block": "eb-m001-20191031-12345", "date_created": "2019-10-31", "dataproduct_file": "product/eb-m001-20221212-12345", "metadata_file": "product/eb-m001-20221212-12345/ska-data-product.yaml"}, {"id": 2, "interface": "http://schema.skao.int/ska-data-product-meta/0.1", "execution_block": "eb-m002-20221212-12345", "date_created": "2022-12-12", "dataproduct_file": "product/eb-m002-20221212-12345", "metadata_file": "product/eb-m002-20221212-12345/ska-data-product.yaml"}]
 
+
+Re-index data products endpoint
+~~~~~~~~~~~
+
+The data product metadata store can be re-indexed but making a get request to the reindexdataproducts endpoint. This allows the user to update the metadata store if metadata have been added or changed since the previous indexing.
+
+.. code-block:: bash
+
+    GET /reindexdataproducts
+
+
+    "Metadata store cleared and re-indexed"
 
 Download data product endpoint
 ~~~~~~~~~~~
