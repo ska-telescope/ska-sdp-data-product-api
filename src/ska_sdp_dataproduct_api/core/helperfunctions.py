@@ -191,10 +191,9 @@ def find_metadata(metadata, query_key):
     return {"key": query_key, "value": subsection}
 
 
-def update_dataproduct_list(metadata_list, metadata_file: str, query_key_list):
+def add_dataproduct(metadata_list, metadata_file: str, query_key_list):
     """Populate a list of data products and its metadata"""
     data_product_details = {}
-    data_product_details["id"] = len(metadata_list) + 1
     for key, value in metadata_file.items():
         if key in (
             "execution_block",
@@ -206,15 +205,38 @@ def update_dataproduct_list(metadata_list, metadata_file: str, query_key_list):
 
     # add additional keys based on the query
     # NOTE: at present users can only query using a single metadata_key,
-    #       but update_dataproduct_list supports multiple query keys
+    #       but add_dataproduct supports multiple query keys
     for query_key in query_key_list:
         query_metadata = find_metadata(metadata_file, query_key)
         if query_metadata is not None:
             data_product_details[query_metadata["key"]] = query_metadata[
                 "value"
             ]
+    update_dataproduct_list(metadata_list, data_product_details)
 
+
+def update_dataproduct_list(metadata_list, data_product_details):
+    """This function looks if the new data product is in the metadata list,
+    if it is, the dataproduct entry is replaced, if it is new, it is appended
+    """
+    # Adds the first dictionary to the list
+    if len(metadata_list) == 0:
+        data_product_details["id"] = 1
+        metadata_list.append(data_product_details)
+
+    # Itterates through all the items in the metadata_list to see if an
+    # entry exist, if it is found, it is replaced, else added to the end.
+    for i, product in enumerate(metadata_list):
+        if (
+            product["execution_block"]
+            == data_product_details["execution_block"]
+        ):
+            data_product_details["id"] = product["id"]
+            metadata_list[i] = data_product_details
+            return
+    data_product_details["id"] = len(metadata_list) + 1
     metadata_list.append(data_product_details)
+    return
 
 
 def ingestmetadatafiles(metadata_store_object, full_path_name: str):

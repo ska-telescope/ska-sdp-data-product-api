@@ -3,8 +3,8 @@ import json
 from collections.abc import MutableMapping
 
 from ska_sdp_dataproduct_api.core.helperfunctions import (
+    add_dataproduct,
     ingestmetadatafiles,
-    update_dataproduct_list,
 )
 from ska_sdp_dataproduct_api.core.settings import PERSISTANT_STORAGE_PATH
 
@@ -41,7 +41,7 @@ class InMemoryDataproductIndex:
             metadata_file, ["files"], "", "."
         )
 
-        update_dataproduct_list(
+        add_dataproduct(
             self.metadata_list,
             metadata_file=metadata_file,
             query_key_list=query_key_list,
