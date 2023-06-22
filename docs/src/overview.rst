@@ -145,7 +145,7 @@ For example, the post request body:
 
     {
         "fileName": "eb_id_2",
-        "relativeFileName": "product/eb_id_2/"
+        "relativePathName": "product/eb_id_2/"
     }
 
 The post request endpoint: 
@@ -168,7 +168,7 @@ For example, the post request body:
 
     {
         "fileName": "ska-data-product.yaml",
-        "relativeFileName": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml"
+        "relativePathName": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml"
     }
 
 The post request endpoint: 

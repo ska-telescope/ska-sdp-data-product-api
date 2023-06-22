@@ -30,7 +30,7 @@ def test_dataproductlist(test_app):
 def test_download_file(test_app):
     """Test if a file can be downloaded from the test files"""
     data = (
-        '{"fileName": "TestDataFile1.txt","relativeFileName": \
+        '{"fileName": "TestDataFile1.txt","relativePathName": \
         "product/eb-m001-20221212-12345/ska-sub-system/scan_id_1/pb_id_1'
         + '/TestDataFile1.txt"}'
     )
@@ -40,7 +40,7 @@ def test_download_file(test_app):
 
 def test_download_folder(test_app):
     """Test if a folder can be downloaded from the test files"""
-    data = '{"fileName": "eb-m001-20221212-12345","relativeFileName": \
+    data = '{"fileName": "eb-m001-20221212-12345","relativePathName": \
         "product/eb-m001-20221212-12345"}'
     response = test_app.post("/download", data=data)
     assert response.status_code == 200
@@ -48,7 +48,7 @@ def test_download_folder(test_app):
 
 def test_dataproductmetadata(test_app):
     """Test if metadata can be retrieved for a data product"""
-    data = '{"fileName": "ska-data-product.yaml","relativeFileName": \
+    data = '{"fileName": "ska-data-product.yaml","relativePathName": \
     "product/eb-m001-20221212-12345/ska-data-product.yaml"}'
     response = test_app.post("/dataproductmetadata", data=data)
     assert response.status_code == 200

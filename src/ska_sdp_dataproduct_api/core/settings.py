@@ -1,13 +1,14 @@
 """API SDP Settings"""
 
+import pathlib
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.config import Config
 
 config = Config(".env")
-PERSISTANT_STORAGE_PATH: str = config(
-    "PERSISTANT_STORAGE_PATH",
-    default="./tests/test_files",
+PERSISTANT_STORAGE_PATH: pathlib.Path = pathlib.Path(
+    config("PERSISTANT_STORAGE_PATH", default="./tests/test_files"),
 )
 REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL: str = config(
     "REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL",
