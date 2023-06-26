@@ -96,9 +96,7 @@ async def ingest_new_data_product(file_object: FileUrl):
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
     if elk_metadata_store.es_search_enabled:
-        ingestmetadatafiles(elk_metadata_store, str(file_object.fullPathName))
+        ingestmetadatafiles(elk_metadata_store, file_object.fullPathName)
     else:
-        ingestmetadatafiles(
-            in_memory_metadata_store, str(file_object.fullPathName)
-        )
+        ingestmetadatafiles(in_memory_metadata_store, file_object.fullPathName)
     return "Data product metadata file loaded and store index updated"
