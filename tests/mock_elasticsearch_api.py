@@ -43,7 +43,7 @@ class MockElasticsearch:
         """Get a value or None."""
         return self.values[index][id]
 
-    def search(self, index, body):  # pylint: disable=W0613,R0201
+    def search(self, index, body):  # pylint: disable=W0613
         """Mock search results."""
         mock_results = {
             "took": 14,
