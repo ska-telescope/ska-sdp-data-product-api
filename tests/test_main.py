@@ -13,17 +13,15 @@ def test_reindexdataproducts(test_app):
     """Test to see if a file list can be retrieved"""
     response = test_app.get("/reindexdataproducts")
     assert response.status_code == 200
-    assert str(response.json()).__contains__(
-        "Metadata store cleared and re-indexed"
-    )
+    assert "Metadata store cleared and re-indexed" in str(response.json())
 
 
 def test_dataproductlist(test_app):
     """Test to see if a file list can be retrieved"""
     response = test_app.get("/dataproductlist")
     assert response.status_code == 200
-    assert str(response.json()).__contains__(
-        "product/eb-m001-20221212-12345/ska-data-product.yaml"
+    assert "product/eb-m001-20221212-12345/ska-data-product.yaml" in str(
+        response.json()
     )
 
 
@@ -52,9 +50,7 @@ def test_dataproductmetadata(test_app):
     "product/eb-m001-20221212-12345/ska-data-product.yaml"}'
     response = test_app.post("/dataproductmetadata", data=data)
     assert response.status_code == 200
-    assert str(response.json()).__contains__(
-        "Experimental run as part of XYZ-123"
-    )
+    assert "Experimental run as part of XYZ-123" in str(response.json())
 
 
 def test_dataproductsearch_unhappy_path(test_app):
