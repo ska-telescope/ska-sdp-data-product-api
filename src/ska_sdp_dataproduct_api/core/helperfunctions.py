@@ -291,9 +291,9 @@ def ingestmetadatafiles(metadata_store_object, full_path_name: pathlib.Path):
         # For each file in the directory,
         # test if the directory contains a metadatafile
         for sub_path in full_path_name.iterdir():
-            if (sub_path / METADATA_FILE_NAME).is_file():
+            if sub_path == sub_path.parent / METADATA_FILE_NAME:
                 # If it contains the metadata file add it to the index
-                metadata_file = sub_path.joinpath(METADATA_FILE_NAME)
+                metadata_file = sub_path
                 metadata_file_name = FileUrl
                 metadata_file_name.fullPathName = (
                     PERSISTANT_STORAGE_PATH.joinpath(
