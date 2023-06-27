@@ -287,9 +287,7 @@ def ingestmetadatafiles(metadata_store_object, full_path_name: pathlib.Path):
     """This method runs through a volume and add all the data products to
     the metadata_list if the store"""
     # Test if the path points to a directory
-    if pathlib.Path.is_dir(full_path_name) and not pathlib.Path.is_symlink(
-        full_path_name
-    ):
+    if full_path_name.is_dir() and not full_path_name.is_symlink():
         # For each file in the directory,
         # test if the directory contains a metadatafile
         for sub_path in full_path_name.iterdir():
