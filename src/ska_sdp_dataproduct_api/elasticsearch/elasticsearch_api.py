@@ -5,8 +5,8 @@ import elasticsearch
 from elasticsearch import Elasticsearch
 
 from ska_sdp_dataproduct_api.core.helperfunctions import (
+    add_dataproduct,
     ingestmetadatafiles,
-    update_dataproduct_list,
 )
 from ska_sdp_dataproduct_api.core.settings import (
     METADATA_ES_SCHEMA_FILE,
@@ -114,7 +114,7 @@ class ElasticsearchMetadataStore:
         for _num, doc in enumerate(all_hits):
             for key, value in doc.items():
                 if key == "_source":
-                    update_dataproduct_list(
+                    add_dataproduct(
                         self.metadata_list,
                         metadata_file=value,
                         query_key_list=[metadata_key],

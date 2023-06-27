@@ -1,14 +1,17 @@
 """Module to insert data into Elasticsearch instance."""
 import datetime
+import gzip
 import json
-import os
 import pathlib
-from pathlib import Path
-
-import yaml
-from fastapi import HTTPException
+import tarfile
+from io import BytesIO
+from typing import Optional
 
 # pylint: disable=no-name-in-module
+import pydantic
+import requests
+import yaml
+from fastapi import HTTPException, Response
 from pydantic import BaseModel
 
 from ska_sdp_dataproduct_api.core.settings import (
@@ -20,10 +23,75 @@ from ska_sdp_dataproduct_api.core.settings import (
 
 
 class FileUrl(BaseModel):
-    """Relative path and file name"""
+    """
+    A class that represents a file URL.
 
-    relativeFileName: str = "Untitled"
+    Attributes:
+        fileName (str): The name of the file.
+        relativePathName (pathlib.Path): The relative path name of the file.
+        fullPathName (pathlib.Path): The full path name of the file.
+        metaDataFile (pathlib.Path): The metadata file of the file.
+
+    """
+
     fileName: str
+    relativePathName: pathlib.Path = None
+    fullPathName: Optional[pathlib.Path]
+    metaDataFile: Optional[pathlib.Path] = None
+
+    class Config:
+        """Config the behaviour of pydantic"""
+
+        arbitrary_types_allowed = True
+        validate_assignment = True
+        validate_all = True
+        extra = "forbid"
+
+    @pydantic.validator("relativePathName")
+    @classmethod
+    def relative_path_name_validator(cls, relative_path: pathlib.Path):
+        """
+        A validator that validates the relative path name.
+
+        Args:
+            relative_path (pathlib.Path): The relative path name.
+
+        Returns:
+            pathlib.Path: The validated relative path name.
+
+        Raises:
+            HTTPException: If the path is invalid.
+
+        """
+        path = PERSISTANT_STORAGE_PATH.joinpath(relative_path)
+        verify_file_path(path)
+        return relative_path
+
+    @pydantic.validator("fullPathName", pre=True)
+    @classmethod
+    def full_path_name_validator(cls, full_path_name: pathlib.Path, values):
+        """
+        A validator that validates the full path name.
+
+        Args:
+            full_path_name (pathlib.Path): The full path name.
+            values (dict): The values of the attributes.
+
+        Returns:
+            pathlib.Path: The validated full path name.
+
+        Raises:
+            HTTPException: If the path is invalid.
+
+        """
+        if full_path_name is None:
+            derived_full_path_name = PERSISTANT_STORAGE_PATH.joinpath(
+                values["relativePathName"]
+            )
+            verify_file_path(derived_full_path_name)
+        else:
+            verify_file_path(full_path_name)
+        return derived_full_path_name or full_path_name
 
 
 class SearchParametersClass(BaseModel):
@@ -34,12 +102,65 @@ class SearchParametersClass(BaseModel):
     key_pair: str = ""
 
 
-def verify_file_path(file_path):
-    """Test if the file path exists"""
-    if not os.path.exists(file_path):
+def gzip_file(file_path: pathlib.Path):
+    """Create a gzip response from a file or folder path.
+
+    Args:
+        path (Path): The file or folder path to compress.
+
+    Returns:
+        requests.Response: A response object with the compressed content.
+    """
+    # Create a temporary tarfile object
+    with tarfile.open(fileobj=BytesIO(), mode="w") as tar:
+        # Add the file or folder to the tarfile object
+        tar.add(file_path, arcname=file_path.name)
+    # Get the content of the tarfile object as bytes
+    content = tar.fileobj.getvalue()
+    # Compress the content using gzip
+    compressed_content = gzip.compress(content)
+    # Create a BytesIO object from the compressed content
+    compressed_file = BytesIO(compressed_content)
+    # Create a new response object with the compressed file
+    gzip_response = requests.Response()
+    gzip_response.status_code = 200
+    gzip_response.headers["Content-Encoding"] = "gzip"
+    gzip_response.headers[
+        "Content-Disposition"
+    ] = f"attachment; filename={file_path.name}.tar.gz"
+    gzip_response.raw = compressed_file
+    return gzip_response
+
+
+def downloadfile(file_object: FileUrl):
+    """This function returns a response that can be used to download a file
+    pointed to by the file_object"""
+    response = gzip_file(file_object.fullPathName)
+    return Response(
+        content=response.raw.read(),
+        status_code=response.status_code,
+        headers=response.headers,
+    )
+
+
+def verify_file_path(file_path: pathlib.Path):
+    """
+    A function that verifies the file path.
+
+    Args:
+        file_path (pathlib.Path): The file path.
+
+    Returns:
+        bool: True if the file path exists.
+
+    Raises:
+        HTTPException: If the file path does not exist.
+
+    """
+    if not file_path.exists():
         raise HTTPException(
             status_code=404,
-            detail=f"File path with name {file_path} not found",
+            detail=f"File path with name '{str(file_path)}' not found",
         )
     return True
 
@@ -47,13 +168,13 @@ def verify_file_path(file_path):
 def relativepath(absolute_path):
     """This function returns the relative path of an absolute path where the
     absolute path = PERSISTANT_STORAGE_PATH + relative_path"""
-    persistant_storage_path_len = len(Path(PERSISTANT_STORAGE_PATH).parts)
+    persistant_storage_path_len = len(PERSISTANT_STORAGE_PATH.parts)
     relative_path = str(
         pathlib.Path(
             *pathlib.Path(absolute_path).parts[(persistant_storage_path_len):]
         )
     )
-    return relative_path
+    return pathlib.Path(relative_path)
 
 
 def getdatefromname(filename: str):
@@ -71,21 +192,12 @@ def getdatefromname(filename: str):
         return datetime.date.today().strftime("%Y-%m-%d")
 
 
-def loadmetadatafile(
-    path_to_selected_file: FileUrl,
-    dataproduct_file_name="",
-    metadata_file_name="",
-):
+def loadmetadatafile(file_object: FileUrl):
     """This function loads the content of a yaml file and return it as
     json."""
-    persistant_file_path = os.path.join(
-        PERSISTANT_STORAGE_PATH, path_to_selected_file.relativeFileName
-    )
-    if verify_file_path(
-        persistant_file_path
-    ) and persistant_file_path.endswith(METADATA_FILE_NAME):
+    if (file_object.fullPathName).is_file():
         with open(
-            persistant_file_path, "r", encoding="utf-8"
+            file_object.fullPathName, "r", encoding="utf-8"
         ) as metadata_yaml_file:
             metadata_yaml_object = yaml.safe_load(
                 metadata_yaml_file
@@ -95,9 +207,11 @@ def loadmetadatafile(
         )
         metadata_yaml_object.update({"date_created": metadata_date})
         metadata_yaml_object.update(
-            {"dataproduct_file": dataproduct_file_name}
+            {"dataproduct_file": str(file_object.relativePathName.parent)}
         )
-        metadata_yaml_object.update({"metadata_file": metadata_file_name})
+        metadata_yaml_object.update(
+            {"metadata_file": str(file_object.relativePathName)}
+        )
         metadata_json = json.dumps(metadata_yaml_object)
         return metadata_json
     return {}
@@ -120,10 +234,9 @@ def find_metadata(metadata, query_key):
     return {"key": query_key, "value": subsection}
 
 
-def update_dataproduct_list(metadata_list, metadata_file: str, query_key_list):
+def add_dataproduct(metadata_list, metadata_file: str, query_key_list):
     """Populate a list of data products and its metadata"""
     data_product_details = {}
-    data_product_details["id"] = len(metadata_list) + 1
     for key, value in metadata_file.items():
         if key in (
             "execution_block",
@@ -135,46 +248,67 @@ def update_dataproduct_list(metadata_list, metadata_file: str, query_key_list):
 
     # add additional keys based on the query
     # NOTE: at present users can only query using a single metadata_key,
-    #       but update_dataproduct_list supports multiple query keys
+    #       but add_dataproduct supports multiple query keys
     for query_key in query_key_list:
         query_metadata = find_metadata(metadata_file, query_key)
         if query_metadata is not None:
             data_product_details[query_metadata["key"]] = query_metadata[
                 "value"
             ]
+    update_dataproduct_list(metadata_list, data_product_details)
 
+
+def update_dataproduct_list(metadata_list, data_product_details):
+    """This function looks if the new data product is in the metadata list,
+    if it is, the dataproduct entry is replaced, if it is new, it is appended
+    """
+    # Adds the first dictionary to the list
+    if len(metadata_list) == 0:
+        data_product_details["id"] = 1
+        metadata_list.append(data_product_details)
+        return
+
+    # Itterates through all the items in the metadata_list to see if an
+    # entry exist, if it is found, it is replaced, else added to the end.
+    for i, product in enumerate(metadata_list):
+        if (
+            product["execution_block"]
+            == data_product_details["execution_block"]
+        ):
+            data_product_details["id"] = product["id"]
+            metadata_list[i] = data_product_details
+            return
+    data_product_details["id"] = len(metadata_list) + 1
     metadata_list.append(data_product_details)
+    return
 
 
-def ingestmetadatafiles(metadata_store_object, storage_path: str):
+def ingestmetadatafiles(metadata_store_object, full_path_name: pathlib.Path):
     """This method runs through a volume and add all the data products to
     the metadata_list if the store"""
-    if verify_file_path(storage_path):
-        # Test if the path points to a directory
-        if os.path.isdir(storage_path) and not os.path.islink(storage_path):
-            # For each file in the directory,
-            files = os.listdir(storage_path)
-            # test if the directory contains a metadatafile
-            if METADATA_FILE_NAME in files:
+    # Test if the path points to a directory
+    if full_path_name.is_dir() and not full_path_name.is_symlink():
+        # For each file in the directory,
+        # test if the directory contains a metadatafile
+        for sub_path in full_path_name.iterdir():
+            if (sub_path / METADATA_FILE_NAME).is_file():
                 # If it contains the metadata file add it to the index
-                dataproduct_file_name = relativepath(storage_path)
-                metadata_file = Path(storage_path).joinpath(METADATA_FILE_NAME)
+                metadata_file = sub_path.joinpath(METADATA_FILE_NAME)
                 metadata_file_name = FileUrl
-                metadata_file_name.relativeFileName = relativepath(
+                metadata_file_name.fullPathName = (
+                    PERSISTANT_STORAGE_PATH.joinpath(
+                        relativepath(metadata_file)
+                    )
+                )
+                metadata_file_name.relativePathName = relativepath(
                     metadata_file
                 )
                 metadata_file_json = loadmetadatafile(
                     metadata_file_name,
-                    dataproduct_file_name,
-                    metadata_file_name.relativeFileName,
                 )
                 metadata_store_object.insert_metadata(metadata_file_json)
             else:
                 # If it is not a data product, enter the folder and repeat
                 # this test.
-                for file in os.listdir(storage_path):
-                    ingestmetadatafiles(
-                        metadata_store_object, os.path.join(storage_path, file)
-                    )
-        return ""
-    return "Metadata ingested"
+                for sub_sub_path in full_path_name.iterdir():
+                    ingestmetadatafiles(metadata_store_object, sub_sub_path)

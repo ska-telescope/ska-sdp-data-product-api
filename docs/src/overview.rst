@@ -135,7 +135,7 @@ The data product metadata store can be re-indexed but making a get request to th
 Download data product endpoint
 ~~~~~~~~~~~
 
-Sending a post request to the download endpoint will return either a FileResponse with the requested file, or a Response with an in-memory zip file.
+Sending a post request to the download endpoint will return a response to an in-memory tar file of the selected data product.
 
 The body of the post request must contain the name of the file and the relative path of the file you want to download as listed in the file list response above. 
 
@@ -144,8 +144,8 @@ For example, the post request body:
 .. code-block:: bash
 
     {
-        "fileName": "eb_id_2",
-        "relativeFileName": "product/eb_id_2/"
+        "fileName": "eb-test-20200325-00001",
+        "relativePathName": "product/eb-test-20200325-00001"
     }
 
 The post request endpoint: 
@@ -168,7 +168,7 @@ For example, the post request body:
 
     {
         "fileName": "ska-data-product.yaml",
-        "relativeFileName": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml"
+        "relativePathName": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml"
     }
 
 The post request endpoint: 

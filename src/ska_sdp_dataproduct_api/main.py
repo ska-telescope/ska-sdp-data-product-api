@@ -1,27 +1,17 @@
 """This API exposes SDP Data Products to the SDP Data Product Dashboard."""
 
-import io
 import json
-import os
-import zipfile
-from pathlib import Path
 
 from fastapi import HTTPException, Response
-
-# pylint: disable=no-name-in-module
-from starlette.responses import FileResponse
 
 from ska_sdp_dataproduct_api.core.helperfunctions import (
     FileUrl,
     SearchParametersClass,
+    downloadfile,
+    ingestmetadatafiles,
     loadmetadatafile,
-    verify_file_path,
 )
-from ska_sdp_dataproduct_api.core.settings import (
-    ES_HOST,
-    PERSISTANT_STORAGE_PATH,
-    app,
-)
+from ska_sdp_dataproduct_api.core.settings import ES_HOST, app
 from ska_sdp_dataproduct_api.elasticsearch.elasticsearch_api import (
     ElasticsearchMetadataStore,
 )
@@ -37,45 +27,6 @@ in_memory_metadata_store = InMemoryDataproductIndex(
 )
 
 
-def downloadfile(relative_path_name):
-    """This function returns a response that can be used to download a file
-    pointed to by the relative_path_name"""
-    persistant_file_path = os.path.join(
-        PERSISTANT_STORAGE_PATH, relative_path_name.relativeFileName
-    )
-    # Test is not found
-    verify_file_path(persistant_file_path)
-    # If relative_path_name points to a file, return a FileResponse
-    if not os.path.isdir(persistant_file_path):
-        return FileResponse(
-            persistant_file_path,
-            media_type="application/octet-stream",
-            filename=relative_path_name.relativeFileName,
-        )
-    # If relative_path_name points to a directory, retrun a zipfile data
-    # stream response
-    zip_file_buffer = io.BytesIO()
-    with zipfile.ZipFile(
-        zip_file_buffer, "a", zipfile.ZIP_DEFLATED, False
-    ) as zip_file:
-        for dir_name, _, files in os.walk(persistant_file_path):
-            for filename in files:
-                file = os.path.join(dir_name, filename)
-                relative_file = Path(str(file)).relative_to(
-                    Path(persistant_file_path)
-                )
-                zip_file.write(file, arcname=relative_file)
-    headers = {
-        "Content-Disposition": f'attachment; filename="\
-            {relative_path_name.relativeFileName}.zip"'
-    }
-    return Response(
-        zip_file_buffer.getvalue(),
-        media_type="application/zip",
-        headers=headers,
-    )
-
-
 @app.get("/status")
 async def root():
     """An enpoint that just returns confirmation that the
@@ -88,7 +39,7 @@ async def root():
 
 
 @app.get("/reindexdataproducts")
-def reindex_data_products():
+async def reindex_data_products():
     """This endpoint clears the list of data products from memory and
     re-ingest the metadata of all data products found"""
     if elk_metadata_store.es_search_enabled:
@@ -99,7 +50,7 @@ def reindex_data_products():
 
 
 @app.post("/dataproductsearch", response_class=Response)
-def data_products_search(search_parameters: SearchParametersClass):
+async def data_products_search(search_parameters: SearchParametersClass):
     """This API endpoint returns a list of all the data products
     in the PERSISTANT_STORAGE_PATH
     """
@@ -119,7 +70,7 @@ def data_products_search(search_parameters: SearchParametersClass):
 
 
 @app.get("/dataproductlist", response_class=Response)
-def data_products_list():
+async def data_products_list():
     """This API endpoint returns a list of all the data products
     in the PERSISTANT_STORAGE_PATH
     """
@@ -127,14 +78,25 @@ def data_products_list():
 
 
 @app.post("/download")
-async def download(relative_file_name: FileUrl):
+async def download(file_object: FileUrl):
     """This API endpoint returns a FileResponse that is used by a
     frontend to download a file"""
-    return downloadfile(relative_file_name)
+    return downloadfile(file_object)
 
 
 @app.post("/dataproductmetadata", response_class=Response)
-async def dataproductmetadata(relative_file_name: FileUrl):
+async def data_product_metadata(file_object: FileUrl):
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
-    return loadmetadatafile(relative_file_name)
+    return loadmetadatafile(file_object)
+
+
+@app.post("/ingestnewdataproduct")
+async def ingest_new_data_product(file_object: FileUrl):
+    """This API endpoint returns the data products metadata in json format of
+    a specified data product."""
+    if elk_metadata_store.es_search_enabled:
+        ingestmetadatafiles(elk_metadata_store, file_object.fullPathName)
+    else:
+        ingestmetadatafiles(in_memory_metadata_store, file_object.fullPathName)
+    return "Data product metadata file loaded and store index updated"
