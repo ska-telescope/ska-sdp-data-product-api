@@ -267,7 +267,9 @@ def add_dataproduct(metadata_list, metadata_file: str, query_key_list):
 
 def update_dataproduct_list(metadata_list, data_product_details):
     """This function looks if the new data product is in the metadata list,
-    if it is, the dataproduct entry is replaced, if it is new, it is appended
+    if it is, the dataproduct entry is replaced, if it is new, it is appended.
+    If new data product contains no 'execution_block' key, then it is always
+    appended.
     """
     # Adds the first dictionary to the list
     if len(metadata_list) == 0:
@@ -279,9 +281,9 @@ def update_dataproduct_list(metadata_list, data_product_details):
     # entry exist, if it is found, it is replaced, else added to the end.
     for i, product in enumerate(metadata_list):
         if (
-            "execution_block" in product and
-            "execution_block" in data_product_details and
-            product["execution_block"]
+            "execution_block" in product
+            and "execution_block" in data_product_details
+            and product["execution_block"]
             == data_product_details["execution_block"]
         ):
             data_product_details["id"] = product["id"]
