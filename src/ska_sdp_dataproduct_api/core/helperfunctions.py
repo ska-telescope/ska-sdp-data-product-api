@@ -202,9 +202,16 @@ def loadmetadatafile(file_object: FileUrl):
             metadata_yaml_object = yaml.safe_load(
                 metadata_yaml_file
             )  # yaml_object will be a list or a dict
-        metadata_date = getdatefromname(
-            metadata_yaml_object["execution_block"]
-        )
+
+        # check if date can be determined from the execution_black attribute,
+        # otherwise use today's date
+        if "execution_block" in metadata_yaml_object:
+            metadata_date = getdatefromname(
+                metadata_yaml_object["execution_block"]
+            )
+        else:
+            metadata_date = datetime.date.today().strftime("%Y-%m-%d")
+
         metadata_yaml_object.update({"date_created": metadata_date})
         metadata_yaml_object.update(
             {"dataproduct_file": str(file_object.relativePathName.parent)}
@@ -268,10 +275,12 @@ def update_dataproduct_list(metadata_list, data_product_details):
         metadata_list.append(data_product_details)
         return
 
-    # Itterates through all the items in the metadata_list to see if an
+    # Iterates through all the items in the metadata_list to see if an
     # entry exist, if it is found, it is replaced, else added to the end.
     for i, product in enumerate(metadata_list):
         if (
+            "execution_block" in product and
+            "execution_block" in data_product_details and
             product["execution_block"]
             == data_product_details["execution_block"]
         ):
