@@ -318,8 +318,6 @@ def ingestmetadatafiles(metadata_store_object, full_path_name: pathlib.Path):
 
                 # abort if no metadata was read
                 if len(metadata_file_json) == 0:
-                    # TODO: once we incorporate logging, add a log here
-                    # indicate that the file is poorly-formed and not ingested
                     continue
 
                 metadata_store_object.insert_metadata(metadata_file_json)
