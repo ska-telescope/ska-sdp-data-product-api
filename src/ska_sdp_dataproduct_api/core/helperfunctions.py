@@ -207,8 +207,7 @@ def loadmetadatafile(file_object: FileUrl):
         if metadata_yaml_object is None:
             return {}
 
-        # check if metadata contains a execution_block attribute,
-        # otherwise, abort
+        # abort if metadata does not contain a execution_block attribute
         if "execution_block" not in metadata_yaml_object:
             return {}
 
@@ -271,8 +270,6 @@ def add_dataproduct(metadata_list, metadata_file: str, query_key_list):
 def update_dataproduct_list(metadata_list, data_product_details):
     """This function looks if the new data product is in the metadata list,
     if it is, the dataproduct entry is replaced, if it is new, it is appended.
-    If new data product contains no 'execution_block' key, then it is always
-    appended.
     """
     # Adds the first dictionary to the list
     if len(metadata_list) == 0:
