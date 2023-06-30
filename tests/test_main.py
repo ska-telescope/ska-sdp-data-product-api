@@ -24,6 +24,11 @@ def test_dataproductlist(test_app):
         response.json()
     )
 
+    # make sure that the response JSON contains 7 data products,
+    # and therefore that the 3 YAML files missing execution_block attributes
+    # have not been ingested
+    assert len(response.json()) == 7
+
 
 def test_download_file(test_app):
     """Test if a file can be downloaded from the test files"""

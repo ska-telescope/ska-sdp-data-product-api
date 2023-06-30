@@ -202,6 +202,15 @@ def loadmetadatafile(file_object: FileUrl):
             metadata_yaml_object = yaml.safe_load(
                 metadata_yaml_file
             )  # yaml_object will be a list or a dict
+
+        # abort if metadata is empty
+        if metadata_yaml_object is None:
+            return {}
+
+        # abort if metadata does not contain an execution_block attribute
+        if "execution_block" not in metadata_yaml_object:
+            return {}
+
         metadata_date = getdatefromname(
             metadata_yaml_object["execution_block"]
         )
@@ -268,7 +277,7 @@ def update_dataproduct_list(metadata_list, data_product_details):
         metadata_list.append(data_product_details)
         return
 
-    # Itterates through all the items in the metadata_list to see if an
+    # Iterates through all the items in the metadata_list to see if an
     # entry exist, if it is found, it is replaced, else added to the end.
     for i, product in enumerate(metadata_list):
         if (
@@ -306,6 +315,11 @@ def ingestmetadatafiles(metadata_store_object, full_path_name: pathlib.Path):
                 metadata_file_json = loadmetadatafile(
                     metadata_file_name,
                 )
+
+                # abort if no metadata was read
+                if len(metadata_file_json) == 0:
+                    continue
+
                 metadata_store_object.insert_metadata(metadata_file_json)
             else:
                 # If it is not a data product, enter the folder and repeat
