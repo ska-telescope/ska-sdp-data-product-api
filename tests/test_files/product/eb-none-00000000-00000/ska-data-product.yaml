@@ -1,16 +1,1 @@
-interface: http://schema.skao.int/ska-data-product-meta/0.1
- 
-context:
-  observer: simulation
-  intent: "Simulation run XYZ-123"
-  notes: "Simulated data"
- 
-config: # Configuration of generating software
-  processing_block: 
-  processing_script: 
-  image:
-  version: 
-  commit:
-  cmdline:
- 
-files: []
+# A completely empty metadata YAML  
