@@ -103,7 +103,10 @@ class SearchParametersClass(BaseModel):
 
 
 class DataProductMetaData(BaseModel):
-    """Class containing all information from a MetaData object"""
+    """
+    Class containing all information from a MetaData object
+    """
+
     interface: str
     execution_block: str
     context: dict
@@ -339,7 +342,7 @@ def ingestmetadatafiles(metadata_store_object, full_path_name: pathlib.Path):
 
 
 def ingestjson(metadata_store_object, dataproduct: DataProductMetaData):
-    """Ingest a single dataproduct"""
-    print(dataproduct)
-
+    """
+    Ingest a single dataproduct
+    """
     metadata_store_object.insert_metadata(dataproduct.json())
