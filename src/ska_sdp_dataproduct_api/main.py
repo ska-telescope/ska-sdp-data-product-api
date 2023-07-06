@@ -106,6 +106,8 @@ async def ingest_new_data_product(file_object: FileUrl):
 
 @app.post("/ingestjson")
 async def ingest_json(dataproduct: DataProductMetaData):
+    """This API endpoint takes JSON dataproduct metadata and ingests into
+    the appropriate store."""
     if elk_metadata_store.es_search_enabled:
         ingestjson(elk_metadata_store, dataproduct)
     else:
