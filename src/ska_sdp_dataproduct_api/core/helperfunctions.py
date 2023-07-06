@@ -102,6 +102,16 @@ class SearchParametersClass(BaseModel):
     key_pair: str = ""
 
 
+class DataProductMetaData(BaseModel):
+    """Class containing all information from a MetaData object"""
+    interface: str
+    execution_block: str
+    context: dict
+    config: dict
+    files: list
+    obscore: dict | None = None
+
+
 def gzip_file(file_path: pathlib.Path):
     """Create a gzip response from a file or folder path.
 
@@ -326,3 +336,10 @@ def ingestmetadatafiles(metadata_store_object, full_path_name: pathlib.Path):
                 # this test.
                 for sub_sub_path in full_path_name.iterdir():
                     ingestmetadatafiles(metadata_store_object, sub_sub_path)
+
+
+def ingestjson(metadata_store_object, dataproduct: DataProductMetaData):
+    """Ingest a single dataproduct"""
+    print(dataproduct)
+
+    metadata_store_object.insert_metadata(dataproduct.json())

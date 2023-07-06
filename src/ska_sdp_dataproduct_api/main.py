@@ -5,9 +5,11 @@ import json
 from fastapi import HTTPException, Response
 
 from ska_sdp_dataproduct_api.core.helperfunctions import (
+    DataProductMetaData,
     FileUrl,
     SearchParametersClass,
     downloadfile,
+    ingestjson,
     ingestmetadatafiles,
     loadmetadatafile,
 )
@@ -100,3 +102,10 @@ async def ingest_new_data_product(file_object: FileUrl):
     else:
         ingestmetadatafiles(in_memory_metadata_store, file_object.fullPathName)
     return "Data product metadata file loaded and store index updated"
+
+@app.post("/ingestjson")
+async def ingest_json(dataproduct: DataProductMetaData):
+    if elk_metadata_store.es_search_enabled:
+        ingestjson(elk_metadata_store, dataproduct)
+    else:
+        ingestjson(in_memory_metadata_store, dataproduct)
