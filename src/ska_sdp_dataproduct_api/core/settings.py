@@ -34,6 +34,11 @@ ES_HOST: str = config(
     default="http://localhost:9200",
 )
 
+VERSION: str = config(
+    "version",
+    default="0.3.0",
+)
+
 app = FastAPI()
 
 origins = [

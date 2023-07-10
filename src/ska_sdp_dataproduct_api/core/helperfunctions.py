@@ -14,10 +14,10 @@ import yaml
 from fastapi import HTTPException, Response
 from pydantic import BaseModel
 
-import ska_sdp_dataproduct_api
 from ska_sdp_dataproduct_api.core.settings import (
     METADATA_FILE_NAME,
     PERSISTANT_STORAGE_PATH,
+    VERSION,
 )
 
 # pylint: disable=too-few-public-methods
@@ -30,7 +30,7 @@ class DPDAPIStatus:
     api_running: bool = True
     search_enabled: bool = (False,)
     date_modified: datetime.datetime = datetime.datetime.now()
-    version: str = ska_sdp_dataproduct_api.__version__
+    version: str = VERSION
 
     def status(self, es_search_enabled: bool):
         """Returns the status of the Data Product API"""
