@@ -14,12 +14,38 @@ import yaml
 from fastapi import HTTPException, Response
 from pydantic import BaseModel
 
+import ska_sdp_dataproduct_api
 from ska_sdp_dataproduct_api.core.settings import (
     METADATA_FILE_NAME,
     PERSISTANT_STORAGE_PATH,
 )
 
 # pylint: disable=too-few-public-methods
+
+
+class DPDAPIStatus:
+    """This class contains the status and methods related to the Data Product
+    dashboard's API"""
+
+    api_running: bool = True
+    search_enabled: bool = (False,)
+    date_modified: datetime.datetime = datetime.datetime.now()
+    version: str = ska_sdp_dataproduct_api.__version__
+
+    def status(self, es_search_enabled: bool):
+        """Returns the status of the Data Product API"""
+        self.search_enabled = es_search_enabled
+        return {
+            "API_running": True,
+            "Search_enabled": self.search_enabled,
+            "Date_modified": self.date_modified,
+            "Version": self.version,
+        }
+
+    def update_data_store_date_modified(self):
+        """This mothod update the timestamp of the last time that data was
+        added or modified in the data product store by this API"""
+        self.date_modified = datetime.datetime.now()
 
 
 class FileUrl(BaseModel):

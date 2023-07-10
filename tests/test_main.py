@@ -6,7 +6,10 @@ def test_ping_main(test_app):
     """Can we hit the ping endpoint"""
     response = test_app.get("/status")
     assert response.status_code == 200
-    assert response.json() == {"API_running": True, "Search_enabled": False}
+    assert response.json()["API_running"] is True
+    assert "Search_enabled" in response.json()
+    assert "Date_modified" in response.json()
+    assert "Version" in response.json()
 
 
 def test_reindexdataproducts(test_app):
