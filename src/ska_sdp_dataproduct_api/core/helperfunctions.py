@@ -374,7 +374,8 @@ def ingestjson(metadata_store_object, dataproduct: DataProductMetaData):
         dataproduct.date_created = datetime.date.today().strftime("%Y-%m-%d")
 
     # determine a path on which to store the file
-    path = f"{PERSISTANT_STORAGE_PATH}/product/{dataproduct.execution_block}/{METADATA_FILE_NAME}"
+    path = f"{PERSISTANT_STORAGE_PATH}/product/"
+    +f"{dataproduct.execution_block}/{METADATA_FILE_NAME}"
     dataproduct.metadata_file = pathlib.Path(path)
 
     # save to disk
