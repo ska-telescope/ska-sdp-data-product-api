@@ -110,6 +110,7 @@ class DataProductMetaData(BaseModel):
     interface: str
     date_created: Optional[str]
     execution_block: str
+    metadata_file: Optional[pathlib.Path]
     context: dict
     config: dict
     files: list
@@ -240,6 +241,28 @@ def loadmetadatafile(file_object: FileUrl):
     return {}
 
 
+def savemetadatafile(dataproduct: DataProductMetaData):
+    """
+    Save the contents of a DataProductMetaData object to disk
+    """
+    # create the parent directory for the metadata file (if required)
+    dataproduct.metadata_file.parent.mkdir(parents=True, exist_ok=True)
+
+    # write the file
+    with open(
+        dataproduct.metadata_file, "w", encoding="utf-8"
+    ) as metadata_yaml_file:
+        metadata_object = {
+            "interface": dataproduct.interface,
+            "execution_block": dataproduct.execution_block,
+            "context": dataproduct.context,
+            "config": dataproduct.config,
+            "files": dataproduct.files,
+            "obscore": dataproduct.obscore,
+        }
+        metadata_yaml_file.write(yaml.safe_dump(metadata_object))
+
+
 def find_metadata(metadata, query_key):
     """Given a dict of metadata, and a period-separated hierarchy of keys,
     return the key and the value found within the dict.
@@ -349,6 +372,13 @@ def ingestjson(metadata_store_object, dataproduct: DataProductMetaData):
     # if no date_created, set to today
     if dataproduct.date_created is None:
         dataproduct.date_created = datetime.date.today().strftime("%Y-%m-%d")
+
+    # determine a path on which to store the file
+    path = f"{PERSISTANT_STORAGE_PATH}/product/{dataproduct.execution_block}/{METADATA_FILE_NAME}"
+    dataproduct.metadata_file = pathlib.Path(path)
+
+    # save to disk
+    savemetadatafile(dataproduct)
 
     # store
     metadata_store_object.insert_metadata(dataproduct.json())
