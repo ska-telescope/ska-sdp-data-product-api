@@ -37,7 +37,7 @@ ES_HOST: str = config(
 )
 
 VERSION: str = config(
-    "SKA_SDP_DATAPRODUCT_DASHBOARD_VERSION",
+    "SKA_SDP_DATAPRODUCT_API_VERSION",
     default=ska_sdp_dataproduct_api.__version__,
 )
 
