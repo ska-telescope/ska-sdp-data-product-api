@@ -5,6 +5,7 @@ import pathlib
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.config import Config
+import ska_sdp_dataproduct_api
 
 config = Config(".env")
 PERSISTANT_STORAGE_PATH: pathlib.Path = pathlib.Path(
@@ -35,8 +36,8 @@ ES_HOST: str = config(
 )
 
 VERSION: str = config(
-    "version",
-    default="0.3.0",
+    "SKA_SDP_DATAPRODUCT_DASHBOARD_VERSION",
+    default=ska_sdp_dataproduct_api.__version__,
 )
 
 app = FastAPI()
