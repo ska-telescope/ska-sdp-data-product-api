@@ -5,6 +5,7 @@ import pathlib
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.config import Config
+
 import ska_sdp_dataproduct_api
 
 config = Config(".env")
