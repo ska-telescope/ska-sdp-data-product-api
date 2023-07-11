@@ -28,7 +28,7 @@ class DPDAPIStatus:
     dashboard's API"""
 
     api_running: bool = True
-    search_enabled: bool = (False,)
+    search_enabled: bool = False
     date_modified: datetime.datetime = datetime.datetime.now()
     version: str = VERSION
 
