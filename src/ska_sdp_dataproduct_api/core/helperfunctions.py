@@ -348,7 +348,7 @@ def ingestjson(metadata_store_object, dataproduct: DataProductMetaData):
     """
     # if no date_created, set to today
     if dataproduct.date_created is None:
-        dataproduct.date_created = datetime.date.today().strftime('%Y-%m-%d')
+        dataproduct.date_created = datetime.date.today().strftime("%Y-%m-%d")
 
     # store
     metadata_store_object.insert_metadata(dataproduct.json())
