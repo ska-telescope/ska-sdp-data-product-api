@@ -108,6 +108,7 @@ class DataProductMetaData(BaseModel):
     """
 
     interface: str
+    date_created: Optional[str]
     execution_block: str
     context: dict
     config: dict
@@ -345,4 +346,9 @@ def ingestjson(metadata_store_object, dataproduct: DataProductMetaData):
     """
     Ingest a single dataproduct
     """
+    # if no date_created, set to today
+    if dataproduct.date_created is None:
+        dataproduct.date_created = datetime.date.today().strftime('%Y-%m-%d')
+
+    # store
     metadata_store_object.insert_metadata(dataproduct.json())
