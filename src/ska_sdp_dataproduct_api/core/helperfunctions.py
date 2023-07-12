@@ -116,6 +116,21 @@ class DataProductMetaData(BaseModel):
     files: list
     obscore: dict | None = None
 
+    def metadata_only(self):
+        """
+        Returns a dict containing only those attributes of the
+        DataProductMetaData that are suitable to be written to
+        a YAML metadata file
+        """
+        return {
+            "interface": self.interface,
+            "execution_block": self.execution_block,
+            "context": self.context,
+            "config": self.config,
+            "files": self.files,
+            "obscore": self.obscore,
+        }
+
 
 def gzip_file(file_path: pathlib.Path):
     """Create a gzip response from a file or folder path.
@@ -252,15 +267,7 @@ def savemetadatafile(dataproduct: DataProductMetaData):
     with open(
         dataproduct.metadata_file, "w", encoding="utf-8"
     ) as metadata_yaml_file:
-        metadata_object = {
-            "interface": dataproduct.interface,
-            "execution_block": dataproduct.execution_block,
-            "context": dataproduct.context,
-            "config": dataproduct.config,
-            "files": dataproduct.files,
-            "obscore": dataproduct.obscore,
-        }
-        metadata_yaml_file.write(yaml.safe_dump(metadata_object))
+        metadata_yaml_file.write(yaml.safe_dump(dataproduct.metadata_only()))
 
 
 def find_metadata(metadata, query_key):
@@ -375,7 +382,7 @@ def ingestjson(metadata_store_object, dataproduct: DataProductMetaData):
 
     # determine a path on which to store the file
     path = f"{PERSISTANT_STORAGE_PATH}/product/"
-    +f"{dataproduct.execution_block}/{METADATA_FILE_NAME}"
+    path += f"{dataproduct.execution_block}/{METADATA_FILE_NAME}"
     dataproduct.metadata_file = pathlib.Path(path)
 
     # save to disk
