@@ -390,3 +390,5 @@ def ingestjson(metadata_store_object, dataproduct: DataProductMetaData):
 
     # store
     metadata_store_object.insert_metadata(dataproduct.json())
+
+    return dataproduct.dict()

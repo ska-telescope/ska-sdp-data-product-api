@@ -109,6 +109,6 @@ async def ingest_json(dataproduct: DataProductMetaData):
     """This API endpoint takes JSON dataproduct metadata and ingests into
     the appropriate store."""
     if elk_metadata_store.es_search_enabled:
-        ingestjson(elk_metadata_store, dataproduct)
-    else:
-        ingestjson(in_memory_metadata_store, dataproduct)
+        return ingestjson(elk_metadata_store, dataproduct)
+
+    return ingestjson(in_memory_metadata_store, dataproduct)
