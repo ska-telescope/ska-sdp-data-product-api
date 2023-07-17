@@ -6,6 +6,7 @@ from fastapi import HTTPException, Response
 
 from ska_sdp_dataproduct_api.core.helperfunctions import (
     DataProductMetaData,
+    DPDAPIStatus,
     FileUrl,
     SearchParametersClass,
     downloadfile,
@@ -21,11 +22,13 @@ from ska_sdp_dataproduct_api.inmemorystore.inmemorystore import (
     InMemoryDataproductIndex,
 )
 
-elk_metadata_store = ElasticsearchMetadataStore()
-elk_metadata_store.connect(hosts=ES_HOST)
+DPD_API_Status = DPDAPIStatus()
+
+elasticsearch_metadata_store = ElasticsearchMetadataStore()
+elasticsearch_metadata_store.connect(hosts=ES_HOST)
 
 in_memory_metadata_store = InMemoryDataproductIndex(
-    elk_metadata_store.es_search_enabled,
+    elasticsearch_metadata_store.es_search_enabled,
 )
 
 
@@ -33,19 +36,18 @@ in_memory_metadata_store = InMemoryDataproductIndex(
 async def root():
     """An enpoint that just returns confirmation that the
     application is running"""
-    status = {
-        "API_running": True,
-        "Search_enabled": elk_metadata_store.es_search_enabled,
-    }
-    return status
+    return DPD_API_Status.status(
+        elasticsearch_metadata_store.es_search_enabled
+    )
 
 
 @app.get("/reindexdataproducts")
 async def reindex_data_products():
     """This endpoint clears the list of data products from memory and
     re-ingest the metadata of all data products found"""
-    if elk_metadata_store.es_search_enabled:
-        elk_metadata_store.reindex()
+    DPD_API_Status.update_data_store_date_modified()
+    if elasticsearch_metadata_store.es_search_enabled:
+        elasticsearch_metadata_store.reindex()
     else:
         in_memory_metadata_store.reindex()
     return "Metadata store cleared and re-indexed"
@@ -56,13 +58,13 @@ async def data_products_search(search_parameters: SearchParametersClass):
     """This API endpoint returns a list of all the data products
     in the PERSISTANT_STORAGE_PATH
     """
-    if not elk_metadata_store.es_search_enabled:
-        elk_metadata_store.connect(hosts=ES_HOST)
-        if not elk_metadata_store.es_search_enabled:
+    if not elasticsearch_metadata_store.es_search_enabled:
+        elasticsearch_metadata_store.connect(hosts=ES_HOST)
+        if not elasticsearch_metadata_store.es_search_enabled:
             raise HTTPException(
                 status_code=503, detail="Elasticsearch not found"
             )
-    filtered_data_product_list = elk_metadata_store.search_metadata(
+    filtered_data_product_list = elasticsearch_metadata_store.search_metadata(
         start_date=search_parameters.start_date,
         end_date=search_parameters.end_date,
         metadata_key=search_parameters.key_pair.split(":")[0],
@@ -97,8 +99,11 @@ async def data_product_metadata(file_object: FileUrl):
 async def ingest_new_data_product(file_object: FileUrl):
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
-    if elk_metadata_store.es_search_enabled:
-        ingestmetadatafiles(elk_metadata_store, file_object.fullPathName)
+    DPD_API_Status.update_data_store_date_modified()
+    if elasticsearch_metadata_store.es_search_enabled:
+        ingestmetadatafiles(
+            elasticsearch_metadata_store, file_object.fullPathName
+        )
     else:
         ingestmetadatafiles(in_memory_metadata_store, file_object.fullPathName)
     return "Data product metadata file loaded and store index updated"
@@ -108,7 +113,7 @@ async def ingest_new_data_product(file_object: FileUrl):
 async def ingest_json(dataproduct: DataProductMetaData):
     """This API endpoint takes JSON dataproduct metadata and ingests into
     the appropriate store."""
-    if elk_metadata_store.es_search_enabled:
-        return ingestjson(elk_metadata_store, dataproduct)
+    if elasticsearch_metadata_store.es_search_enabled:
+        return ingestjson(elasticsearch_metadata_store, dataproduct)
 
     return ingestjson(in_memory_metadata_store, dataproduct)
