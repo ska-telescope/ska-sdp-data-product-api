@@ -1344,7 +1344,7 @@ files = [
 name = "requests"
 version = "2.31.0"
 description = "Python HTTP for Humans."
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -1829,4 +1829,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "670c77a37e431f1816bed25af029c7cf2001a92ca37ba0ce60a30ca3b7b4fafc"
+content-hash = "802a5f4e66c70b9f355747b053c7d6907fef2b2c18825daef8618bb851f881b2"
