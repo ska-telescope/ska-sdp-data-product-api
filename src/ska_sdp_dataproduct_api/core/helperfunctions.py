@@ -318,37 +318,38 @@ def update_dataproduct_list(metadata_list, data_product_details):
     return
 
 
+def ingestfile(metadata_store_object, path: pathlib.Path):
+    """This function gets the file information of a data product and
+    structure the information to be inserted into the metadata store.
+    """
+    metadata_file = path
+    metadata_file_name = FileUrl
+    metadata_file_name.fullPathName = PERSISTANT_STORAGE_PATH.joinpath(
+        relativepath(metadata_file)
+    )
+    metadata_file_name.relativePathName = relativepath(metadata_file)
+    metadata_file_json = loadmetadatafile(
+        metadata_file_name,
+    )
+    # return if no metadata was read
+    if len(metadata_file_json) == 0:
+        return
+    metadata_store_object.insert_metadata(metadata_file_json)
+
+
 def ingestmetadatafiles(metadata_store_object, full_path_name: pathlib.Path):
-    """This method runs through a volume and add all the data products to
+    """This function runs through a volume and add all the data products to
     the metadata_list if the store"""
     # Test if the path points to a directory
-    if full_path_name.is_dir() and not full_path_name.is_symlink():
-        # For each file in the directory,
-        # test if the directory contains a metadatafile
-        for sub_path in full_path_name.iterdir():
-            if sub_path == sub_path.parent / METADATA_FILE_NAME:
-                # If it contains the metadata file add it to the index
-                metadata_file = sub_path
-                metadata_file_name = FileUrl
-                metadata_file_name.fullPathName = (
-                    PERSISTANT_STORAGE_PATH.joinpath(
-                        relativepath(metadata_file)
-                    )
-                )
-                metadata_file_name.relativePathName = relativepath(
-                    metadata_file
-                )
-                metadata_file_json = loadmetadatafile(
-                    metadata_file_name,
-                )
-
-                # abort if no metadata was read
-                if len(metadata_file_json) == 0:
-                    continue
-
-                metadata_store_object.insert_metadata(metadata_file_json)
-            else:
-                # If it is not a data product, enter the folder and repeat
-                # this test.
-                for sub_sub_path in full_path_name.iterdir():
-                    ingestmetadatafiles(metadata_store_object, sub_sub_path)
+    if not full_path_name.is_dir() or full_path_name.is_symlink():
+        return
+    # The first loop runs through all the products
+    for product in full_path_name.iterdir():
+        # The second loops through all the files of a possible product,
+        # checking for metadata files.
+        for execution_block in product.iterdir():
+            # If it contains the metadata file add it to the index as well
+            # as the path to the execution block.
+            if execution_block == execution_block.parent / METADATA_FILE_NAME:
+                ingestfile(metadata_store_object, execution_block)
+                continue
