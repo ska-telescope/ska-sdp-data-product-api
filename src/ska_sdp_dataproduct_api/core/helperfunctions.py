@@ -348,7 +348,7 @@ def find_folders_with_metadata_files():
 
 def ingestmetadatafiles(metadata_store_object, full_path_name: pathlib.Path):
     """This function runs through a volume and add all the data products to
-    the metadata_list if the store"""
+    the metadata_list of the store"""
     # Test if the path points to a directory
     if not full_path_name.is_dir() or full_path_name.is_symlink():
         return
