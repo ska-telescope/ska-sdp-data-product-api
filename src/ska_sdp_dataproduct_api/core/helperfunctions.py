@@ -340,7 +340,7 @@ def ingestfile(metadata_store_object, path: pathlib.Path):
 def find_folders_with_metadata_files():
     """This function lists all folders containing a metadata file"""
     folders = []
-    for file_path in pathlib.Path(".").rglob(METADATA_FILE_NAME):
+    for file_path in PERSISTANT_STORAGE_PATH.rglob(METADATA_FILE_NAME):
         if file_path not in folders:
             folders.append(file_path)
     return folders
