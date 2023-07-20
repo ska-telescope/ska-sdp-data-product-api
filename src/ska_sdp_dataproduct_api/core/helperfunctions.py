@@ -337,19 +337,21 @@ def ingestfile(metadata_store_object, path: pathlib.Path):
     metadata_store_object.insert_metadata(metadata_file_json)
 
 
+def find_folders_with_metadata_files():
+    """This function lists all folders containing a metadata file"""
+    folders = []
+    for file_path in pathlib.Path(".").rglob(METADATA_FILE_NAME):
+        if file_path not in folders:
+            folders.append(file_path)
+    return folders
+
+
 def ingestmetadatafiles(metadata_store_object, full_path_name: pathlib.Path):
     """This function runs through a volume and add all the data products to
     the metadata_list if the store"""
     # Test if the path points to a directory
     if not full_path_name.is_dir() or full_path_name.is_symlink():
         return
-    # The first loop runs through all the products
-    for product in full_path_name.iterdir():
-        # The second loops through all the files of a possible product,
-        # checking for metadata files.
-        for execution_block in product.iterdir():
-            # If it contains the metadata file add it to the index as well
-            # as the path to the execution block.
-            if execution_block == execution_block.parent / METADATA_FILE_NAME:
-                ingestfile(metadata_store_object, execution_block)
-                continue
+    dataproduct_paths = find_folders_with_metadata_files()
+    for product_path in dataproduct_paths:
+        ingestfile(metadata_store_object, product_path)
