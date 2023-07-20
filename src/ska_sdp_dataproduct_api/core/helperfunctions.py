@@ -158,7 +158,7 @@ def gzip_file(file_path: pathlib.Path):
     return gzip_response
 
 
-def downloadfile(file_object: FileUrl):
+def download_file(file_object: FileUrl):
     """This function returns a response that can be used to download a file
     pointed to by the file_object"""
     response = gzip_file(file_object.fullPathName)
@@ -191,7 +191,7 @@ def verify_file_path(file_path: pathlib.Path):
     return True
 
 
-def relativepath(absolute_path):
+def get_relative_path(absolute_path):
     """This function returns the relative path of an absolute path where the
     absolute path = PERSISTANT_STORAGE_PATH + relative_path"""
     persistant_storage_path_len = len(PERSISTANT_STORAGE_PATH.parts)
@@ -203,7 +203,7 @@ def relativepath(absolute_path):
     return pathlib.Path(relative_path)
 
 
-def getdatefromname(filename: str):
+def get_date_from_name(filename: str):
     """This function extracts the date from the file named according to the
     following format: type-generatorID-datetime-localSeq.
     https://confluence.skatelescope.org/display/SWSI/SKA+Unique+Identifiers"""
@@ -218,7 +218,7 @@ def getdatefromname(filename: str):
         return datetime.date.today().strftime("%Y-%m-%d")
 
 
-def loadmetadatafile(file_object: FileUrl):
+def load_metadata_file(file_object: FileUrl):
     """This function loads the content of a yaml file and return it as
     json."""
     if (file_object.fullPathName).is_file():
@@ -237,7 +237,7 @@ def loadmetadatafile(file_object: FileUrl):
         if "execution_block" not in metadata_yaml_object:
             return {}
 
-        metadata_date = getdatefromname(
+        metadata_date = get_date_from_name(
             metadata_yaml_object["execution_block"]
         )
         metadata_yaml_object.update({"date_created": metadata_date})
@@ -318,17 +318,17 @@ def update_dataproduct_list(metadata_list, data_product_details):
     return
 
 
-def ingestfile(metadata_store_object, path: pathlib.Path):
+def ingest_file(metadata_store_object, path: pathlib.Path):
     """This function gets the file information of a data product and
     structure the information to be inserted into the metadata store.
     """
     metadata_file = path
     metadata_file_name = FileUrl
     metadata_file_name.fullPathName = PERSISTANT_STORAGE_PATH.joinpath(
-        relativepath(metadata_file)
+        get_relative_path(metadata_file)
     )
-    metadata_file_name.relativePathName = relativepath(metadata_file)
-    metadata_file_json = loadmetadatafile(
+    metadata_file_name.relativePathName = get_relative_path(metadata_file)
+    metadata_file_json = load_metadata_file(
         metadata_file_name,
     )
     # return if no metadata was read
@@ -346,7 +346,7 @@ def find_folders_with_metadata_files():
     return folders
 
 
-def ingestmetadatafiles(metadata_store_object, full_path_name: pathlib.Path):
+def ingest_metadata_files(metadata_store_object, full_path_name: pathlib.Path):
     """This function runs through a volume and add all the data products to
     the metadata_list of the store"""
     # Test if the path points to a directory
@@ -354,4 +354,4 @@ def ingestmetadatafiles(metadata_store_object, full_path_name: pathlib.Path):
         return
     dataproduct_paths = find_folders_with_metadata_files()
     for product_path in dataproduct_paths:
-        ingestfile(metadata_store_object, product_path)
+        ingest_file(metadata_store_object, product_path)
