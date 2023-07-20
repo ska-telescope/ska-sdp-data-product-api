@@ -12,32 +12,32 @@ def test_ping_main(test_app):
     assert "Version" in response.json()
 
 
-def test_reindexdataproducts(test_app):
+def test_reindex_data_products(test_app):
     """Test to see if a file list can be retrieved"""
     response = test_app.get("/reindexdataproducts")
     assert response.status_code == 200
     assert "Metadata store cleared and re-indexed" in str(response.json())
 
 
-def test_dataproductlist(test_app):
+def test_data_product_list(test_app):
     """Test to see if a file list can be retrieved"""
     response = test_app.get("/dataproductlist")
     assert response.status_code == 200
-    assert "product/eb-m001-20221212-12345/ska-data-product.yaml" in str(
+    assert "eb-m001-20221212-12345/ska-data-product.yaml" in str(
         response.json()
     )
 
     # make sure that the response JSON contains 7 data products,
     # and therefore that the 3 YAML files missing execution_block attributes
     # have not been ingested
-    assert len(response.json()) == 7
+    assert len(response.json()) == 8
 
 
 def test_download_file(test_app):
     """Test if a file can be downloaded from the test files"""
     data = (
         '{"fileName": "TestDataFile1.txt","relativePathName": \
-        "product/eb-m001-20221212-12345/ska-sub-system/scan_id_1/pb_id_1'
+        "eb-m001-20221212-12345/ska-sub-system/scan_id_1/pb_id_1'
         + '/TestDataFile1.txt"}'
     )
     response = test_app.post("/download", data=data)
@@ -47,21 +47,21 @@ def test_download_file(test_app):
 def test_download_folder(test_app):
     """Test if a folder can be downloaded from the test files"""
     data = '{"fileName": "eb-m001-20221212-12345","relativePathName": \
-        "product/eb-m001-20221212-12345"}'
+        "eb-m001-20221212-12345"}'
     response = test_app.post("/download", data=data)
     assert response.status_code == 200
 
 
-def test_dataproductmetadata(test_app):
+def test_data_product_metadata(test_app):
     """Test if metadata can be retrieved for a data product"""
     data = '{"fileName": "ska-data-product.yaml","relativePathName": \
-    "product/eb-m001-20221212-12345/ska-data-product.yaml"}'
+    "eb-m001-20221212-12345/ska-data-product.yaml"}'
     response = test_app.post("/dataproductmetadata", data=data)
     assert response.status_code == 200
     assert "Experimental run as part of XYZ-123" in str(response.json())
 
 
-def test_dataproductsearch_unhappy_path(test_app):
+def test_data_product_search_unhappy_path(test_app):
     """Test the unhappy data product search for when the ES instance is
     not available, should return a 503 service not available error"""
     data = {

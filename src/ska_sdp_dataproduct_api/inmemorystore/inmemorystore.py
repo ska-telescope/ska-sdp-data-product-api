@@ -4,7 +4,7 @@ from collections.abc import MutableMapping
 
 from ska_sdp_dataproduct_api.core.helperfunctions import (
     add_dataproduct,
-    ingestmetadatafiles,
+    ingest_metadata_files,
 )
 from ska_sdp_dataproduct_api.core.settings import PERSISTANT_STORAGE_PATH
 
@@ -21,14 +21,14 @@ class InMemoryDataproductIndex:
     def __init__(self, es_search_enabled) -> None:
         self.metadata_list = []
         if not es_search_enabled:
-            ingestmetadatafiles(self, PERSISTANT_STORAGE_PATH)
+            ingest_metadata_files(self, PERSISTANT_STORAGE_PATH)
 
     def reindex(self):
         """This methods resets and recreates the metadata_list. This is added
         to enable the user to reindex if the data products were changed or
         appended since the initial load of the data"""
         self.metadata_list.clear()
-        ingestmetadatafiles(self, PERSISTANT_STORAGE_PATH)
+        ingest_metadata_files(self, PERSISTANT_STORAGE_PATH)
 
     def insert_metadata(self, metadata_file_json):
         """This method loads the metadata file of a data product, creates a
@@ -37,7 +37,7 @@ class InMemoryDataproductIndex:
         metadata_file = json.loads(metadata_file_json)
 
         # generate a list of keys from this object
-        query_key_list = self.generatemetadatakeyslist(
+        query_key_list = self.generate_metadata_keys_list(
             metadata_file, ["files"], "", "."
         )
 
@@ -47,7 +47,7 @@ class InMemoryDataproductIndex:
             query_key_list=query_key_list,
         )
 
-    def generatemetadatakeyslist(
+    def generate_metadata_keys_list(
         self, metadata, ignore_keys, parent_key="", sep="_"
     ):
         """Given a nested dict, return the flattened list of keys"""
@@ -56,7 +56,7 @@ class InMemoryDataproductIndex:
             new_key = parent_key + sep + key if parent_key else key
             if isinstance(value, MutableMapping):
                 items.extend(
-                    self.generatemetadatakeyslist(
+                    self.generate_metadata_keys_list(
                         value, ignore_keys, new_key, sep=sep
                     )
                 )

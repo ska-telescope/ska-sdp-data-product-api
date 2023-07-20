@@ -6,7 +6,7 @@ from elasticsearch import Elasticsearch
 
 from ska_sdp_dataproduct_api.core.helperfunctions import (
     add_dataproduct,
-    ingestmetadatafiles,
+    ingest_metadata_files,
 )
 from ska_sdp_dataproduct_api.core.settings import (
     METADATA_ES_SCHEMA_FILE,
@@ -59,7 +59,7 @@ class ElasticsearchMetadataStore:
         to enable the user to reindex if the data products were changed or
         appended since the initial load of the data"""
         self.clear_indecise()
-        ingestmetadatafiles(self, PERSISTANT_STORAGE_PATH)
+        ingest_metadata_files(self, PERSISTANT_STORAGE_PATH)
 
     def insert_metadata(
         self,
