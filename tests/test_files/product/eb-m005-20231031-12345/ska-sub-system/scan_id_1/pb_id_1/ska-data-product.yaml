@@ -1,0 +1,47 @@
+interface: http://schema.skao.int/ska-data-product-meta/0.1
+ 
+execution_block: eb-m005-20231031-12345
+ 
+ 
+context: # Free-form data provided by OET.
+  observer: AIV_person_1
+  intent: "Experimental run as part of XYZ-123"
+  notes: "Running that signal from XX/YY/ZZ through again, things seem a bit flaky"
+ 
+config: # Configuration of generating software
+  processing_block: pb-m004-20191031-12345
+  processing_script: receive
+  image: artefact.skao.int/ska-docker/vis_receive
+  version: 0.1.3
+  commit: 516fb5a693f9dc9aff5d46192f4e055b582fc025
+  cmdline: -dump /product/eb-m004-20191031-12345/ska-sdp/pb-m004-20191031-12345/vis.ms
+ 
+files:
+  - # Path to files. Can be a directory, in which case it applies to all nested files.
+    path: vis.ms
+    # Indicate current file status
+    # * working = processes still running, files might be missing or incomplete
+    # * done = processes finished, files should be complete
+    # * failure = not finished sucessfully, files might be incomplete or corrupt
+    status: working
+    description: "Raw visibility dump from receive"
+ 
+obscore: # ObsCore minimal set
+  dataproduct_type: MS
+  calib_level: raw
+  obs_collection: AIV-tests-20191031
+  obs_id: pb-m004-20191031-12345
+  access_url: https://archive.skatelescope.org/pb-m004-20191031-12345/retrieve
+  access_format: application/x-tar-gzip
+  access_estsize: 1234567890
+  target_name: None
+  s_ra: 10.203040
+  s_dec: -26.70312
+  t_min: 19304.508625
+  t_max: 19340.509625
+  t_exptime: 86.4
+  o_ucd: stat.fourier
+  pol_states: /XX/XY/YX/YY/
+  pol_xel: 4
+  facility_name: "SKA-Observatory"
+  instrument_name: "SKA-LOW"

@@ -9,10 +9,10 @@ from ska_sdp_dataproduct_api.core.helperfunctions import (
     DPDAPIStatus,
     FileUrl,
     SearchParametersClass,
-    downloadfile,
-    ingestjson,
-    ingestmetadatafiles,
-    loadmetadatafile,
+    download_file,
+    ingest_json,
+    ingest_metadata_files,
+    load_metadata_file,
 )
 from ska_sdp_dataproduct_api.core.settings import ES_HOST, app
 from ska_sdp_dataproduct_api.elasticsearch.elasticsearch_api import (
@@ -85,14 +85,14 @@ async def data_products_list():
 async def download(file_object: FileUrl):
     """This API endpoint returns a FileResponse that is used by a
     frontend to download a file"""
-    return downloadfile(file_object)
+    return download_file(file_object)
 
 
 @app.post("/dataproductmetadata", response_class=Response)
 async def data_product_metadata(file_object: FileUrl):
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
-    return loadmetadatafile(file_object)
+    return load_metadata_file(file_object)
 
 
 @app.post("/ingestnewdataproduct")
@@ -101,19 +101,21 @@ async def ingest_new_data_product(file_object: FileUrl):
     a specified data product."""
     DPD_API_Status.update_data_store_date_modified()
     if elasticsearch_metadata_store.es_search_enabled:
-        ingestmetadatafiles(
+        ingest_metadata_files(
             elasticsearch_metadata_store, file_object.fullPathName
         )
     else:
-        ingestmetadatafiles(in_memory_metadata_store, file_object.fullPathName)
+        ingest_metadata_files(
+            in_memory_metadata_store, file_object.fullPathName
+        )
     return "Data product metadata file loaded and store index updated"
 
 
 @app.post("/ingestjson")
-async def ingest_json(dataproduct: DataProductMetaData):
+async def ingest_json_dataproduct(dataproduct: DataProductMetaData):
     """This API endpoint takes JSON dataproduct metadata and ingests into
     the appropriate store."""
     if elasticsearch_metadata_store.es_search_enabled:
-        return ingestjson(elasticsearch_metadata_store, dataproduct)
+        return ingest_json(elasticsearch_metadata_store, dataproduct)
 
-    return ingestjson(in_memory_metadata_store, dataproduct)
+    return ingest_json(in_memory_metadata_store, dataproduct)
