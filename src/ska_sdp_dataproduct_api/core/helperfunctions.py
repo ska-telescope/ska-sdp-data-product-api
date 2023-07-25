@@ -206,11 +206,11 @@ def get_relative_path(absolute_path):
     return pathlib.Path(relative_path)
 
 
-def get_date_from_name(eb_id: str):
-    """This function extracts the date from the file named according to the
-    following format: type-generatorID-datetime-localSeq.
+def get_date_from_name(execution_block: str):
+    """This function extracts the date from the execution_block named according
+    to the following format: type-generatorID-datetime-localSeq.
     https://confluence.skatelescope.org/display/SWSI/SKA+Unique+Identifiers"""
-    metadata_date_str = eb_id.split("-")[2]
+    metadata_date_str = execution_block.split("-")[2]
     year = metadata_date_str[0:4]
     month = metadata_date_str[4:6]
     day = metadata_date_str[6:8]
@@ -219,8 +219,8 @@ def get_date_from_name(eb_id: str):
         return year + "-" + month + "-" + day
     except ValueError as error:
         logger.warning(
-            "Date retrieved from eb_id '%s' caused and error: %s",
-            eb_id,
+            "Date retrieved from execution_block '%s' caused and error: %s",
+            execution_block,
             error,
         )
         raise
@@ -384,7 +384,8 @@ def ingest_metadata_files(metadata_store_object, full_path_name: pathlib.Path):
     the metadata_list of the store"""
     # Test if the path points to a directory
     logger.info(
-        "Ingesting metadata into store from storage location %s",
+        "Loading metadata files from storage location %s, then ingesting them\
+into the metadata store",
         str(full_path_name),
     )
     if not full_path_name.is_dir() or full_path_name.is_symlink():
