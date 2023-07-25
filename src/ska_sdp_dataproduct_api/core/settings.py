@@ -1,12 +1,20 @@
 """API SDP Settings"""
 
+import logging
 import pathlib
 
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from ska_ser_logging import configure_logging
 from starlette.config import Config
 
 import ska_sdp_dataproduct_api
+
+configure_logging(
+    level=uvicorn.config.LOGGING_CONFIG["loggers"]["uvicorn.error"]["level"]
+)
+logger = logging.getLogger(__name__)
 
 config = Config(".env")
 PERSISTANT_STORAGE_PATH: pathlib.Path = pathlib.Path(

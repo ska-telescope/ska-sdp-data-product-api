@@ -2,6 +2,7 @@
 import datetime
 import gzip
 import json
+import logging
 import pathlib
 import tarfile
 from io import BytesIO
@@ -19,6 +20,8 @@ from ska_sdp_dataproduct_api.core.settings import (
     PERSISTANT_STORAGE_PATH,
     VERSION,
 )
+
+logger = logging.getLogger(__name__)
 
 # pylint: disable=too-few-public-methods
 
@@ -203,25 +206,36 @@ def get_relative_path(absolute_path):
     return pathlib.Path(relative_path)
 
 
-def get_date_from_name(filename: str):
-    """This function extracts the date from the file named according to the
-    following format: type-generatorID-datetime-localSeq.
+def get_date_from_name(execution_block: str):
+    """This function extracts the date from the execution_block named according
+    to the following format: type-generatorID-datetime-localSeq.
     https://confluence.skatelescope.org/display/SWSI/SKA+Unique+Identifiers"""
-    metadata_date_str = filename.split("-")[2]
+    metadata_date_str = execution_block.split("-")[2]
     year = metadata_date_str[0:4]
     month = metadata_date_str[4:6]
     day = metadata_date_str[6:8]
     try:
         datetime.datetime(int(year), int(month), int(day))
         return year + "-" + month + "-" + day
-    except ValueError:
-        return datetime.date.today().strftime("%Y-%m-%d")
+    except ValueError as error:
+        logger.warning(
+            "Date retrieved from execution_block '%s' caused and error: %s",
+            execution_block,
+            error,
+        )
+        raise
 
 
 def load_metadata_file(file_object: FileUrl):
     """This function loads the content of a yaml file and return it as
     json."""
-    if (file_object.fullPathName).is_file():
+    if not (file_object.fullPathName).is_file():
+        logger.warning(
+            "Metadata file path '%s' not pointing to a file.",
+            str(file_object.fullPathName),
+        )
+        return {}
+    try:
         with open(
             file_object.fullPathName, "r", encoding="utf-8"
         ) as metadata_yaml_file:
@@ -231,10 +245,20 @@ def load_metadata_file(file_object: FileUrl):
 
         # abort if metadata is empty
         if metadata_yaml_object is None:
+            logger.warning(
+                "Load of metadata file failed as there were no metadata in \
+file: %s",
+                str(file_object.fullPathName),
+            )
             return {}
 
         # abort if metadata does not contain an execution_block attribute
         if "execution_block" not in metadata_yaml_object:
+            logger.warning(
+                "Load of metadata file for execution_block failed as there \
+were no execution_block specified in the metadata file: %s",
+                str(file_object.fullPathName),
+            )
             return {}
 
         metadata_date = get_date_from_name(
@@ -249,7 +273,16 @@ def load_metadata_file(file_object: FileUrl):
         )
         metadata_json = json.dumps(metadata_yaml_object)
         return metadata_json
-    return {}
+    except Exception as error:  # pylint: disable=W0718
+        #     Expecting that there will be some errors on ingest of metadata
+        #     and dont want to breack the application when it occurs. Therefore
+        #     logging the error to log and returning {}
+        logger.warning(
+            "Load of metadata file failed for: %s, %s",
+            str(file_object.fullPathName),
+            error,
+        )
+        return {}
 
 
 def find_metadata(metadata, query_key):
@@ -350,6 +383,11 @@ def ingest_metadata_files(metadata_store_object, full_path_name: pathlib.Path):
     """This function runs through a volume and add all the data products to
     the metadata_list of the store"""
     # Test if the path points to a directory
+    logger.info(
+        "Loading metadata files from storage location %s, then ingesting them\
+into the metadata store",
+        str(full_path_name),
+    )
     if not full_path_name.is_dir() or full_path_name.is_symlink():
         return
     dataproduct_paths = find_folders_with_metadata_files()

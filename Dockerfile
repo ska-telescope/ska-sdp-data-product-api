@@ -21,4 +21,4 @@ RUN set -eux \
     && rm -rf /root/.cache/pip
 
 # start app
-CMD ["uvicorn", "ska_sdp_dataproduct_api.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000", "--app-dir", "/usr/src"]
+CMD ["uvicorn", "ska_sdp_dataproduct_api.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000", "--app-dir", "/usr/src",  "--log-level", "warning"]
