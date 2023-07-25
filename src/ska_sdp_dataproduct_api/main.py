@@ -1,6 +1,7 @@
 """This API exposes SDP Data Products to the SDP Data Product Dashboard."""
 
 import json
+import logging
 
 from fastapi import HTTPException, Response
 
@@ -19,6 +20,8 @@ from ska_sdp_dataproduct_api.elasticsearch.elasticsearch_api import (
 from ska_sdp_dataproduct_api.inmemorystore.inmemorystore import (
     InMemoryDataproductIndex,
 )
+
+logger = logging.getLogger(__name__)
 
 DPD_API_Status = DPDAPIStatus()
 
@@ -48,6 +51,7 @@ async def reindex_data_products():
         elasticsearch_metadata_store.reindex()
     else:
         in_memory_metadata_store.reindex()
+    logger.info("Metadata store cleared and re-indexed")
     return "Metadata store cleared and re-indexed"
 
 
@@ -106,4 +110,7 @@ async def ingest_new_data_product(file_object: FileUrl):
         ingest_metadata_files(
             in_memory_metadata_store, file_object.fullPathName
         )
-    return "Data product metadata file loaded and store index updated"
+    logger.info(
+        "New data product metadata file loaded and store index updated"
+    )
+    return "New data product metadata file loaded and store index updated"

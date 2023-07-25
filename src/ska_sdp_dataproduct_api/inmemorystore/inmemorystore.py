@@ -1,5 +1,6 @@
 """Module to insert data into Elasticsearch instance."""
 import json
+import logging
 from collections.abc import MutableMapping
 
 from ska_sdp_dataproduct_api.core.helperfunctions import (
@@ -7,6 +8,8 @@ from ska_sdp_dataproduct_api.core.helperfunctions import (
     ingest_metadata_files,
 )
 from ska_sdp_dataproduct_api.core.settings import PERSISTANT_STORAGE_PATH
+
+logger = logging.getLogger(__name__)
 
 # pylint: disable=no-name-in-module
 
@@ -29,6 +32,7 @@ class InMemoryDataproductIndex:
         appended since the initial load of the data"""
         self.metadata_list.clear()
         ingest_metadata_files(self, PERSISTANT_STORAGE_PATH)
+        logger.info("Metadata store cleared and re-indexed")
 
     def insert_metadata(self, metadata_file_json):
         """This method loads the metadata file of a data product, creates a

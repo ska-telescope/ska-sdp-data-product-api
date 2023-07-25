@@ -1,5 +1,6 @@
 """Module to insert data into Elasticsearch instance."""
 import json
+import logging
 
 import elasticsearch
 from elasticsearch import Elasticsearch
@@ -12,6 +13,8 @@ from ska_sdp_dataproduct_api.core.settings import (
     METADATA_ES_SCHEMA_FILE,
     PERSISTANT_STORAGE_PATH,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ElasticsearchMetadataStore:
@@ -32,6 +35,9 @@ class ElasticsearchMetadataStore:
         except elasticsearch.exceptions.ConnectionError:
             # If now connection is available, disable search.
             self.es_search_enabled = False
+            logger.info(
+                "Elasticsearch backend not reachable, setting search to false"
+            )
 
     def create_schema_if_not_existing(self, index: str):
         """Method to create a Schema from schema and index if it does not yet
@@ -60,6 +66,7 @@ class ElasticsearchMetadataStore:
         appended since the initial load of the data"""
         self.clear_indecise()
         ingest_metadata_files(self, PERSISTANT_STORAGE_PATH)
+        logger.info("Metadata store cleared and re-indexed")
 
     def insert_metadata(
         self,
