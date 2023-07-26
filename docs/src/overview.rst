@@ -35,7 +35,7 @@ Configure the environmental variables in the .evn file under the root folder acc
     REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL=http://localhost
     REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_PORT=8100
     PERSISTANT_STORAGE_PATH=./tests/test_files
-    METADATE_FILE_NAME=ska-data-product.yaml
+    METADATA_FILE_NAME=ska-data-product.yaml
     METADATA_ES_SCHEMA_FILE=./src/ska_sdp_dataproduct_api/elasticsearch/data_product_metadata_schema.json
     ES_HOST=http://localhost:9200
 
