@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Basic test for the ska_sdp_qa_data_api fastapi module."""
+"""Basic test for the ska_sdp_dataproduct_api fastapi module."""
 
 
 def test_ping_main(test_app):
