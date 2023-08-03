@@ -36,7 +36,12 @@ METADATA_FILE_NAME: str = config(
 
 METADATA_ES_SCHEMA_FILE: str = config(
     "METADATA_ES_SCHEMA_FILE",
-    default="./elasticsearch/data_product_metadata_schema.json",
+    default="",
+)
+
+METADATA_JSON_SCHEMA_FILE: str = config(
+    "METADATA_JSON_SCHEMA_FILE",
+    default="./data_product_metadata_json_schema.json",
 )
 
 ES_HOST: str = config(
