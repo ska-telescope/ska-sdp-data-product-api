@@ -27,11 +27,14 @@ from ska_sdp_dataproduct_api.core.settings import (
 # get reference to the logging object
 logger = logging.getLogger(__name__)
 
-# load the JSON schema for metadata files
+# load the metadata schema and create a single validator that can be used
+# for every incoming metadata file
 with open(
     METADATA_JSON_SCHEMA_FILE, "r", encoding="utf-8"
 ) as metadata_schema_file:
-    metadata_schema = json.load(metadata_schema_file)
+    metadata_validator = jsonschema.validators.Draft202012Validator(
+        json.load(metadata_schema_file)
+    )
 
 # pylint: disable=too-few-public-methods
 
@@ -265,10 +268,10 @@ def load_metadata_file(file_object: FileUrl):
 
     # validate the metadata against the schema
     try:
-        jsonschema.validate(metadata_yaml_object, metadata_schema)
+        metadata_validator.validate(metadata_yaml_object)
     except jsonschema.exceptions.ValidationError as validation_error:
         logger.info(
-            "Unable to ingest %s : %s",
+            "Schema validation error when ingesting: %s : %s",
             str(file_object.fullPathName),
             str(validation_error.message),
         )
