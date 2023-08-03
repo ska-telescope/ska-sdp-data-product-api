@@ -83,7 +83,7 @@
         },
         "obscore": {
             "type": "object",
-            "additionalProperties": false,
+            "additionalProperties": true,
             "properties": {
                 "dataproduct_type": {
                     "type": "string"
