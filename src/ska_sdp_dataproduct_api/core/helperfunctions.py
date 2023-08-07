@@ -8,6 +8,8 @@ import tarfile
 from io import BytesIO
 from typing import Optional
 
+import jsonschema
+
 # pylint: disable=no-name-in-module
 import pydantic
 import requests
@@ -17,11 +19,22 @@ from pydantic import BaseModel
 
 from ska_sdp_dataproduct_api.core.settings import (
     METADATA_FILE_NAME,
+    METADATA_JSON_SCHEMA_FILE,
     PERSISTANT_STORAGE_PATH,
     VERSION,
 )
 
+# get reference to the logging object
 logger = logging.getLogger(__name__)
+
+# load the metadata schema and create a single validator that can be used
+# for every incoming metadata file
+with open(
+    METADATA_JSON_SCHEMA_FILE, "r", encoding="utf-8"
+) as metadata_schema_file:
+    metadata_validator = jsonschema.validators.Draft202012Validator(
+        json.load(metadata_schema_file)
+    )
 
 # pylint: disable=too-few-public-methods
 
@@ -46,7 +59,7 @@ class DPDAPIStatus:
         }
 
     def update_data_store_date_modified(self):
-        """This mothod update the timestamp of the last time that data was
+        """This method update the timestamp of the last time that data was
         added or modified in the data product store by this API"""
         self.date_modified = datetime.datetime.now()
 
@@ -242,40 +255,9 @@ def load_metadata_file(file_object: FileUrl):
             metadata_yaml_object = yaml.safe_load(
                 metadata_yaml_file
             )  # yaml_object will be a list or a dict
-
-        # abort if metadata is empty
-        if metadata_yaml_object is None:
-            logger.warning(
-                "Load of metadata file failed as there were no metadata in \
-file: %s",
-                str(file_object.fullPathName),
-            )
-            return {}
-
-        # abort if metadata does not contain an execution_block attribute
-        if "execution_block" not in metadata_yaml_object:
-            logger.warning(
-                "Load of metadata file for execution_block failed as there \
-were no execution_block specified in the metadata file: %s",
-                str(file_object.fullPathName),
-            )
-            return {}
-
-        metadata_date = get_date_from_name(
-            metadata_yaml_object["execution_block"]
-        )
-        metadata_yaml_object.update({"date_created": metadata_date})
-        metadata_yaml_object.update(
-            {"dataproduct_file": str(file_object.relativePathName.parent)}
-        )
-        metadata_yaml_object.update(
-            {"metadata_file": str(file_object.relativePathName)}
-        )
-        metadata_json = json.dumps(metadata_yaml_object)
-        return metadata_json
     except Exception as error:  # pylint: disable=W0718
         #     Expecting that there will be some errors on ingest of metadata
-        #     and dont want to breack the application when it occurs. Therefore
+        #     and dont want to break the application when it occurs. Therefore
         #     logging the error to log and returning {}
         logger.warning(
             "Load of metadata file failed for: %s, %s",
@@ -283,6 +265,28 @@ were no execution_block specified in the metadata file: %s",
             error,
         )
         return {}
+
+    # validate the metadata against the schema
+    try:
+        metadata_validator.validate(metadata_yaml_object)
+    except jsonschema.exceptions.ValidationError as validation_error:
+        logger.info(
+            "Schema validation error when ingesting: %s : %s",
+            str(file_object.fullPathName),
+            str(validation_error.message),
+        )
+        return {}
+
+    metadata_date = get_date_from_name(metadata_yaml_object["execution_block"])
+    metadata_yaml_object.update({"date_created": metadata_date})
+    metadata_yaml_object.update(
+        {"dataproduct_file": str(file_object.relativePathName.parent)}
+    )
+    metadata_yaml_object.update(
+        {"metadata_file": str(file_object.relativePathName)}
+    )
+    metadata_json = json.dumps(metadata_yaml_object)
+    return metadata_json
 
 
 def find_metadata(metadata, query_key):
@@ -384,7 +388,7 @@ def ingest_metadata_files(metadata_store_object, full_path_name: pathlib.Path):
     the metadata_list of the store"""
     # Test if the path points to a directory
     logger.info(
-        "Loading metadata files from storage location %s, then ingesting them\
+        "Loading metadata files from storage location %s, then ingesting them \
 into the metadata store",
         str(full_path_name),
     )

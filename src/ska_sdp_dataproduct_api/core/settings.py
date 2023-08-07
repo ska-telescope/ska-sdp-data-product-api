@@ -39,6 +39,11 @@ METADATA_ES_SCHEMA_FILE: str = config(
     default="./elasticsearch/data_product_metadata_schema.json",
 )
 
+METADATA_JSON_SCHEMA_FILE: str = config(
+    "METADATA_JSON_SCHEMA_FILE",
+    default="./core/data_product_metadata_json_schema.json",
+)
+
 ES_HOST: str = config(
     "ES_HOST",
     default="http://localhost:9200",
