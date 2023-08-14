@@ -1,0 +1,47 @@
+interface: http://schema.skao.int/ska-data-product-meta/0.1
+  
+execution_block: eb-m001-20191031-245
+  
+context: # Free-form data provided by OET.
+  observer: PST_jc
+  intent: "Tied-array beam observation of J0437-4715"
+  notes: "Observation ran smoothly, but the RFI levels were higher than usual"
+    
+config: # Configuration of generating software
+  image: artefact.skao.int/ska-pst/ska-pst
+  version: 0.1.3
+    
+files:
+  - path: data
+    status: done
+    description: "Channelised voltage data raw files"
+    size: 625025.024
+  - path: weights
+    status: done
+    description: "Channelised weights raw files"
+    size: 5310.232
+   
+obscore:
+  dataproduct_type: timeseries
+  dataproduct_subtype: voltages
+  calib_level: 0
+  obs_id: 12345
+  access_estsize: 615561.7734375
+  target_name: None
+  s_ra: 4.6210833333
+  s_dec: -47.2525277778
+  t_min: 60018.1538078704
+  t_max: 60018.1542418672
+  t_resolution: 0.00020736
+  t_exptime: 37.5
+  facility_name: "SKA-Observatory"
+  instrument_name: "SKA-LOW-PST"
+  pol_xel: 2
+  pol_states: null
+  em_xel: 432
+  em_unit: Hz
+  em_min: 50412326.39
+  em_max: 51974826.39
+  em_res_power: null
+  em_resolution: 3616.898148
+  o_ucd: null
