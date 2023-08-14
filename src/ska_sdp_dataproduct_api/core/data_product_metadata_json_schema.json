@@ -1,10 +1,10 @@
 {
     "type": "object",
-    "additionalProperties": false,
+    "additionalProperties": true,
     "properties": {
         "config": {
             "type": "object",
-            "additionalProperties": false,
+            "additionalProperties": true,
             "properties": {
                 "cmdline": {
                     "type": ["string", "null"]
@@ -26,17 +26,11 @@
                 }
             },
             "required": [
-                "cmdline",
-                "commit",
-                "image",
-                "processing_block",
-                "processing_script",
-                "version"
             ]
         },
         "context": {
             "type": "object",
-            "additionalProperties": false,
+            "additionalProperties": true,
             "properties": {
                 "observer": {
                     "type": "string"
@@ -58,7 +52,7 @@
             "type": "array",
             "items": {
                 "type": "object",
-                "additionalProperties": false,
+                "additionalProperties": true,
                 "properties": {
                     "description": {
                         "type": "string"
@@ -71,9 +65,6 @@
                     }
                 },
                 "required": [
-                    "description",
-                    "path",
-                    "status"
                 ]
             }
         },
@@ -145,32 +136,10 @@
                 }
             },
             "required": [
-                "access_estsize",
-                "access_format",
-                "access_url",
-                "calib_level",
-                "dataproduct_type",
-                "facility_name",
-                "instrument_name",
-                "o_ucd",
-                "obs_collection",
-                "obs_id",
-                "pol_states",
-                "pol_xel",
-                "s_dec",
-                "s_ra",
-                "t_exptime",
-                "t_max",
-                "t_min",
-                "target_name"
             ]
         }
     },
     "required": [
-        "config",
-        "context",
-        "execution_block",
-        "files",
-        "interface"
+        "execution_block"
     ]
 }

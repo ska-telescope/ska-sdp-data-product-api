@@ -267,15 +267,26 @@ def load_metadata_file(file_object: FileUrl):
         return {}
 
     # validate the metadata against the schema
-    try:
-        metadata_validator.validate(metadata_yaml_object)
-    except jsonschema.exceptions.ValidationError as validation_error:
-        logger.info(
-            "Schema validation error when ingesting: %s : %s",
+    validation_errors = metadata_validator.iter_errors(metadata_yaml_object)
+    # Loop over the errors
+    for validation_error in validation_errors:
+        logger.debug(
+            "Dataproduct schema validation error when ingesting: %s : %s",
             str(file_object.fullPathName),
             str(validation_error.message),
         )
-        return {}
+
+        if (
+            str(validation_error.validator) == "required"
+            or str(validation_error.message) == "None is not of type 'object'"
+        ):
+            logger.warning(
+                "Not loading dataproduct due to schema validation error \
+when ingesting: %s : %s",
+                str(file_object.fullPathName),
+                str(validation_error.message),
+            )
+            return {}
 
     metadata_date = get_date_from_name(metadata_yaml_object["execution_block"])
     metadata_yaml_object.update({"date_created": metadata_date})
