@@ -30,7 +30,7 @@ def test_data_product_list(test_app):
     # make sure that the response JSON contains 7 data products,
     # and therefore that the 3 YAML files missing execution_block attributes
     # have not been ingested
-    assert len(response.json()) == 8
+    assert len(response.json()) == 9
 
 
 def test_download_file(test_app):
