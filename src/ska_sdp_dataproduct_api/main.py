@@ -13,12 +13,6 @@ from ska_sdp_dataproduct_api.core.helperfunctions import (
     download_file
 )
 from ska_sdp_dataproduct_api.core.settings import ES_HOST, app
-from ska_sdp_dataproduct_api.elasticsearch.elasticsearch_api import (
-    ElasticsearchMetadataStore,
-)
-from ska_sdp_dataproduct_api.inmemorystore.inmemorystore import (
-    InMemoryDataproductIndex,
-)
 from ska_sdp_dataproduct_api.metadatastore.datastore import Store
 logger = logging.getLogger(__name__)
 
@@ -34,7 +28,7 @@ async def root():
     return DPD_API_Status.status(store.es_search_enabled)
 
 
-@app.get("/reindexdataproducts")
+@app.get("/reindexdataproducts", status_code=202)
 async def reindex_data_products(background_tasks: BackgroundTasks):
     """This endpoint clears the list of data products from memory and
     re-ingest the metadata of all data products found"""
