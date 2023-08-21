@@ -17,6 +17,7 @@ configure_logging(
 logger = logging.getLogger(__name__)
 
 config = Config(".env")
+REINDEXING_DELAY = 300  # Only allow reindexing after 5 minutes
 PERSISTANT_STORAGE_PATH: pathlib.Path = pathlib.Path(
     config("PERSISTANT_STORAGE_PATH", default="./tests/test_files"),
 )
