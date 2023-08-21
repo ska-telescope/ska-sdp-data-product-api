@@ -16,13 +16,12 @@ logger = logging.getLogger(__name__)
 class ElasticsearchMetadataStore(Store):
     """Class to insert data into Elasticsearch instance."""
 
-    def __init__(self, hosts):
+    def __init__(self, hosts=None):
         self.metadata_index = "sdp_meta_data"
         self.metadata_list = []
         self.hosts = hosts
         self.es_client = None
         self.es_search_enabled = True
-        self.connect()  # @Andre, any reason not to connect now?
 
     def connect(self):
         """Connect to Elasticsearch host and create default schema"""
@@ -104,7 +103,6 @@ class ElasticsearchMetadataStore(Store):
             for key, value in doc.items():
                 if key == "_source":
                     self.add_dataproduct(
-                        self.metadata_list,
                         metadata_file=value,
                         query_key_list=[metadata_key],
                     )
