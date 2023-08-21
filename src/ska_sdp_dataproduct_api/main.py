@@ -3,6 +3,7 @@
 import json
 import logging
 
+from fastapi import BackgroundTasks
 from fastapi import HTTPException, Response
 
 from ska_sdp_dataproduct_api.core.helperfunctions import (
@@ -43,14 +44,15 @@ async def root():
 
 
 @app.get("/reindexdataproducts")
-async def reindex_data_products():
+async def reindex_data_products(background_tasks: BackgroundTasks):
     """This endpoint clears the list of data products from memory and
     re-ingest the metadata of all data products found"""
     DPD_API_Status.update_data_store_date_modified()
     if elasticsearch_metadata_store.es_search_enabled:
-        elasticsearch_metadata_store.reindex()
+        store = elasticsearch_metadata_store
     else:
-        in_memory_metadata_store.reindex()
+        store = in_memory_metadata_store
+    background_tasks.add_task(store.reindex)
     logger.info("Metadata store cleared and re-indexed")
     return "Metadata store cleared and re-indexed"
 
