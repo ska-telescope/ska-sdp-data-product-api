@@ -2,7 +2,6 @@
 
 import json
 
-from ska_sdp_dataproduct_api.core.helperfunctions import add_dataproduct
 from ska_sdp_dataproduct_api.core.settings import METADATA_ES_SCHEMA_FILE
 from ska_sdp_dataproduct_api.elasticsearch.elasticsearch_api import (
     ElasticsearchMetadataStore,
@@ -56,8 +55,7 @@ def test_update_dataproduct_list():
     ) as document_file:
         metadata_file = json.loads(document_file.read())
 
-    add_dataproduct(
-        metadata_store.metadata_list,
+    metadata_store.add_dataproduct(
         metadata_file=metadata_file,
         query_key_list=[],
     )
@@ -76,7 +74,7 @@ def test_search_metadata():
     """Method to test search of metadata"""
     metadata_store = ElasticsearchMetadataStore()
     metadata_store.es_client = MockElasticsearch()
-
+    metadata_store.es_client.ping = lambda: True
     metadata_list = metadata_store.search_metadata(
         start_date="2020-01-01",
         end_date="2100-01-01",

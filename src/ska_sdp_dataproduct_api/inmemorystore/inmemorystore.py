@@ -3,36 +3,32 @@ import json
 import logging
 from collections.abc import MutableMapping
 
-from ska_sdp_dataproduct_api.core.helperfunctions import (
-    add_dataproduct,
-    ingest_metadata_files,
-)
-from ska_sdp_dataproduct_api.core.settings import PERSISTANT_STORAGE_PATH
+from ska_sdp_dataproduct_api.metadatastore.datastore import Store
 
 logger = logging.getLogger(__name__)
 
 # pylint: disable=no-name-in-module
 
 
-class InMemoryDataproductIndex:
+class InMemoryDataproductIndex(Store):
     """
     This class defines an object that is used to create a list of data products
     based on information contained in the metadata files of these data
     products.
     """
 
-    def __init__(self, es_search_enabled) -> None:
-        self.metadata_list = []
-        if not es_search_enabled:
-            ingest_metadata_files(self, PERSISTANT_STORAGE_PATH)
+    def __init__(self) -> None:
+        super().__init__()
+        self.reindex()
 
-    def reindex(self):
-        """This methods resets and recreates the metadata_list. This is added
-        to enable the user to reindex if the data products were changed or
-        appended since the initial load of the data"""
+    @property
+    def es_search_enabled(self):
+        """Generic interface to verify there is no Elasticsearch backend"""
+        return False
+
+    def clear_metadata_indecise(self):
+        """Clear out all indices from in memory instance"""
         self.metadata_list.clear()
-        ingest_metadata_files(self, PERSISTANT_STORAGE_PATH)
-        logger.info("Metadata store cleared and re-indexed")
 
     def insert_metadata(self, metadata_file_json):
         """This method loads the metadata file of a data product, creates a
@@ -45,8 +41,7 @@ class InMemoryDataproductIndex:
             metadata_file, ["files"], "", "."
         )
 
-        add_dataproduct(
-            self.metadata_list,
+        self.add_dataproduct(
             metadata_file=metadata_file,
             query_key_list=query_key_list,
         )
