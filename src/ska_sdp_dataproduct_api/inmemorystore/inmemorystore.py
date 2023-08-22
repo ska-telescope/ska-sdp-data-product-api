@@ -5,7 +5,6 @@ from collections.abc import MutableMapping
 
 from ska_sdp_dataproduct_api.metadatastore.datastore import Store
 
-
 logger = logging.getLogger(__name__)
 
 # pylint: disable=no-name-in-module
@@ -19,9 +18,8 @@ class InMemoryDataproductIndex(Store):
     """
 
     def __init__(self) -> None:
-        self.metadata_list = []
+        super().__init__()
         self.es_search_enabled = False
-        self.indexing_timestamp = 0
         self.reindex()
 
     def clear_metadata_indecise(self):

@@ -5,9 +5,7 @@ import logging
 import elasticsearch
 from elasticsearch import Elasticsearch
 
-from ska_sdp_dataproduct_api.core.settings import (
-    METADATA_ES_SCHEMA_FILE,
-)
+from ska_sdp_dataproduct_api.core.settings import METADATA_ES_SCHEMA_FILE
 from ska_sdp_dataproduct_api.metadatastore.datastore import Store
 
 logger = logging.getLogger(__name__)
@@ -17,8 +15,8 @@ class ElasticsearchMetadataStore(Store):
     """Class to insert data into Elasticsearch instance."""
 
     def __init__(self, hosts=None):
+        super().__init__()
         self.metadata_index = "sdp_meta_data"
-        self.metadata_list = []
         self.hosts = hosts
         self.es_client = None
         self.es_search_enabled = True
@@ -49,10 +47,7 @@ class ElasticsearchMetadataStore(Store):
         )
         self.metadata_list = []
 
-    def insert_metadata(
-        self,
-        metadata_file_json,
-    ):
+    def insert_metadata(self, metadata_file_json):
         """Method to insert metadata into Elasticsearch."""
         # Add new metadata to es
         result = self.es_client.index(

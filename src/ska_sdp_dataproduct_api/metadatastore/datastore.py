@@ -1,38 +1,46 @@
-
-import pathlib
-import logging
+"""Module to capture commonality between in memory and elasticsearch stores."""
 import json
-import yaml
+import logging
+import pathlib
 from time import time
+
+import yaml
 from elasticsearch import Elasticsearch
 
+from ska_sdp_dataproduct_api.core.helperfunctions import (
+    FileUrl,
+    find_metadata,
+    get_date_from_name,
+    get_relative_path,
+    metadata_validator,
+)
 from ska_sdp_dataproduct_api.core.settings import (
     METADATA_FILE_NAME,
     PERSISTANT_STORAGE_PATH,
 )
 
-from ska_sdp_dataproduct_api.core.helperfunctions import (
-    FileUrl,
-    metadata_validator,
-    get_date_from_name,
-    get_relative_path,
-    find_metadata
-)
-
-
 logger = logging.getLogger(__name__)
 
 
 class Store:
+    """Common store class (superclass to elastic search and in memory store)"""
+
     @staticmethod
-    def specialise(hosts):
+    def select_correct_class(hosts):
+        """Specialise the store based on elasticsearch availability."""
+        # importing here to avoid circular import.
+        # pylint: disable=wrong-import-position
+        from ska_sdp_dataproduct_api.elasticsearch.elasticsearch_api import (
+            ElasticsearchMetadataStore,
+        )
+        from ska_sdp_dataproduct_api.inmemorystore.inmemorystore import (
+            InMemoryDataproductIndex,
+        )
+
+        # pylint: enable=wrong-import-position
         es_client = Elasticsearch(hosts=hosts)
         if es_client.ping():
-            from ska_sdp_dataproduct_api.elasticsearch.elasticsearch_api \
-                import ElasticsearchMetadataStore
             return ElasticsearchMetadataStore(hosts)
-        from ska_sdp_dataproduct_api.inmemorystore.inmemorystore import \
-            InMemoryDataproductIndex
         return InMemoryDataproductIndex()
 
     def __init__(self):
@@ -40,7 +48,11 @@ class Store:
         self.metadata_list = []
 
     def clear_metadata_indecise(self):
-        """ This method is implemented in the subclasses."""
+        """This method is implemented in the subclasses."""
+        raise NotImplementedError
+
+    def insert_metadata(self, metadata_file_json):
+        """This is implemented in subclasses."""
         raise NotImplementedError
 
     def reindex(self):
@@ -53,31 +65,30 @@ class Store:
         logger.info("Metadata store cleared and re-indexed")
 
     def ingest_file(self, path: pathlib.Path):
-            """This function gets the file information of a data product and
-            structure the information to be inserted into the metadata store.
-            """
-            metadata_file = path
-            metadata_file_name = FileUrl
-            metadata_file_name.fullPathName = PERSISTANT_STORAGE_PATH.joinpath(
-                get_relative_path(metadata_file)
-            )
-            metadata_file_name.relativePathName = get_relative_path(
-                metadata_file)
-            metadata_file_json = self.load_metadata_file(
-                metadata_file_name,
-            )
-            # return if no metadata was read
-            if len(metadata_file_json) == 0:
-                return
-            self.insert_metadata(metadata_file_json)
+        """This function gets the file information of a data product and
+        structure the information to be inserted into the metadata store.
+        """
+        metadata_file = path
+        metadata_file_name = FileUrl
+        metadata_file_name.fullPathName = PERSISTANT_STORAGE_PATH.joinpath(
+            get_relative_path(metadata_file)
+        )
+        metadata_file_name.relativePathName = get_relative_path(metadata_file)
+        metadata_file_json = self.load_metadata_file(
+            metadata_file_name,
+        )
+        # return if no metadata was read
+        if len(metadata_file_json) == 0:
+            return
+        self.insert_metadata(metadata_file_json)
 
     def ingest_metadata_files(self, full_path_name: pathlib.Path):
         """This function runs through a volume and add all the data products to
         the metadata_list of the store"""
         # Test if the path points to a directory
         logger.info(
-            "Loading metadata files from storage location %s, then ingesting them \
-    into the metadata store",
+            "Loading metadata files from storage location %s, \
+            then ingesting them into the metadata store",
             str(full_path_name),
         )
         if not full_path_name.is_dir() or full_path_name.is_symlink():
@@ -91,10 +102,10 @@ class Store:
         data_product_details = {}
         for key, value in metadata_file.items():
             if key in (
-                    "execution_block",
-                    "date_created",
-                    "dataproduct_file",
-                    "metadata_file",
+                "execution_block",
+                "date_created",
+                "dataproduct_file",
+                "metadata_file",
             ):
                 data_product_details[key] = value
 
@@ -111,7 +122,8 @@ class Store:
 
     def update_dataproduct_list(self, data_product_details):
         """This function looks if the new data product is in the metadata list,
-        if it is, the dataproduct entry is replaced, if it is new, it is appended
+        if it is, the dataproduct entry is replaced, if it is new, it is
+        appended
         """
         # Adds the first dictionary to the list
         if len(self.metadata_list) == 0:
@@ -123,8 +135,8 @@ class Store:
         # entry exist, if it is found, it is replaced, else added to the end.
         for i, product in enumerate(self.metadata_list):
             if (
-                    product["execution_block"]
-                    == data_product_details["execution_block"]
+                product["execution_block"]
+                == data_product_details["execution_block"]
             ):
                 data_product_details["id"] = product["id"]
                 self.metadata_list[i] = data_product_details
@@ -161,8 +173,8 @@ class Store:
                 )  # yaml_object will be a list or a dict
         except Exception as error:  # pylint: disable=W0718
             # Expecting that there will be some errors on ingest of metadata
-            # and don't want to break the application when it occurs. Therefore
-            # logging the error to log and returning {}
+            # and don't want to break the application when it occurs.
+            # Therefore, logging the error to log and returning {}
             logger.warning(
                 "Load of metadata file failed for: %s, %s",
                 str(file_object.fullPathName),
@@ -171,7 +183,9 @@ class Store:
             return {}
 
         # validate the metadata against the schema
-        validation_errors = metadata_validator.iter_errors(metadata_yaml_object)
+        validation_errors = metadata_validator.iter_errors(
+            metadata_yaml_object
+        )
         # Loop over the errors
         for validation_error in validation_errors:
             logger.debug(
@@ -182,7 +196,8 @@ class Store:
 
             if (
                 str(validation_error.validator) == "required"
-                or str(validation_error.message) == "None is not of type 'object'"
+                or str(validation_error.message)
+                == "None is not of type 'object'"
             ):
                 logger.warning(
                     "Not loading dataproduct due to schema validation error \
@@ -192,7 +207,9 @@ class Store:
                 )
                 return {}
 
-        metadata_date = get_date_from_name(metadata_yaml_object["execution_block"])
+        metadata_date = get_date_from_name(
+            metadata_yaml_object["execution_block"]
+        )
         metadata_yaml_object.update({"date_created": metadata_date})
         metadata_yaml_object.update(
             {"dataproduct_file": str(file_object.relativePathName.parent)}
@@ -202,4 +219,3 @@ class Store:
         )
         metadata_json = json.dumps(metadata_yaml_object)
         return metadata_json
-

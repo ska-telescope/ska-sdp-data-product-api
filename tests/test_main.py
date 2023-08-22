@@ -16,7 +16,9 @@ def test_reindex_data_products(test_app):
     """Test to see if a file list can be retrieved"""
     response = test_app.get("/reindexdataproducts")
     assert response.status_code == 202
-    assert "Metadata is set to be cleared and re-indexed" in str(response.json())
+    assert "Metadata is set to be cleared and re-indexed" in str(
+        response.json()
+    )
 
 
 def test_data_product_list(test_app):

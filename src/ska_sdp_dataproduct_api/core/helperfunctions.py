@@ -13,12 +13,10 @@ import jsonschema
 # pylint: disable=no-name-in-module
 import pydantic
 import requests
-import yaml
 from fastapi import HTTPException, Response
 from pydantic import BaseModel
 
 from ska_sdp_dataproduct_api.core.settings import (
-    METADATA_FILE_NAME,
     METADATA_JSON_SCHEMA_FILE,
     PERSISTANT_STORAGE_PATH,
     VERSION,
@@ -238,6 +236,7 @@ def get_date_from_name(execution_block: str):
         )
         raise
 
+
 def find_metadata(metadata, query_key):
     """Given a dict of metadata, and a period-separated hierarchy of keys,
     return the key and the value found within the dict.
@@ -253,4 +252,3 @@ def find_metadata(metadata, query_key):
             return None
 
     return {"key": query_key, "value": subsection}
-
