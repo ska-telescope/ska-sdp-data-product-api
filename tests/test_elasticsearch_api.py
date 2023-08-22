@@ -74,7 +74,7 @@ def test_search_metadata():
     """Method to test search of metadata"""
     metadata_store = ElasticsearchMetadataStore()
     metadata_store.es_client = MockElasticsearch()
-
+    metadata_store.es_client.ping = lambda: True
     metadata_list = metadata_store.search_metadata(
         start_date="2020-01-01",
         end_date="2100-01-01",
