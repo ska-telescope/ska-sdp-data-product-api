@@ -158,8 +158,10 @@ class Store:
                     metadata_yaml_file
                 )  # yaml_object will be a list or a dict
         except Exception as error:  # pylint: disable=W0718
+            # pylint: disable=W0511
             # TODO: The exception is too broad we should strive
             # TODO: to only handle errors we think are reasonable.
+            # pylint: enable=W0511
             # Expecting that there will be some errors on ingest of metadata
             # and don't want to break the application when it occurs.
             # Therefore, logging the error to log and returning {}
