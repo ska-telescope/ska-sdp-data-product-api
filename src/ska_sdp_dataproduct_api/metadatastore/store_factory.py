@@ -9,8 +9,8 @@ from ska_sdp_dataproduct_api.inmemorystore.inmemorystore import (
 )
 
 
-def select_correct_class(hosts):
-    """Specialise the store based on elasticsearch availability."""
+def select_correct_store_class(hosts):
+    """Select the store based on elasticsearch availability."""
     es_client = Elasticsearch(hosts=hosts)
     if es_client.ping():
         return ElasticsearchMetadataStore(hosts)
