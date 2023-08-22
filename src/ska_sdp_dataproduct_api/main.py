@@ -3,22 +3,22 @@
 import json
 import logging
 
-from fastapi import BackgroundTasks
-from fastapi import HTTPException, Response
+from fastapi import BackgroundTasks, HTTPException, Response
 
 from ska_sdp_dataproduct_api.core.helperfunctions import (
     DPDAPIStatus,
     FileUrl,
     SearchParametersClass,
-    download_file
+    download_file,
 )
 from ska_sdp_dataproduct_api.core.settings import ES_HOST, app
 from ska_sdp_dataproduct_api.metadatastore.datastore import Store
+
 logger = logging.getLogger(__name__)
 
 DPD_API_Status = DPDAPIStatus()
 
-store = Store.specialise(ES_HOST)
+store = Store.select_correct_class(ES_HOST)
 
 
 @app.get("/status")
@@ -44,9 +44,7 @@ async def data_products_search(search_parameters: SearchParametersClass):
     in the PERSISTANT_STORAGE_PATH
     """
     if not store.es_search_enabled:
-        raise HTTPException(
-            status_code=503, detail="Elasticsearch not found"
-        )
+        raise HTTPException(status_code=503, detail="Elasticsearch not found")
     filtered_data_product_list = store.search_metadata(
         start_date=search_parameters.start_date,
         end_date=search_parameters.end_date,
