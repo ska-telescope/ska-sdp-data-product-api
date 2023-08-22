@@ -19,12 +19,22 @@ class ElasticsearchMetadataStore(Store):
         self.metadata_index = "sdp_meta_data"
         self.hosts = hosts
         self.es_client = None
-        self.es_search_enabled = True
+        self.connect()
+
+    @property
+    def es_search_enabled(self):
+        """Generic interface to verify there is a Elasticsearch backend"""
+        return True
 
     def connect(self):
         """Connect to Elasticsearch host and create default schema"""
         self.es_client = Elasticsearch(self.hosts)
-        self.create_schema_if_not_existing(index=self.metadata_index)
+        if self.es_client.ping():
+            # Address the case where the elasticsearch host
+            # is no longer reachable
+            self.create_schema_if_not_existing(index=self.metadata_index)
+            return True
+        return False
 
     def create_schema_if_not_existing(self, index: str):
         """Method to create a Schema from schema and index if it does not yet
@@ -86,12 +96,12 @@ class ElasticsearchMetadataStore(Store):
                 }
             }
         }
-        try:
-            resp = self.es_client.search(  # pylint: disable=E1123
-                index=self.metadata_index, body=query_body
-            )
-        except elasticsearch.exceptions.ConnectionError:
-            self.es_search_enabled = False
+        if self.es_client.ping():
+            return json.dumps({'Error': 'Elasticsearch unavailable'})
+
+        resp = self.es_client.search(  # pylint: disable=E1123
+            index=self.metadata_index, body=query_body
+        )
         all_hits = resp["hits"]["hits"]
         self.metadata_list = []
         for _num, doc in enumerate(all_hits):

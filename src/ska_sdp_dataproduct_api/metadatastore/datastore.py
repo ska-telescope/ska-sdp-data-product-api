@@ -5,7 +5,6 @@ import pathlib
 from time import time
 
 import yaml
-from elasticsearch import Elasticsearch
 
 from ska_sdp_dataproduct_api.core.helperfunctions import (
     FileUrl,
@@ -25,27 +24,14 @@ logger = logging.getLogger(__name__)
 class Store:
     """Common store class (superclass to elastic search and in memory store)"""
 
-    @staticmethod
-    def select_correct_class(hosts):
-        """Specialise the store based on elasticsearch availability."""
-        # importing here to avoid circular import.
-        # pylint: disable=wrong-import-position
-        from ska_sdp_dataproduct_api.elasticsearch.elasticsearch_api import (
-            ElasticsearchMetadataStore,
-        )
-        from ska_sdp_dataproduct_api.inmemorystore.inmemorystore import (
-            InMemoryDataproductIndex,
-        )
-
-        # pylint: enable=wrong-import-position
-        es_client = Elasticsearch(hosts=hosts)
-        if es_client.ping():
-            return ElasticsearchMetadataStore(hosts)
-        return InMemoryDataproductIndex()
-
     def __init__(self):
         self.indexing_timestamp = 0
         self.metadata_list = []
+
+    @property
+    def es_search_enabled(self):
+        """This property is implemented in the subclasses."""
+        raise NotImplementedError
 
     def clear_metadata_indecise(self):
         """This method is implemented in the subclasses."""
@@ -172,6 +158,8 @@ class Store:
                     metadata_yaml_file
                 )  # yaml_object will be a list or a dict
         except Exception as error:  # pylint: disable=W0718
+            # TODO: The exception is too broad we should strive
+            # TODO: to only handle errors we think are reasonable.
             # Expecting that there will be some errors on ingest of metadata
             # and don't want to break the application when it occurs.
             # Therefore, logging the error to log and returning {}
