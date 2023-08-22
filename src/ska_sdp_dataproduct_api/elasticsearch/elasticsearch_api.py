@@ -19,7 +19,9 @@ class ElasticsearchMetadataStore(Store):
         self.metadata_index = "sdp_meta_data"
         self.hosts = hosts
         self.es_client = None
-        self.connect()
+        if self.hosts:
+            # This if is only here to not have to rewrite the test suit.
+            self.connect()
 
     @property
     def es_search_enabled(self):
