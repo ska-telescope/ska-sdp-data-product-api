@@ -99,7 +99,7 @@ class ElasticsearchMetadataStore(Store):
             }
         }
         if not self.es_client.ping():
-            return json.dumps({'Error': 'Elasticsearch unavailable'})
+            return json.dumps({"Error": "Elasticsearch unavailable"})
 
         resp = self.es_client.search(  # pylint: disable=E1123
             index=self.metadata_index, body=query_body
