@@ -19,8 +19,12 @@ class InMemoryDataproductIndex(Store):
 
     def __init__(self) -> None:
         super().__init__()
-        self.es_search_enabled = False
         self.reindex()
+
+    @property
+    def es_search_enabled(self):
+        """Generic interface to verify there is no Elasticsearch backend"""
+        return False
 
     def clear_metadata_indecise(self):
         """Clear out all indices from in memory instance"""

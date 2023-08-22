@@ -12,13 +12,15 @@ from ska_sdp_dataproduct_api.core.helperfunctions import (
     download_file,
 )
 from ska_sdp_dataproduct_api.core.settings import ES_HOST, app
-from ska_sdp_dataproduct_api.metadatastore.datastore import Store
+from ska_sdp_dataproduct_api.metadatastore.store_factory import (
+    select_correct_class,
+)
 
 logger = logging.getLogger(__name__)
 
 DPD_API_Status = DPDAPIStatus()
 
-store = Store.select_correct_class(ES_HOST)
+store = select_correct_class(ES_HOST)
 
 
 @app.get("/status")
