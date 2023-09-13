@@ -1,14 +1,14 @@
 SDP Data Product API Overview
-=============
+=============================
 
 This API is used to provide a list of SDP data products (files) that are hosted at a configurable storage location <PERSISTANT_STORAGE_PATH>.
 
 
 Deployment
------
+----------
 
 Local Deployment
-~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 **Tooling Pre-requisites**
 Below are some tools that will be required to work with the data product API:
 
@@ -32,12 +32,14 @@ Configure the environmental variables in the .evn file under the root folder acc
 
 .. code-block:: bash
 
-    REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL=http://localhost
-    REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_PORT=8100
-    PERSISTANT_STORAGE_PATH=./tests/test_files
+    REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL=http://localhost
+    REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT=8100
+    PERSISTANT_STORAGE_PATH=./tests/test_files/product
     METADATA_FILE_NAME=ska-data-product.yaml
     METADATA_ES_SCHEMA_FILE=./src/ska_sdp_dataproduct_api/elasticsearch/data_product_metadata_schema.json
+    METADATA_JSON_SCHEMA_FILE=./src/ska_sdp_dataproduct_api/core/data_product_metadata_json_schema.json
     ES_HOST=http://localhost:9200
+    STREAM_CHUNK_SIZE=65536
 
 *To run the application directly on your host machine:*
 
@@ -60,7 +62,7 @@ NOTE: When running the application in a docker container, the <PERSISTANT_STORAG
 Uvicorn will then be running on http://127.0.0.1:8000
 
 Kubernetes Deployment
-~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 
 
@@ -69,14 +71,14 @@ The SDP Data Product API is deployed as part of the helm chart of the `SDP Data 
 
 
 Automatic API Documentation
------
+---------------------------
 For detailed documentation of the API, see the FastAPI Swagger UI documentation. This interactive API documentation can be accessed at http://127.0.0.1:8000/docs after running the application.
 
 Basic Usage
------
+-----------
 
 Test endpoint
-~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 
 To retrieve the status of the API, you can send a get request to the status endpoint and you will get a reply indicating the status of the API and the Search:
@@ -90,7 +92,7 @@ To retrieve the status of the API, you can send a get request to the status endp
 
 
 Metadata search endpoint
-~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 When an Elasticsearch backend endpoint is available, the dataproductsearch will query the Elasticsearch datastore with the search criteria passed to the API (start_date, end_date and key_pair). The search results will then be returned as a list of data products, with key metadata attributes.
 
@@ -108,7 +110,7 @@ When an Elasticsearch backend endpoint is available, the dataproductsearch will 
     [{"id": 1, "execution_block": "eb-test-20230401-12345", "interface": "http://schema.skao.int/ska-data-product-meta/0.1", "date_created": "2023-04-01", "dataproduct_file": "product/eb-test-20230401-12345", "metadata_file": "product/eb-test-20230401-12345/ska-data-product.yaml", "obscore.dataproduct_type": "MS"}, {"id": 2, "interface": "http://schema.skao.int/ska-data-product-meta/0.1", "execution_block": "eb-m004-20191031-12345", "date_created": "2019-10-31", "dataproduct_file": "product/eb-m004-20191031-12345", "metadata_file": "product/eb-m004-20191031-12345/ska-data-product.yaml", "obscore.dataproduct_type": "MS"}]
 
 Metadata list endpoint
-~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 When an Elasticsearch backend endpoint is not available, the dataproductlist can be used to return all the data products as a list of data products, with key metadata attributes.
 
@@ -121,7 +123,7 @@ When an Elasticsearch backend endpoint is not available, the dataproductlist can
 
 
 Re-index data products endpoint
-~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The data product metadata store can be re-indexed but making a get request to the reindexdataproducts endpoint. This allows the user to update the metadata store if metadata have been added or changed since the previous indexing.
 
@@ -133,9 +135,9 @@ The data product metadata store can be re-indexed but making a get request to th
     "Metadata store cleared and re-indexed"
 
 Download data product endpoint
-~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Sending a post request to the download endpoint will return a response to an in-memory tar file of the selected data product.
+Sending a post request to the download endpoint will return a stream response of the specified data product as a tar archive.
 
 The body of the post request must contain the name of the file and the relative path of the file you want to download as listed in the file list response above. 
 
@@ -156,7 +158,7 @@ The post request endpoint:
 
 
 Retrieve metadata of a data product endpoint
-~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Sending a post request to the dataproductmetadata endpoint will return a Response with the metadata of the data product in a JSON format.
 
