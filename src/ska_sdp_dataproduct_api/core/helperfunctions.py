@@ -146,7 +146,8 @@ def generate_data_stream(file_path: pathlib.Path):
     chunks"""
     # create a subprocess to run the tar command
     with subprocess.Popen(
-        ["tar", "-c", str(file_path)], stdout=subprocess.PIPE
+        ["tar", "-C", str(file_path.parent), "-c", str(file_path.name)],
+        stdout=subprocess.PIPE,
     ) as process:
         # stream the data from the process output
         chunk = process.stdout.read(STREAM_CHUNK_SIZE)
