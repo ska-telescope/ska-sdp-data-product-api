@@ -55,10 +55,7 @@ VERSION: str = config(
     default=ska_sdp_dataproduct_api.__version__,
 )
 
-INGRESS_PATH_PREPEND: str = config(
-    "INGRESS_PATH_PREPEND",
-    default=""
-)
+INGRESS_PATH_PREPEND: str = config("INGRESS_PATH_PREPEND", default="")
 
 app = FastAPI()
 
