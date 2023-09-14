@@ -55,11 +55,11 @@ VERSION: str = config(
     default=ska_sdp_dataproduct_api.__version__,
 )
 
-INGRESS_PATH_PREPEND: str = config("INGRESS_PATH_PREPEND", default="")
+API_URL_SUBDIRECTORY: str = config("API_URL_SUBDIRECTORY", default="")
 
 app = FastAPI()
 
-app = FastAPI(root_path=INGRESS_PATH_PREPEND)
+app = FastAPI(root_path=API_URL_SUBDIRECTORY)
 
 origins = [
     "http://localhost",
