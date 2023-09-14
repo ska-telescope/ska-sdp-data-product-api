@@ -156,7 +156,7 @@ def generate_data_stream(file_path: pathlib.Path):
             chunk = process.stdout.read(STREAM_CHUNK_SIZE)
 
 
-def stream_file(file_object: FileUrl):
+def download_file(file_object: FileUrl):
     """This function returns a response that can be used to download a file
     pointed to by the file_object"""
     return StreamingResponse(
