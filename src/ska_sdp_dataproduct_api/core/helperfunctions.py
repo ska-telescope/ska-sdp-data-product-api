@@ -1,24 +1,23 @@
 """Module to insert data into Elasticsearch instance."""
 import datetime
-import gzip
 import json
 import logging
 import pathlib
-import tarfile
-from io import BytesIO
+import subprocess
 from typing import Optional
 
 import jsonschema
 
 # pylint: disable=no-name-in-module
 import pydantic
-import requests
-from fastapi import HTTPException, Response
+from fastapi import HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from ska_sdp_dataproduct_api.core.settings import (
     METADATA_JSON_SCHEMA_FILE,
     PERSISTANT_STORAGE_PATH,
+    STREAM_CHUNK_SIZE,
     VERSION,
 )
 
@@ -142,44 +141,27 @@ class SearchParametersClass(BaseModel):
     key_pair: str = ""
 
 
-def gzip_file(file_path: pathlib.Path):
-    """Create a gzip response from a file or folder path.
-
-    Args:
-        path (Path): The file or folder path to compress.
-
-    Returns:
-        requests.Response: A response object with the compressed content.
-    """
-    # Create a temporary tarfile object
-    with tarfile.open(fileobj=BytesIO(), mode="w") as tar:
-        # Add the file or folder to the tarfile object
-        tar.add(file_path, arcname=file_path.name)
-    # Get the content of the tarfile object as bytes
-    content = tar.fileobj.getvalue()
-    # Compress the content using gzip
-    compressed_content = gzip.compress(content)
-    # Create a BytesIO object from the compressed content
-    compressed_file = BytesIO(compressed_content)
-    # Create a new response object with the compressed file
-    gzip_response = requests.Response()
-    gzip_response.status_code = 200
-    gzip_response.headers["Content-Encoding"] = "gzip"
-    gzip_response.headers[
-        "Content-Disposition"
-    ] = f"attachment; filename={file_path.name}.tar.gz"
-    gzip_response.raw = compressed_file
-    return gzip_response
+def generate_data_stream(file_path: pathlib.Path):
+    """This function creates a subprocess that stream a specified file in
+    chunks"""
+    # create a subprocess to run the tar command
+    with subprocess.Popen(
+        ["tar", "-C", str(file_path.parent), "-c", str(file_path.name)],
+        stdout=subprocess.PIPE,
+    ) as process:
+        # stream the data from the process output
+        chunk = process.stdout.read(STREAM_CHUNK_SIZE)
+        while chunk:
+            yield chunk
+            chunk = process.stdout.read(STREAM_CHUNK_SIZE)
 
 
 def download_file(file_object: FileUrl):
     """This function returns a response that can be used to download a file
     pointed to by the file_object"""
-    response = gzip_file(file_object.fullPathName)
-    return Response(
-        content=response.raw.read(),
-        status_code=response.status_code,
-        headers=response.headers,
+    return StreamingResponse(
+        generate_data_stream(file_object.fullPathName),
+        media_type="application/x-tar",
     )
 
 

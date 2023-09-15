@@ -55,6 +55,13 @@ VERSION: str = config(
     default=ska_sdp_dataproduct_api.__version__,
 )
 
+STREAM_CHUNK_SIZE: int = int(
+    config(
+        "STREAM_CHUNK_SIZE",
+        default=65536,
+    )
+)
+
 app = FastAPI()
 
 origins = [
