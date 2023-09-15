@@ -71,8 +71,8 @@ The SDP Data Product API is deployed as part of the helm chart of the `SDP Data 
 
 
 Automatic API Documentation
----------------------------
-For detailed documentation of the API, see the FastAPI Swagger UI documentation. This interactive API documentation can be accessed at http://127.0.0.1:8000/docs after running the application.
+-----
+For detailed documentation of the API, see the FastAPI Swagger UI documentation. This interactive API documentation can be accessed at http://127.0.0.1:8000/docs when running the application locally or https://<domain>/<namespace>/api/docs when deployed behind an ingress.
 
 Basic Usage
 -----------
