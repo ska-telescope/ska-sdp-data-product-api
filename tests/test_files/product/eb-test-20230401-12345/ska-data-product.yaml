@@ -11,11 +11,15 @@ context:
   notes: Running that signal from XX/YY/ZZ through again, things seem a bit flaky
 execution_block: eb-test-20230401-12345
 files:
-- description: MS for scan 1
+- crc: 00000000
+  description: MS for scan 1
   path: ./output.scan-1.ms
+  size: 0
   status: working
-- description: MS for scan 2
+- crc: 00000000
+  description: MS for scan 2
   path: ./output.scan-2.ms
+  size: 0
   status: done
 interface: http://schema.skao.int/ska-data-product-meta/0.1
 obscore:
