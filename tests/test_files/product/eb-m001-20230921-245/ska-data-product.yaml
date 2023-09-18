@@ -15,11 +15,9 @@ files:
   - path: pst-low/245/data
     status: done
     description: "Channelised voltage data raw files"
-    size: 0
   - path: pst-low/245/weights
     status: done
     description: "Channelised weights raw files"
-    size: 0
    
 obscore:
   dataproduct_type: timeseries
