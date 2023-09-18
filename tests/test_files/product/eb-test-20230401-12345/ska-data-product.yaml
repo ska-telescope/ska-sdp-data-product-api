@@ -23,6 +23,7 @@ files:
   status: done
 interface: http://schema.skao.int/ska-data-product-meta/0.1
 obscore:
+  access_estsize: 1
   dataproduct_type: MS
   calib_level: raw
   obs_collection: AIV-tests-20230401

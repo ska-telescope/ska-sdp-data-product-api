@@ -37,6 +37,7 @@ files:
     status: done
  
 obscore: # ObsCore minimal set
+  access_estsize: 1
   dataproduct_type: MS
   calib_level: raw
   obs_collection: AIV-tests-20191031
