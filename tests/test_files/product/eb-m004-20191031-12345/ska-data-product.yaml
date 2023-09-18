@@ -44,7 +44,6 @@ obscore: # ObsCore minimal set
   obs_id: pb-m004-20191031-12345
   access_url: https://archive.skatelescope.org/pb-m004-20191031-12345/retrieve
   access_format: application/x-tar-gzip
-  access_estsize: 1234567890
   target_name: None
   s_ra: 10.203040
   s_dec: -26.70312
