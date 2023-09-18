@@ -13,5 +13,5 @@ files:
   status: working
 - description: MS for scan 2
   path: ./output.scan-2.ms
-  status: finished
+  status: done
 interface: http://schema.skao.int/ska-data-product-meta/0.1
