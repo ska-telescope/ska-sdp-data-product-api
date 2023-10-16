@@ -63,7 +63,7 @@ class FileUrl(BaseModel):
 
     fileName: str
     relativePathName: pathlib.Path = None
-    fullPathName: Optional[pathlib.Path]
+    fullPathName: Optional[pathlib.Path] = None
     metaDataFile: Optional[pathlib.Path] = None
 
     class Config:
@@ -71,7 +71,7 @@ class FileUrl(BaseModel):
 
         arbitrary_types_allowed = True
         validate_assignment = True
-        validate_all = True
+        validate_default = True
         extra = "forbid"
 
     @pydantic.validator("relativePathName")
