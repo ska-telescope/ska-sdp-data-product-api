@@ -5,13 +5,13 @@ import pathlib
 from time import time
 
 import yaml
+from ska_sdp_dataproduct_metadata import MetaData
 
 from ska_sdp_dataproduct_api.core.helperfunctions import (
     FileUrl,
     find_metadata,
     get_date_from_name,
     get_relative_path,
-    metadata_validator,
 )
 from ska_sdp_dataproduct_api.core.settings import (
     METADATA_FILE_NAME,
@@ -173,7 +173,7 @@ class Store:
             return {}
 
         # validate the metadata against the schema
-        validation_errors = metadata_validator.iter_errors(
+        validation_errors = MetaData.validator.iter_errors(
             metadata_yaml_object
         )
         # Loop over the errors
