@@ -1,12 +1,9 @@
 """Module to insert data into Elasticsearch instance."""
 import datetime
-import json
 import logging
 import pathlib
 import subprocess
 from typing import Optional
-
-import jsonschema
 
 # pylint: disable=no-name-in-module
 import pydantic
@@ -15,7 +12,6 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from ska_sdp_dataproduct_api.core.settings import (
-    METADATA_JSON_SCHEMA_FILE,
     PERSISTANT_STORAGE_PATH,
     STREAM_CHUNK_SIZE,
     VERSION,
@@ -24,14 +20,6 @@ from ska_sdp_dataproduct_api.core.settings import (
 # get reference to the logging object
 logger = logging.getLogger(__name__)
 
-# load the metadata schema and create a single validator that can be used
-# for every incoming metadata file
-with open(
-    METADATA_JSON_SCHEMA_FILE, "r", encoding="utf-8"
-) as metadata_schema_file:
-    metadata_validator = jsonschema.validators.Draft202012Validator(
-        json.load(metadata_schema_file)
-    )
 
 # pylint: disable=too-few-public-methods
 
@@ -75,7 +63,7 @@ class FileUrl(BaseModel):
 
     fileName: str
     relativePathName: pathlib.Path = None
-    fullPathName: Optional[pathlib.Path]
+    fullPathName: Optional[pathlib.Path] = None
     metaDataFile: Optional[pathlib.Path] = None
 
     class Config:
@@ -83,7 +71,7 @@ class FileUrl(BaseModel):
 
         arbitrary_types_allowed = True
         validate_assignment = True
-        validate_all = True
+        validate_default = True
         extra = "forbid"
 
     @pydantic.validator("relativePathName")
