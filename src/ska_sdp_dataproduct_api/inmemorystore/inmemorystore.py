@@ -82,16 +82,16 @@ class InMemoryDataproductIndex(Store):
         search_results = []
         for product in self.metadata_list:
             product_date = time.strptime(product["date_created"], DATE_FORMAT)
-            if (start_date <= product_date) and (product_date <= end_date):
+            if not (start_date <= product_date <= end_date):
+                continue
+            if metadata_key == "*" and metadata_value == "*":
                 search_results.append(product)
-        if metadata_key == "*" and metadata_value == "*":
-            return json.dumps(search_results)
-        for product in search_results:
+                continue
             try:
                 product_value = product[metadata_key]
                 if product_value != metadata_value:
-                    search_results.pop(search_results.index(product))
+                    search_results.append(product)
             except KeyError:
-                search_results.pop(search_results.index(product))
+                continue
         return json.dumps(search_results)
 
