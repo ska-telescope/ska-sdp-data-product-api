@@ -83,12 +83,11 @@ class InMemoryDataproductIndex(Store):
         if metadata_key == "*" and metadata_value == "*":
             return json.dumps(search_results)
         for product in search_results:
-            for key, value in zip(metadata_key, metadata_value):
-                try:
-                    product_value = product[key]
-                    if product_value != value:
-                        search_results.pop(search_results.index(product))
-                except KeyError:
+            try:
+                product_value = product[metadata_key]
+                if product_value != metadata_value:
                     search_results.pop(search_results.index(product))
+            except KeyError:
+                search_results.pop(search_results.index(product))
         return json.dumps(search_results)
 
