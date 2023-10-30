@@ -73,8 +73,12 @@ class InMemoryDataproductIndex(Store):
         metadata_value: str = "*"
     ):
         """Metadata Search method"""
-        start_date = time.strptime(start_date, DATE_FORMAT)
-        end_date = time.strptime(end_date, DATE_FORMAT)
+        try:
+            start_date = time.strptime(start_date, DATE_FORMAT)
+            end_date = time.strptime(end_date, DATE_FORMAT)
+        except ValueError:
+            return json.dumps(
+                {"Error": "Invalid date format, expected YYYY-MM-DD"})
         search_results = []
         for product in self.metadata_list:
             product_date = time.strptime(product["date_created"], DATE_FORMAT)
