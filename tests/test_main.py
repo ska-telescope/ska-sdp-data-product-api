@@ -63,8 +63,8 @@ def test_data_product_metadata(test_app):
     assert "Experimental run as part of XYZ-123" in str(response.json())
 
 
-def test_data_product_search_unhappy_path(test_app):
-    """This should now respond with a happy path"""
+def test_in_memory_search(test_app):
+    """This tests the in-memory precise search."""
     data = {
         "start_date": "2001-12-12",
         "end_date": "2032-12-12",
