@@ -84,7 +84,7 @@ class InMemoryDataproductIndex(Store):
         search_results = []
         for product in self.metadata_list:
             product_date = time.strptime(product["date_created"], DATE_FORMAT)
-            if not (start_date <= product_date <= end_date):
+            if not start_date <= product_date <= end_date:
                 continue
             if metadata_key == "*" and metadata_value == "*":
                 search_results.append(product)
