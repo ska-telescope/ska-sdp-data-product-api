@@ -3,7 +3,7 @@
 import json
 import logging
 
-from fastapi import BackgroundTasks, HTTPException, Response
+from fastapi import BackgroundTasks, Response
 
 from ska_sdp_dataproduct_api.core.helperfunctions import (
     DPDAPIStatus,
