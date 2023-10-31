@@ -64,7 +64,7 @@ def test_data_product_metadata(test_app):
 
 
 def test_data_product_search_unhappy_path(test_app):
-    """This should now respond with a happy bath"""
+    """This should now respond with a happy path"""
     data = {
         "start_date": "2001-12-12",
         "end_date": "2032-12-12",
