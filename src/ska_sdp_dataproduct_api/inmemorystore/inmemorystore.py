@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 # pylint: disable=no-name-in-module
 DATE_FORMAT = "%Y-%m-%d"
 
+
 class InMemoryDataproductIndex(Store):
     """
     This class defines an object that is used to create a list of data products
@@ -70,7 +71,7 @@ class InMemoryDataproductIndex(Store):
         start_date: str = "1970-01-01",
         end_date: str = "2100-01-01",
         metadata_key: str = "*",
-        metadata_value: str = "*"
+        metadata_value: str = "*",
     ):
         """Metadata Search method"""
         try:
@@ -78,7 +79,8 @@ class InMemoryDataproductIndex(Store):
             end_date = time.strptime(end_date, DATE_FORMAT)
         except ValueError:
             return json.dumps(
-                {"Error": "Invalid date format, expected YYYY-MM-DD"})
+                {"Error": "Invalid date format, expected YYYY-MM-DD"}
+            )
         search_results = []
         for product in self.metadata_list:
             product_date = time.strptime(product["date_created"], DATE_FORMAT)
@@ -94,4 +96,3 @@ class InMemoryDataproductIndex(Store):
             except KeyError:
                 continue
         return json.dumps(search_results)
-
