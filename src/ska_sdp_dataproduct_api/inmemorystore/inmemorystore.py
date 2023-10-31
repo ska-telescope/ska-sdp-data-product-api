@@ -1,6 +1,7 @@
 """Module to insert data into Elasticsearch instance."""
 import json
 import logging
+import time
 from collections.abc import MutableMapping
 
 from ska_sdp_dataproduct_api.metadatastore.datastore import Store
@@ -8,6 +9,7 @@ from ska_sdp_dataproduct_api.metadatastore.datastore import Store
 logger = logging.getLogger(__name__)
 
 # pylint: disable=no-name-in-module
+DATE_FORMAT = "%Y-%m-%d"
 
 
 class InMemoryDataproductIndex(Store):
@@ -63,3 +65,34 @@ class InMemoryDataproductIndex(Store):
                 if new_key not in ignore_keys:
                     items.append(new_key)
         return items
+
+    def search_metadata(
+        self,
+        start_date: str = "1970-01-01",
+        end_date: str = "2100-01-01",
+        metadata_key: str = "*",
+        metadata_value: str = "*",
+    ):
+        """Metadata Search method"""
+        try:
+            start_date = time.strptime(start_date, DATE_FORMAT)
+            end_date = time.strptime(end_date, DATE_FORMAT)
+        except ValueError:
+            return json.dumps(
+                {"Error": "Invalid date format, expected YYYY-MM-DD"}
+            )
+        search_results = []
+        for product in self.metadata_list:
+            product_date = time.strptime(product["date_created"], DATE_FORMAT)
+            if not start_date <= product_date <= end_date:
+                continue
+            if metadata_key == "*" and metadata_value == "*":
+                search_results.append(product)
+                continue
+            try:
+                product_value = product[metadata_key]
+                if product_value == metadata_value:
+                    search_results.append(product)
+            except KeyError:
+                continue
+        return json.dumps(search_results)

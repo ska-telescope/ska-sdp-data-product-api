@@ -63,13 +63,13 @@ def test_data_product_metadata(test_app):
     assert "Experimental run as part of XYZ-123" in str(response.json())
 
 
-def test_data_product_search_unhappy_path(test_app):
-    """Test the unhappy data product search for when the ES instance is
-    not available, should return a 503 service not available error"""
+def test_in_memory_search(test_app):
+    """This tests the in-memory precise search."""
     data = {
         "start_date": "2001-12-12",
         "end_date": "2032-12-12",
         "key_pair": "execution_block:eb-m001-20191031-12345",
     }
     response = test_app.post("/dataproductsearch", json=data)
-    assert response.status_code == 503
+    assert response.status_code == 200
+    assert response.json()[0]["execution_block"] == "eb-m001-20191031-12345"

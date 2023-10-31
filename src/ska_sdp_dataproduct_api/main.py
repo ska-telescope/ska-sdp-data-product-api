@@ -3,7 +3,7 @@
 import json
 import logging
 
-from fastapi import BackgroundTasks, HTTPException, Response
+from fastapi import BackgroundTasks, Response
 
 from ska_sdp_dataproduct_api.core.helperfunctions import (
     DPDAPIStatus,
@@ -45,8 +45,6 @@ async def data_products_search(search_parameters: SearchParametersClass):
     """This API endpoint returns a list of all the data products
     in the PERSISTANT_STORAGE_PATH
     """
-    if not store.es_search_enabled:
-        raise HTTPException(status_code=503, detail="Elasticsearch not found")
     filtered_data_product_list = store.search_metadata(
         start_date=search_parameters.start_date,
         end_date=search_parameters.end_date,
