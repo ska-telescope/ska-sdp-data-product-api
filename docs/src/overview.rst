@@ -206,3 +206,66 @@ The post request endpoint:
             }
         ]
     }
+
+
+API User
+-----------
+
+The Data Product Dashboard (DPD) will usually be used via the GUI, for certain systems and users direct access to the API may be useful and desired. This guide will help users get up to speed with the Data Product Dashboard API.
+
+DPD API documentation can be found at https://developer.skao.int/projects/ska-sdp-dataproduct-api/en/latest/overview.html#automatic-api-documentation. The DPD API is self documenting and as such the available endpoints can be found at `/docs`
+
+Data Product Modes of Operation
+The Data Product Dashboard has two modes of operation. With an Elastic Search backend available the full functionality is available, without that backend, a degraded experience is given to the user. Due to current architectural decisions that need to be made. The degraded or “in memory” implementation is currently the expected behavior and as such this guide expects the “in memory” mode of operation. Since the API is consistent between the two modes of operation, the guide should still be relevant when the mode is switched across.
+The endpoint ‘/status’ will inform which mode of operation is currently activated, Search enabled is expected to be false.
+
+Searching for and Downloading Data Products
+When searching for data products it is important to ensure that the most recent data is available. The cached map for the in-memory solution periodically checks for new product that are available, but there is a way to manually ensure this, namely through the update command:
+
+.. code-block:: python
+
+    import requests
+    BASE_URL = "http://localhost:8000"
+    response = requests.get(f"{BASE_URL}/reindexdataproducts")
+    print(response.status_code)
+    >>> 202
+
+
+Searching for a specific product can be done by date or by other metadata fields available.
+
+.. code-block:: python
+
+    data = {
+        "start_date": "2001-12-12",
+        "end_date": "2032-12-12",
+        "key_pair": "execution_block:eb-m001-20191031-12345",
+    }
+    response = requests.post(f"{BASE_URL}/dataproductsearch", json=data)
+    products = response.json()
+    print(products)
+    >>> [{'execution_block': 'eb-m001-20191031-12345', 'date_created': '2019-10-31', 'dataproduct_file': 'eb-m001-20221212-12345', 'metadata_file': 'eb-m001-20221212-12345/ska-data-product.yaml', 'interface': 'http://schema.skao.int/ska-data-product-meta/0.1', 'context.observer': 'AIV_person_1', 'context.intent': 'Experimental run as part of XYZ-123', 'context.notes': 'Running that signal from XX/YY/ZZ through again, things seem a bit flaky', 'config.processing_block': 'pb-m001-20191031-12345', 'config.processing_script': 'receive', 'config.image': 'artefact.skao.int/ska-docker/vis_receive', 'config.version': '0.1.3', 'config.commit': '516fb5a693f9dc9aff5d46192f4e055b582fc025', 'config.cmdline': '-dump /product/eb-m001-20191031-12345/ska-sdp/pb-m001-20191031-12345/vis.ms', 'id': 2}]
+
+
+Identify the product that should be downloaded and select it. This will be one of the products in the list of returned products:
+
+.. code-block:: python
+
+    product = products[0]
+
+The download endpoint returns a response that can be used to stream the data product into a tarball. This can saved into a local file:
+
+.. code-block:: python
+
+    data = {"fileName": product["dataproduct_file"],"relativePathName": product["dataproduct_file"]}
+    response = requests.post(f"{BASE_URL}/download", json=data)
+
+    with open('product.tar', 'wb') as fd:
+        for chunk in response.iter_content(chunk_size=4096):
+            fd.write(chunk)
+
+The tarball can then be opened using standard operation software. On linux this can be done using
+
+.. code-block:: bash
+
+    $ tar -xvf ./product.tar
+    eb-m001-20221212-12345/
