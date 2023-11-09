@@ -40,7 +40,7 @@ class InMemoryDataproductIndex(Store):
 
         # generate a list of keys from this object
         query_key_list = self.generate_metadata_keys_list(
-            metadata_file, ["files"], "", "."
+            metadata_file, [], "", "."
         )
 
         self.add_dataproduct(
