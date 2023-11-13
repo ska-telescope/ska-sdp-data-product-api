@@ -13,9 +13,9 @@ from ska_sdp_dataproduct_api.core.helperfunctions import (
     download_file,
 )
 from ska_sdp_dataproduct_api.core.settings import (
+    DEFAULT_DISPLAY_LAYOUT,
     ES_HOST,
     app,
-    DEFAULT_DISPLAY_LAYOUT,
 )
 from ska_sdp_dataproduct_api.metadatastore.store_factory import (
     select_correct_store_class,
