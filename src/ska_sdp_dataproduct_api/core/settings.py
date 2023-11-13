@@ -78,3 +78,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+DEFAULT_DISPLAY_LAYOUT = [
+    {"name": "execution_block", "width": 180},
+    {"name": "id", "width": 20},
+    {"name": "date_created", "width": 60},
+    {"name": "observer", "width": 60},
+    {"name": "execution_block", "width": 120},
+    {"name": "processing_block", "width": 180},
+    {"name": "Intent", "width": 180},
+    {"name": "notes", "width": 180},
+]
