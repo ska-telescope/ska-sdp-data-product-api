@@ -88,7 +88,7 @@ class ElasticsearchMetadataStore(Store):
             time.strptime(start_date, DATE_FORMAT)
             time.strptime(end_date, DATE_FORMAT)
         except ValueError:
-            return logger.ERROR(
+            return logger.error(
                 json.dumps(
                     {"Error": "Invalid date format, expected YYYY-MM-DD"}
                 )
