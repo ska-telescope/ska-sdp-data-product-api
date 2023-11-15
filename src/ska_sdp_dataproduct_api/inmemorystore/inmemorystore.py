@@ -4,12 +4,13 @@ import logging
 import time
 from collections.abc import MutableMapping
 
-from ska_sdp_dataproduct_api.metadatastore.datastore import Store
 from ska_sdp_dataproduct_api.core.settings import DATE_FORMAT
+from ska_sdp_dataproduct_api.metadatastore.datastore import Store
 
 logger = logging.getLogger(__name__)
 
 # pylint: disable=no-name-in-module
+
 
 class InMemoryDataproductIndex(Store):
     """
