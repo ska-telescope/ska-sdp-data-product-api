@@ -1,11 +1,12 @@
 """Module to insert data into Elasticsearch instance."""
 import json
 import logging
+import time
 
 import elasticsearch
 from elasticsearch import Elasticsearch
 
-from ska_sdp_dataproduct_api.core.settings import METADATA_ES_SCHEMA_FILE
+from ska_sdp_dataproduct_api.core.settings import METADATA_ES_SCHEMA_FILE, DATE_FORMAT
 from ska_sdp_dataproduct_api.metadatastore.datastore import Store
 
 logger = logging.getLogger(__name__)
@@ -79,6 +80,14 @@ class ElasticsearchMetadataStore(Store):
             match_criteria = {"match": {metadata_key: metadata_value}}
         else:
             match_criteria = {"match_all": {}}
+
+        try:
+            time.strptime(start_date, DATE_FORMAT)
+            time.strptime(end_date, DATE_FORMAT)
+        except ValueError:
+            return logger.ERROR(json.dumps(
+                {"Error": "Invalid date format, expected YYYY-MM-DD"}
+            ))
 
         query_body = {
             "query": {
