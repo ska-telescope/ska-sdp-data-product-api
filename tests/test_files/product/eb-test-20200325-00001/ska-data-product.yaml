@@ -10,7 +10,7 @@ execution_block: eb-test-20200325-00001
 files:
   -
     crc: 2a890fbe
-    description: This is test file 3
+    description: This is test file 1
     path: ska-sub-system/scan_id_1/pb_id_1/TestDataFile1.txt
     size: 19
     status: done
