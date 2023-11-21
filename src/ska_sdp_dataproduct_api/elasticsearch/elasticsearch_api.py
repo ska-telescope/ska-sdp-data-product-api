@@ -5,39 +5,38 @@ import logging
 import elasticsearch
 from elasticsearch import Elasticsearch
 
-from ska_sdp_dataproduct_api.core.helperfunctions import (
-    add_dataproduct,
-    ingest_metadata_files,
-)
-from ska_sdp_dataproduct_api.core.settings import (
-    METADATA_ES_SCHEMA_FILE,
-    PERSISTANT_STORAGE_PATH,
-)
+from ska_sdp_dataproduct_api.core.settings import METADATA_ES_SCHEMA_FILE
+from ska_sdp_dataproduct_api.metadatastore.datastore import Store
 
 logger = logging.getLogger(__name__)
 
 
-class ElasticsearchMetadataStore:
+class ElasticsearchMetadataStore(Store):
     """Class to insert data into Elasticsearch instance."""
 
-    def __init__(self):
+    def __init__(self, hosts=None):
+        super().__init__()
         self.metadata_index = "sdp_meta_data"
-        self.metadata_list = []
+        self.hosts = hosts
         self.es_client = None
-        self.es_search_enabled = True
+        if self.hosts:
+            # This if is only here to not have to rewrite the test suit.
+            self.connect()
 
-    def connect(self, hosts):
+    @property
+    def es_search_enabled(self):
+        """Generic interface to verify there is a Elasticsearch backend"""
+        return True
+
+    def connect(self):
         """Connect to Elasticsearch host and create default schema"""
-        try:
-            self.es_client = Elasticsearch(hosts=hosts)
+        self.es_client = Elasticsearch(self.hosts)
+        if self.es_client.ping():
+            # Address the case where the elasticsearch host
+            # is no longer reachable
             self.create_schema_if_not_existing(index=self.metadata_index)
-            self.es_search_enabled = True
-        except elasticsearch.exceptions.ConnectionError:
-            # If now connection is available, disable search.
-            self.es_search_enabled = False
-            logger.info(
-                "Elasticsearch backend not reachable, setting search to false"
-            )
+            return True
+        return False
 
     def create_schema_if_not_existing(self, index: str):
         """Method to create a Schema from schema and index if it does not yet
@@ -53,25 +52,14 @@ class ElasticsearchMetadataStore:
                 index=index, ignore=400, body=metadata_schema_json
             )
 
-    def clear_indecise(self):
+    def clear_metadata_indecise(self):
         """Clear out all indices from elasticsearch instance"""
         self.es_client.options(ignore_status=[400, 404]).indices.delete(
             index=self.metadata_index
         )
         self.metadata_list = []
 
-    def reindex(self):
-        """This methods resets and recreates the metadata_list. This is added
-        to enable the user to reindex if the data products were changed or
-        appended since the initial load of the data"""
-        self.clear_indecise()
-        ingest_metadata_files(self, PERSISTANT_STORAGE_PATH)
-        logger.info("Metadata store cleared and re-indexed")
-
-    def insert_metadata(
-        self,
-        metadata_file_json,
-    ):
+    def insert_metadata(self, metadata_file_json):
         """Method to insert metadata into Elasticsearch."""
         # Add new metadata to es
         result = self.es_client.index(
@@ -110,19 +98,18 @@ class ElasticsearchMetadataStore:
                 }
             }
         }
-        try:
-            resp = self.es_client.search(  # pylint: disable=E1123
-                index=self.metadata_index, body=query_body
-            )
-        except elasticsearch.exceptions.ConnectionError:
-            self.es_search_enabled = False
+        if not self.es_client.ping():
+            return json.dumps({"Error": "Elasticsearch unavailable"})
+
+        resp = self.es_client.search(  # pylint: disable=E1123
+            index=self.metadata_index, body=query_body
+        )
         all_hits = resp["hits"]["hits"]
         self.metadata_list = []
         for _num, doc in enumerate(all_hits):
             for key, value in doc.items():
                 if key == "_source":
-                    add_dataproduct(
-                        self.metadata_list,
+                    self.add_dataproduct(
                         metadata_file=value,
                         query_key_list=[metadata_key],
                     )

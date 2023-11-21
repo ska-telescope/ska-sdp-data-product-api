@@ -1,14 +1,14 @@
 SDP Data Product API Overview
-=============
+=============================
 
 This API is used to provide a list of SDP data products (files) that are hosted at a configurable storage location <PERSISTANT_STORAGE_PATH>.
 
 
 Deployment
------
+----------
 
 Local Deployment
-~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 **Tooling Pre-requisites**
 Below are some tools that will be required to work with the data product API:
 
@@ -32,12 +32,14 @@ Configure the environmental variables in the .evn file under the root folder acc
 
 .. code-block:: bash
 
-    REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL=http://localhost
-    REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_PORT=8100
-    PERSISTANT_STORAGE_PATH=./tests/test_files
-    METADATE_FILE_NAME=ska-data-product.yaml
+    REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL=http://localhost
+    REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT=8100
+    PERSISTANT_STORAGE_PATH=./tests/test_files/product
+    METADATA_FILE_NAME=ska-data-product.yaml
     METADATA_ES_SCHEMA_FILE=./src/ska_sdp_dataproduct_api/elasticsearch/data_product_metadata_schema.json
+    METADATA_JSON_SCHEMA_FILE=./src/ska_sdp_dataproduct_api/core/data_product_metadata_json_schema.json
     ES_HOST=http://localhost:9200
+    STREAM_CHUNK_SIZE=65536
 
 *To run the application directly on your host machine:*
 
@@ -60,7 +62,7 @@ NOTE: When running the application in a docker container, the <PERSISTANT_STORAG
 Uvicorn will then be running on http://127.0.0.1:8000
 
 Kubernetes Deployment
-~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
 
 
@@ -70,13 +72,13 @@ The SDP Data Product API is deployed as part of the helm chart of the `SDP Data 
 
 Automatic API Documentation
 -----
-For detailed documentation of the API, see the FastAPI Swagger UI documentation. This interactive API documentation can be accessed at http://127.0.0.1:8000/docs after running the application.
+For detailed documentation of the API, see the FastAPI Swagger UI documentation. This interactive API documentation can be accessed at http://127.0.0.1:8000/docs when running the application locally or https://<domain>/<namespace>/api/docs when deployed behind an ingress.
 
 Basic Usage
------
+-----------
 
 Test endpoint
-~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 
 To retrieve the status of the API, you can send a get request to the status endpoint and you will get a reply indicating the status of the API and the Search:
@@ -90,7 +92,7 @@ To retrieve the status of the API, you can send a get request to the status endp
 
 
 Metadata search endpoint
-~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 When an Elasticsearch backend endpoint is available, the dataproductsearch will query the Elasticsearch datastore with the search criteria passed to the API (start_date, end_date and key_pair). The search results will then be returned as a list of data products, with key metadata attributes.
 
@@ -108,7 +110,7 @@ When an Elasticsearch backend endpoint is available, the dataproductsearch will 
     [{"id": 1, "execution_block": "eb-test-20230401-12345", "interface": "http://schema.skao.int/ska-data-product-meta/0.1", "date_created": "2023-04-01", "dataproduct_file": "product/eb-test-20230401-12345", "metadata_file": "product/eb-test-20230401-12345/ska-data-product.yaml", "obscore.dataproduct_type": "MS"}, {"id": 2, "interface": "http://schema.skao.int/ska-data-product-meta/0.1", "execution_block": "eb-m004-20191031-12345", "date_created": "2019-10-31", "dataproduct_file": "product/eb-m004-20191031-12345", "metadata_file": "product/eb-m004-20191031-12345/ska-data-product.yaml", "obscore.dataproduct_type": "MS"}]
 
 Metadata list endpoint
-~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 When an Elasticsearch backend endpoint is not available, the dataproductlist can be used to return all the data products as a list of data products, with key metadata attributes.
 
@@ -121,7 +123,7 @@ When an Elasticsearch backend endpoint is not available, the dataproductlist can
 
 
 Re-index data products endpoint
-~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The data product metadata store can be re-indexed but making a get request to the reindexdataproducts endpoint. This allows the user to update the metadata store if metadata have been added or changed since the previous indexing.
 
@@ -133,9 +135,9 @@ The data product metadata store can be re-indexed but making a get request to th
     "Metadata store cleared and re-indexed"
 
 Download data product endpoint
-~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Sending a post request to the download endpoint will return a response to an in-memory tar file of the selected data product.
+Sending a post request to the download endpoint will return a stream response of the specified data product as a tar archive.
 
 The body of the post request must contain the name of the file and the relative path of the file you want to download as listed in the file list response above. 
 
@@ -156,7 +158,7 @@ The post request endpoint:
 
 
 Retrieve metadata of a data product endpoint
-~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Sending a post request to the dataproductmetadata endpoint will return a Response with the metadata of the data product in a JSON format.
 
@@ -204,3 +206,66 @@ The post request endpoint:
             }
         ]
     }
+
+
+API User
+-----------
+
+The Data Product Dashboard (DPD) will usually be used via the GUI, for certain systems and users direct access to the API may be useful and desired. This guide will help users get up to speed with the Data Product Dashboard API.
+
+DPD API documentation can be found at https://developer.skao.int/projects/ska-sdp-dataproduct-api/en/latest/overview.html#automatic-api-documentation. The DPD API is self documenting and as such the available endpoints can be found at `/docs`
+
+Data Product Modes of Operation
+The Data Product Dashboard has two modes of operation. With an Elastic Search backend available the full functionality is available, without that backend, a degraded experience is given to the user. Due to current architectural decisions that need to be made. The degraded or “in memory” implementation is currently the expected behavior and as such this guide expects the “in memory” mode of operation. Since the API is consistent between the two modes of operation, the guide should still be relevant when the mode is switched across.
+The endpoint ‘/status’ will inform which mode of operation is currently activated, Search enabled is expected to be false.
+
+Searching for and Downloading Data Products
+When searching for data products it is important to ensure that the most recent data is available. The cached map for the in-memory solution periodically checks for new product that are available, but there is a way to manually ensure this, namely through the update command:
+
+.. code-block:: python
+
+    import requests
+    BASE_URL = "http://localhost:8000"
+    response = requests.get(f"{BASE_URL}/reindexdataproducts")
+    print(response.status_code)
+    >>> 202
+
+
+Searching for a specific product can be done by date or by other metadata fields available.
+
+.. code-block:: python
+
+    data = {
+        "start_date": "2001-12-12",
+        "end_date": "2032-12-12",
+        "key_pair": "execution_block:eb-m001-20191031-12345",
+    }
+    response = requests.post(f"{BASE_URL}/dataproductsearch", json=data)
+    products = response.json()
+    print(products)
+    >>> [{'execution_block': 'eb-m001-20191031-12345', 'date_created': '2019-10-31', 'dataproduct_file': 'eb-m001-20221212-12345', 'metadata_file': 'eb-m001-20221212-12345/ska-data-product.yaml', 'interface': 'http://schema.skao.int/ska-data-product-meta/0.1', 'context.observer': 'AIV_person_1', 'context.intent': 'Experimental run as part of XYZ-123', 'context.notes': 'Running that signal from XX/YY/ZZ through again, things seem a bit flaky', 'config.processing_block': 'pb-m001-20191031-12345', 'config.processing_script': 'receive', 'config.image': 'artefact.skao.int/ska-docker/vis_receive', 'config.version': '0.1.3', 'config.commit': '516fb5a693f9dc9aff5d46192f4e055b582fc025', 'config.cmdline': '-dump /product/eb-m001-20191031-12345/ska-sdp/pb-m001-20191031-12345/vis.ms', 'id': 2}]
+
+
+Identify the product that should be downloaded and select it. This will be one of the products in the list of returned products:
+
+.. code-block:: python
+
+    product = products[0]
+
+The download endpoint returns a response that can be used to stream the data product into a tarball. This can saved into a local file:
+
+.. code-block:: python
+
+    data = {"fileName": product["dataproduct_file"],"relativePathName": product["dataproduct_file"]}
+    response = requests.post(f"{BASE_URL}/download", json=data)
+
+    with open('product.tar', 'wb') as fd:
+        for chunk in response.iter_content(chunk_size=4096):
+            fd.write(chunk)
+
+The tarball can then be opened using standard operation software. On linux this can be done using
+
+.. code-block:: bash
+
+    $ tar -xvf ./product.tar
+    eb-m001-20221212-12345/

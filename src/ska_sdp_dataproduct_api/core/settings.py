@@ -17,6 +17,7 @@ configure_logging(
 logger = logging.getLogger(__name__)
 
 config = Config(".env")
+REINDEXING_DELAY = 300  # Only allow reindexing after 5 minutes
 PERSISTANT_STORAGE_PATH: pathlib.Path = pathlib.Path(
     config("PERSISTANT_STORAGE_PATH", default="./tests/test_files"),
 )
@@ -49,7 +50,18 @@ VERSION: str = config(
     default=ska_sdp_dataproduct_api.__version__,
 )
 
+STREAM_CHUNK_SIZE: int = int(
+    config(
+        "STREAM_CHUNK_SIZE",
+        default=65536,
+    )
+)
+
+API_URL_SUBDIRECTORY: str = config("API_URL_SUBDIRECTORY", default="")
+
 app = FastAPI()
+
+app = FastAPI(root_path=API_URL_SUBDIRECTORY)
 
 origins = [
     "http://localhost",

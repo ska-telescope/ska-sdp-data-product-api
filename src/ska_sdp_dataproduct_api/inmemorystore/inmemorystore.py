@@ -1,38 +1,36 @@
 """Module to insert data into Elasticsearch instance."""
 import json
 import logging
+import time
 from collections.abc import MutableMapping
 
-from ska_sdp_dataproduct_api.core.helperfunctions import (
-    add_dataproduct,
-    ingest_metadata_files,
-)
-from ska_sdp_dataproduct_api.core.settings import PERSISTANT_STORAGE_PATH
+from ska_sdp_dataproduct_api.metadatastore.datastore import Store
 
 logger = logging.getLogger(__name__)
 
 # pylint: disable=no-name-in-module
+DATE_FORMAT = "%Y-%m-%d"
 
 
-class InMemoryDataproductIndex:
+class InMemoryDataproductIndex(Store):
     """
     This class defines an object that is used to create a list of data products
     based on information contained in the metadata files of these data
     products.
     """
 
-    def __init__(self, es_search_enabled) -> None:
-        self.metadata_list = []
-        if not es_search_enabled:
-            ingest_metadata_files(self, PERSISTANT_STORAGE_PATH)
+    def __init__(self) -> None:
+        super().__init__()
+        self.reindex()
 
-    def reindex(self):
-        """This methods resets and recreates the metadata_list. This is added
-        to enable the user to reindex if the data products were changed or
-        appended since the initial load of the data"""
+    @property
+    def es_search_enabled(self):
+        """Generic interface to verify there is no Elasticsearch backend"""
+        return False
+
+    def clear_metadata_indecise(self):
+        """Clear out all indices from in memory instance"""
         self.metadata_list.clear()
-        ingest_metadata_files(self, PERSISTANT_STORAGE_PATH)
-        logger.info("Metadata store cleared and re-indexed")
 
     def insert_metadata(self, metadata_file_json):
         """This method loads the metadata file of a data product, creates a
@@ -45,8 +43,7 @@ class InMemoryDataproductIndex:
             metadata_file, ["files"], "", "."
         )
 
-        add_dataproduct(
-            self.metadata_list,
+        self.add_dataproduct(
             metadata_file=metadata_file,
             query_key_list=query_key_list,
         )
@@ -68,3 +65,34 @@ class InMemoryDataproductIndex:
                 if new_key not in ignore_keys:
                     items.append(new_key)
         return items
+
+    def search_metadata(
+        self,
+        start_date: str = "1970-01-01",
+        end_date: str = "2100-01-01",
+        metadata_key: str = "*",
+        metadata_value: str = "*",
+    ):
+        """Metadata Search method"""
+        try:
+            start_date = time.strptime(start_date, DATE_FORMAT)
+            end_date = time.strptime(end_date, DATE_FORMAT)
+        except ValueError:
+            return json.dumps(
+                {"Error": "Invalid date format, expected YYYY-MM-DD"}
+            )
+        search_results = []
+        for product in self.metadata_list:
+            product_date = time.strptime(product["date_created"], DATE_FORMAT)
+            if not start_date <= product_date <= end_date:
+                continue
+            if metadata_key == "*" and metadata_value == "*":
+                search_results.append(product)
+                continue
+            try:
+                product_value = product[metadata_key]
+                if product_value == metadata_value:
+                    search_results.append(product)
+            except KeyError:
+                continue
+        return json.dumps(search_results)
