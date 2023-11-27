@@ -6,6 +6,7 @@ from collections.abc import MutableMapping
 
 from ska_sdp_dataproduct_api.core.settings import DATE_FORMAT
 from ska_sdp_dataproduct_api.metadatastore.datastore import Store
+from ska_sdp_dataproduct_api.core.helperfunctions import check_date_format
 
 logger = logging.getLogger(__name__)
 
@@ -74,13 +75,10 @@ class InMemoryDataproductIndex(Store):
         metadata_value: str = "*",
     ):
         """Metadata Search method"""
-        try:
-            start_date = time.strptime(start_date, DATE_FORMAT)
-            end_date = time.strptime(end_date, DATE_FORMAT)
-        except ValueError:
-            return json.dumps(
-                {"Error": "Invalid date format, expected YYYY-MM-DD"}
-            )
+
+        start_date = check_date_format(start_date, DATE_FORMAT)
+        end_date = check_date_format(end_date, DATE_FORMAT)
+
         search_results = []
         for product in self.metadata_list:
             product_date = time.strptime(product["date_created"], DATE_FORMAT)
