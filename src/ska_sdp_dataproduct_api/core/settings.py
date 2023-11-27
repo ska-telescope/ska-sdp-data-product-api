@@ -29,6 +29,10 @@ REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_PORT: str = config(
     "REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_PORT",
     default="8100",
 )
+REACT_APP_SKA_PORTAL_PORT: str = config(
+    "REACT_APP_SKA_PORTAL_PORT",
+    default="4200",
+)
 
 METADATA_FILE_NAME: str = config(
     "METADATA_FILE_NAME",
@@ -66,6 +70,7 @@ app = FastAPI(root_path=API_URL_SUBDIRECTORY)
 origins = [
     "http://localhost",
     "http://localhost" + ":" + REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_PORT,
+    "http://localhost" + ":" + REACT_APP_SKA_PORTAL_PORT,
     REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL,
     REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL
     + ":"
