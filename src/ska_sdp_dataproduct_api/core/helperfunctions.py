@@ -1,10 +1,10 @@
 """Module to insert data into Elasticsearch instance."""
 import datetime
+import json
 import logging
 import pathlib
 import subprocess
 import time
-import json
 from typing import Optional
 
 # pylint: disable=no-name-in-module
@@ -226,14 +226,12 @@ def find_metadata(metadata, query_key):
     return {"key": query_key, "value": subsection}
 
 
-def check_date_format(date, DATE_FORMAT):
-
+def check_date_format(date, date_format):
+    """Given a date, check that it is in the expected YYYY-MM-DD format"""
     try:
-        formatted_date = time.strptime(date, DATE_FORMAT)
+        formatted_date = time.strptime(date, date_format)
         return formatted_date
     except ValueError:
         return logger.error(
-            json.dumps(
-                {"Error": "Invalid date format, expected YYYY-MM-DD"}
-            )
+            json.dumps({"Error": "Invalid date format, expected YYYY-MM-DD"})
         )

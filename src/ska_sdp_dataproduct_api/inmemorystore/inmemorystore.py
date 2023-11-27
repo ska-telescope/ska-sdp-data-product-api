@@ -4,9 +4,9 @@ import logging
 import time
 from collections.abc import MutableMapping
 
+from ska_sdp_dataproduct_api.core.helperfunctions import check_date_format
 from ska_sdp_dataproduct_api.core.settings import DATE_FORMAT
 from ska_sdp_dataproduct_api.metadatastore.datastore import Store
-from ska_sdp_dataproduct_api.core.helperfunctions import check_date_format
 
 logger = logging.getLogger(__name__)
 
