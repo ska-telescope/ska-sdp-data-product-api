@@ -5,7 +5,11 @@ import logging
 import elasticsearch
 from elasticsearch import Elasticsearch
 
-from ska_sdp_dataproduct_api.core.settings import METADATA_ES_SCHEMA_FILE
+from ska_sdp_dataproduct_api.core.helperfunctions import check_date_format
+from ska_sdp_dataproduct_api.core.settings import (
+    DATE_FORMAT,
+    METADATA_ES_SCHEMA_FILE,
+)
 from ska_sdp_dataproduct_api.metadatastore.datastore import Store
 
 logger = logging.getLogger(__name__)
@@ -79,6 +83,9 @@ class ElasticsearchMetadataStore(Store):
             match_criteria = {"match": {metadata_key: metadata_value}}
         else:
             match_criteria = {"match_all": {}}
+
+        check_date_format(start_date, DATE_FORMAT)
+        check_date_format(end_date, DATE_FORMAT)
 
         query_body = {
             "query": {
