@@ -3,6 +3,8 @@ import datetime
 import logging
 import pathlib
 import subprocess
+import time
+import json
 from typing import Optional
 
 # pylint: disable=no-name-in-module
@@ -222,3 +224,16 @@ def find_metadata(metadata, query_key):
             return None
 
     return {"key": query_key, "value": subsection}
+
+
+def check_date_format(date, DATE_FORMAT):
+
+    try:
+        formatted_date = time.strptime(date, DATE_FORMAT)
+        return formatted_date
+    except ValueError:
+        return logger.error(
+            json.dumps(
+                {"Error": "Invalid date format, expected YYYY-MM-DD"}
+            )
+        )
