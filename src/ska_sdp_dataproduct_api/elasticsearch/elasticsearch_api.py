@@ -1,17 +1,16 @@
 """Module to insert data into Elasticsearch instance."""
 import json
 import logging
-import time
 
 import elasticsearch
 from elasticsearch import Elasticsearch
 
+from ska_sdp_dataproduct_api.core.helperfunctions import check_date_format
 from ska_sdp_dataproduct_api.core.settings import (
     DATE_FORMAT,
     METADATA_ES_SCHEMA_FILE,
 )
 from ska_sdp_dataproduct_api.metadatastore.datastore import Store
-from ska_sdp_dataproduct_api.core.helperfunctions import check_date_format
 
 logger = logging.getLogger(__name__)
 
