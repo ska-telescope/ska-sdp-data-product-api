@@ -84,12 +84,12 @@ app.add_middleware(
 
 
 DEFAULT_DISPLAY_LAYOUT = [
-    {"name": "execution_block", "width": 180},
-    {"name": "date_created", "width": 60},
-    {"name": "observer", "width": 60},
-    {"name": "processing_block", "width": 180},
-    {"name": "Intent", "width": 180},
-    {"name": "notes", "width": 180},
-    {"name": "file_size", "width": 60},
-    {"name": "status", "width": 60},
+    {"name": "execution_block", "width": 200},
+    {"name": "date_created", "width": 150},
+    {"name": "observer", "width": 150},
+    {"name": "processing_block", "width": 200},
+    {"name": "Intent", "width": 300},
+    {"name": "notes", "width": 500},
+    {"name": "file_size", "width": 80},
+    {"name": "status", "width": 80},
 ]
