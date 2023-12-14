@@ -8,6 +8,7 @@ import yaml
 from ska_sdp_dataproduct_metadata import MetaData
 
 from ska_sdp_dataproduct_api.core.helperfunctions import (
+    DPDAPIStatus,
     FileUrl,
     find_metadata,
     get_date_from_name,
@@ -24,9 +25,10 @@ logger = logging.getLogger(__name__)
 class Store:
     """Common store class (superclass to elastic search and in memory store)"""
 
-    def __init__(self):
+    def __init__(self, dpd_api_status):
         self.indexing_timestamp = 0
         self.metadata_list = []
+        self.dpd_api_status: DPDAPIStatus = dpd_api_status
 
     @property
     def es_search_enabled(self):
@@ -41,13 +43,14 @@ class Store:
         """This is implemented in subclasses."""
         raise NotImplementedError
 
-    def reindex(self):
+    def reindex(self) -> None:
         """This method resets and recreates the metadata_list. This is added
         to enable the user to reindex if the data products were changed or
         appended since the initial load of the data"""
         self.clear_metadata_indecise()
         self.ingest_metadata_files(PERSISTANT_STORAGE_PATH)
         self.indexing_timestamp = time()
+        self.dpd_api_status.update_data_store_date_modified()
         logger.info("Metadata store cleared and re-indexed")
 
     def ingest_file(self, path: pathlib.Path):

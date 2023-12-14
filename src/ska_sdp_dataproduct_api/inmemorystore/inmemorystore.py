@@ -4,7 +4,10 @@ import logging
 import time
 from collections.abc import MutableMapping
 
-from ska_sdp_dataproduct_api.core.helperfunctions import check_date_format
+from ska_sdp_dataproduct_api.core.helperfunctions import (
+    DPDAPIStatus,
+    check_date_format,
+)
 from ska_sdp_dataproduct_api.core.settings import DATE_FORMAT
 from ska_sdp_dataproduct_api.metadatastore.datastore import Store
 
@@ -20,8 +23,8 @@ class InMemoryDataproductIndex(Store):
     products.
     """
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, dpd_api_status: DPDAPIStatus) -> None:
+        super().__init__(dpd_api_status)
         self.reindex()
 
     @property
