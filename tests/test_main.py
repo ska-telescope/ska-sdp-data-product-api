@@ -10,6 +10,7 @@ def test_ping_main(test_app):
     assert "Search_enabled" in response.json()
     assert "Date_modified" in response.json()
     assert "Version" in response.json()
+    assert "Indexing" in response.json()
 
 
 def test_reindex_data_products(test_app):
