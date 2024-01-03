@@ -47,11 +47,17 @@ class Store:
         """This method resets and recreates the metadata_list. This is added
         to enable the user to reindex if the data products were changed or
         appended since the initial load of the data"""
-        self.clear_metadata_indecise()
-        self.ingest_metadata_files(PERSISTANT_STORAGE_PATH)
-        self.indexing_timestamp = time()
-        self.dpd_api_status.update_data_store_date_modified()
-        logger.info("Metadata store cleared and re-indexed")
+        try:
+            self.clear_metadata_indecise()
+            self.dpd_api_status.indexing = True
+            self.ingest_metadata_files(PERSISTANT_STORAGE_PATH)
+            self.indexing_timestamp = time()
+            self.dpd_api_status.update_data_store_date_modified()
+            self.dpd_api_status.indexing = False
+            logger.info("Metadata store cleared and re-indexed")
+        except Exception as exception:
+            self.dpd_api_status.indexing = False
+            raise exception
 
     def ingest_file(self, path: pathlib.Path):
         """This function gets the file information of a data product and

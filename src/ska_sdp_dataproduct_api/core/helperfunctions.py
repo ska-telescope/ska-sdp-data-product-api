@@ -32,6 +32,7 @@ class DPDAPIStatus:
 
     api_running: bool = True
     search_enabled: bool = False
+    indexing: bool = False
     date_modified: datetime.datetime = datetime.datetime.now()
     version: str = VERSION
 
@@ -40,6 +41,7 @@ class DPDAPIStatus:
         self.search_enabled = es_search_enabled
         return {
             "API_running": True,
+            "Indexing": self.indexing,
             "Search_enabled": self.search_enabled,
             "Date_modified": self.date_modified,
             "Version": self.version,
