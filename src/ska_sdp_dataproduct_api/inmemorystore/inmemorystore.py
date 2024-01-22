@@ -1,4 +1,5 @@
 """Module to insert data into Elasticsearch instance."""
+import copy
 import json
 import logging
 import time
@@ -74,7 +75,12 @@ class InMemoryDataproductIndex(Store):
         self,
         start_date: str = "1970-01-01",
         end_date: str = "2100-01-01",
-        metadata_key_value_pairs=[],
+        metadata_key_value_pairs=[
+            {
+                "metadata_key": "*",
+                "metadata_value": "*",
+            }
+        ],
     ):
         """Metadata Search method. Only takes the first key value pair."""
 
@@ -100,14 +106,14 @@ class InMemoryDataproductIndex(Store):
                     search_results.append(product)
             except KeyError:
                 continue
-
+        search_results_cpy = copy.deepcopy(search_results)
         if len(metadata_key_value_pairs) > 0:
             for product in search_results:
                 for key_value_pair in metadata_key_value_pairs[1:]:
                     try:
                         product_value = product[key_value_pair.metadata_key]
                         if product_value != key_value_pair.metadata_value:
-                            search_results.remove(product)
+                            search_results_cpy.remove(product)
                     except KeyError:
                         continue
         return json.dumps(search_results)
