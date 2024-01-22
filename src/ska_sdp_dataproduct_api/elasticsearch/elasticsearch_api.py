@@ -81,19 +81,22 @@ class ElasticsearchMetadataStore(Store):
         metadata_key_value_pairs=[],
     ):
         """Metadata Search method"""
+
         must = []
+        meta_data_keys = []
         for key_value in metadata_key_value_pairs:
             if (
                 key_value.metadata_key != "*"
                 and key.value.metadata_value != "*"
             ):
                 match_criteria = {
-                    "match": {key_value.metadata_key: key.value.metadata_value}
+                    "match": {key_value.metadata_key: key_value.metadata_value}
                 }
             else:
                 match_criteria = {"match_all": {}}
 
             must.append(match_criteria)
+            meta_data_keys.append(key_value.metadata_key)
 
         check_date_format(start_date, DATE_FORMAT)
         check_date_format(end_date, DATE_FORMAT)
@@ -129,6 +132,6 @@ class ElasticsearchMetadataStore(Store):
                 if key == "_source":
                     self.add_dataproduct(
                         metadata_file=value,
-                        query_key_list=[metadata_key],
+                        query_key_list=meta_data_keys,
                     )
         return json.dumps(self.metadata_list)
