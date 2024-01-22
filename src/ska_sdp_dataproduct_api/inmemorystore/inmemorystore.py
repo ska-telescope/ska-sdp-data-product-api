@@ -95,4 +95,14 @@ class InMemoryDataproductIndex(Store):
                     search_results.append(product)
             except KeyError:
                 continue
+        
+        if len(metadata_key_value_pairs) > 0: 
+            for product in search_results:
+                for key_value_pair in metadata_key_value_pairs[1:]:
+                    try:
+                        product_value = product[key_value_pair.metadata_key]
+                        if product_value != key_value_pair.metadata_value:
+                            search_results.remove(product)
+                    except KeyError:
+                        continue
         return json.dumps(search_results)
