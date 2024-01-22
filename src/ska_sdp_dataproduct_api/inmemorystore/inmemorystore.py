@@ -74,7 +74,7 @@ class InMemoryDataproductIndex(Store):
         self,
         start_date: str = "1970-01-01",
         end_date: str = "2100-01-01",
-        metadata_key_value_pairs = []
+        metadata_key_value_pairs=[],
     ):
         """Metadata Search method. Only takes the first key value pair."""
 
@@ -86,17 +86,22 @@ class InMemoryDataproductIndex(Store):
             product_date = time.strptime(product["date_created"], DATE_FORMAT)
             if not start_date <= product_date <= end_date:
                 continue
-            if metadata_key_value_pairs[0].metadata_key == "*" and metadata_key_value_pairs[0].metadata_value == "*":
+            if (
+                metadata_key_value_pairs[0].metadata_key == "*"
+                and metadata_key_value_pairs[0].metadata_value == "*"
+            ):
                 search_results.append(product)
                 continue
             try:
-                product_value = product[metadata_key_value_pairs[0].metadata_key]
+                product_value = product[
+                    metadata_key_value_pairs[0].metadata_key
+                ]
                 if product_value == metadata_key_value_pairs[0].metadata_value:
                     search_results.append(product)
             except KeyError:
                 continue
-        
-        if len(metadata_key_value_pairs) > 0: 
+
+        if len(metadata_key_value_pairs) > 0:
             for product in search_results:
                 for key_value_pair in metadata_key_value_pairs[1:]:
                     try:

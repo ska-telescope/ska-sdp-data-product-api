@@ -81,8 +81,9 @@ def test_search_metadata():
     metadata_list = metadata_store.search_metadata(
         start_date="2020-01-01",
         end_date="2100-01-01",
-        metadata_key_value_pairs = [{"metadata_key":"*",
-        "metadata_value":"*"}],
+        metadata_key_value_pairs=[
+            {"metadata_key": "*", "metadata_value": "*"}
+        ],
     )
 
     expected_value = [

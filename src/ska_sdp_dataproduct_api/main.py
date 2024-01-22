@@ -52,16 +52,21 @@ async def data_products_search(search_parameters: SearchParametersClass):
     metadata_key_value_pairs = []
     for key_value_pair in search_parameters.key_value_pairs:
         if ":" not in search_parameters.key_pair:
-            raise HTTPException(status_code=400, detail="Invalid search key pair.")
+            raise HTTPException(
+                status_code=400, detail="Invalid search key pair."
+            )
         else:
-            metadata_key_value_pairs.append({
-                "metadata_key":key_value_pair.split(":")[0],
-                "metadata_value":key_value_pair.split(":")[1]})        
+            metadata_key_value_pairs.append(
+                {
+                    "metadata_key": key_value_pair.split(":")[0],
+                    "metadata_value": key_value_pair.split(":")[1],
+                }
+            )
     filtered_data_product_list = store.search_metadata(
         start_date=search_parameters.start_date,
         end_date=search_parameters.end_date,
         metadata_key_value_pairs=metadata_key_value_pairs,
-        )
+    )
     return filtered_data_product_list
 
 

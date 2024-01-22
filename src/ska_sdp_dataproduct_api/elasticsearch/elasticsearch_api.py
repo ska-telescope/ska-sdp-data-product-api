@@ -78,17 +78,21 @@ class ElasticsearchMetadataStore(Store):
         self,
         start_date: str = "1970-01-01",
         end_date: str = "2100-01-01",
-        metadata_key_value_pairs = []
+        metadata_key_value_pairs=[],
     ):
         """Metadata Search method"""
         must = []
         for key_value in metadata_key_value_pairs:
-
-            if key_value.metadata_key != "*" and key.value.metadata_value != "*":
-                match_criteria = {"match": {key_value.metadata_key: key.value.metadata_value}}
+            if (
+                key_value.metadata_key != "*"
+                and key.value.metadata_value != "*"
+            ):
+                match_criteria = {
+                    "match": {key_value.metadata_key: key.value.metadata_value}
+                }
             else:
                 match_criteria = {"match_all": {}}
-            
+
             must.append(match_criteria)
 
         check_date_format(start_date, DATE_FORMAT)
