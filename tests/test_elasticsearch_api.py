@@ -2,16 +2,19 @@
 
 import json
 
+from ska_sdp_dataproduct_api.core.helperfunctions import DPDAPIStatus
 from ska_sdp_dataproduct_api.core.settings import METADATA_ES_SCHEMA_FILE
 from ska_sdp_dataproduct_api.elasticsearch.elasticsearch_api import (
     ElasticsearchMetadataStore,
 )
 from tests.mock_elasticsearch_api import MockElasticsearch
 
+DPD_API_Status = DPDAPIStatus()
+
 
 def test_create_schema():
     """Method to test creation of schema."""
-    metadata_store = ElasticsearchMetadataStore()
+    metadata_store = ElasticsearchMetadataStore(DPD_API_Status)
     metadata_store.es_client = MockElasticsearch()
 
     with open(
@@ -27,7 +30,7 @@ def test_create_schema():
 
 def test_insert_metadata():
     """Method to test insertion of metadata."""
-    metadata_store = ElasticsearchMetadataStore()
+    metadata_store = ElasticsearchMetadataStore(DPD_API_Status)
     metadata_store.es_client = MockElasticsearch()
 
     with open(
@@ -45,7 +48,7 @@ def test_insert_metadata():
 
 def test_update_dataproduct_list():
     """Method to test insertion of metadata."""
-    metadata_store = ElasticsearchMetadataStore()
+    metadata_store = ElasticsearchMetadataStore(DPD_API_Status)
     metadata_store.es_client = MockElasticsearch()
 
     with open(
@@ -72,7 +75,7 @@ def test_update_dataproduct_list():
 
 def test_search_metadata():
     """Method to test search of metadata"""
-    metadata_store = ElasticsearchMetadataStore()
+    metadata_store = ElasticsearchMetadataStore(DPD_API_Status)
     metadata_store.es_client = MockElasticsearch()
     metadata_store.es_client.ping = lambda: True
     metadata_list = metadata_store.search_metadata(

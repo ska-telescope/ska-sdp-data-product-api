@@ -1,8 +1,10 @@
 """Module to insert data into Elasticsearch instance."""
 import datetime
+import json
 import logging
 import pathlib
 import subprocess
+import time
 from typing import Optional
 
 # pylint: disable=no-name-in-module
@@ -30,6 +32,7 @@ class DPDAPIStatus:
 
     api_running: bool = True
     search_enabled: bool = False
+    indexing: bool = False
     date_modified: datetime.datetime = datetime.datetime.now()
     version: str = VERSION
 
@@ -38,6 +41,7 @@ class DPDAPIStatus:
         self.search_enabled = es_search_enabled
         return {
             "API_running": True,
+            "Indexing": self.indexing,
             "Search_enabled": self.search_enabled,
             "Date_modified": self.date_modified,
             "Version": self.version,
@@ -222,3 +226,14 @@ def find_metadata(metadata, query_key):
             return None
 
     return {"key": query_key, "value": subsection}
+
+
+def check_date_format(date, date_format):
+    """Given a date, check that it is in the expected YYYY-MM-DD format"""
+    try:
+        formatted_date = time.strptime(date, date_format)
+        return formatted_date
+    except ValueError:
+        return logger.error(
+            json.dumps({"Error": "Invalid date format, expected YYYY-MM-DD"})
+        )

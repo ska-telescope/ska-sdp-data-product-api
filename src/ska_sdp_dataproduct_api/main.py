@@ -12,7 +12,11 @@ from ska_sdp_dataproduct_api.core.helperfunctions import (
     SearchParametersClass,
     download_file,
 )
-from ska_sdp_dataproduct_api.core.settings import ES_HOST, app
+from ska_sdp_dataproduct_api.core.settings import (
+    DEFAULT_DISPLAY_LAYOUT,
+    ES_HOST,
+    app,
+)
 from ska_sdp_dataproduct_api.metadatastore.store_factory import (
     select_correct_store_class,
 )
@@ -21,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 DPD_API_Status = DPDAPIStatus()
 
-store = select_correct_store_class(ES_HOST)
+store = select_correct_store_class(ES_HOST, DPD_API_Status)
 
 
 @app.get("/status")
@@ -35,7 +39,6 @@ async def root():
 async def reindex_data_products(background_tasks: BackgroundTasks):
     """This endpoint clears the list of data products from memory and
     re-ingest the metadata of all data products found"""
-    DPD_API_Status.update_data_store_date_modified()
     background_tasks.add_task(store.reindex)
     logger.info("Metadata store cleared and re-indexed")
     return "Metadata is set to be cleared and re-indexed"
@@ -89,3 +92,11 @@ async def ingest_new_data_product(file_object: FileUrl):
         "New data product metadata file loaded and store index updated"
     )
     return "New data product metadata file loaded and store index updated"
+
+
+@app.get("/layout")
+async def layout():
+    """API endpoint returns the columns that should be shown by default
+    as well as their current width. In future I would like it to also
+    return a user specific layout (possibly something the user has saved?)"""
+    return DEFAULT_DISPLAY_LAYOUT
