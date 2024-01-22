@@ -87,7 +87,7 @@ class ElasticsearchMetadataStore(Store):
         for key_value in metadata_key_value_pairs:
             if (
                 key_value.metadata_key != "*"
-                and key.value.metadata_value != "*"
+                and key_value.metadata_value != "*"
             ):
                 match_criteria = {
                     "match": {key_value.metadata_key: key_value.metadata_value}
