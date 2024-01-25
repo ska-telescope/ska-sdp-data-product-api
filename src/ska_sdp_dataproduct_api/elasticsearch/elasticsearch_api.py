@@ -78,7 +78,7 @@ class ElasticsearchMetadataStore(Store):
         self,
         start_date: str = "1970-01-01",
         end_date: str = "2100-01-01",
-        metadata_key_value_pairs = None,
+        metadata_key_value_pairs=None,
     ):
         """Metadata Search method"""
 
@@ -90,7 +90,9 @@ class ElasticsearchMetadataStore(Store):
                 and key_value["metadata_value"] != "*"
             ):
                 match_criteria = {
-                    "match": {key_value["metadata_key"]: key_value["metadata_value"]}
+                    "match": {
+                        key_value["metadata_key"]: key_value["metadata_value"]
+                    }
                 }
             else:
                 match_criteria = {"match_all": {}}

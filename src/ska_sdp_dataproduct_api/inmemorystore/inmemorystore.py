@@ -102,7 +102,10 @@ class InMemoryDataproductIndex(Store):
                 product_value = product[
                     metadata_key_value_pairs[0]["metadata_key"]
                 ]
-                if product_value == metadata_key_value_pairs[0]["metadata_value"]:
+                if (
+                    product_value
+                    == metadata_key_value_pairs[0]["metadata_value"]
+                ):
                     search_results.append(product)
             except KeyError:
                 continue
