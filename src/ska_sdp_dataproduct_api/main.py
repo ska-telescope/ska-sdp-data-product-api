@@ -51,7 +51,7 @@ async def data_products_search(search_parameters: SearchParametersClass):
     """
     metadata_key_value_pairs = []
     for key_value_pair in search_parameters.key_value_pairs:
-        if ":" not in search_parameters.key_value_pair:
+        if ":" not in key_value_pair:
             raise HTTPException(
                 status_code=400, detail="Invalid search key pair."
             )
