@@ -81,7 +81,7 @@ def test_in_faulty_data_search(test_app):
     data = {
         "start_date": "2001-12-13",
         "end_date": "2032-12-13",
-        "key_value_pairs": ["execution_block:eb-m001-20191031-12345"],
+        "key_value_pairs": ["execution_blockeb-m001-20191031-12345"],
     }
     response = test_app.post("/dataproductsearch", json=data)
     assert response.status_code == 400
