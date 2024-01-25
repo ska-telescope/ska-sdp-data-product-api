@@ -32,7 +32,7 @@ store = select_correct_store_class(ES_HOST, DPD_API_Status)
 async def root():
     """An enpoint that just returns confirmation that the
     application is running"""
-    return DPD_API_Status.status(True)
+    return DPD_API_Status.status(store.es_search_enabled())
 
 
 @app.get("/reindexdataproducts", status_code=202)
