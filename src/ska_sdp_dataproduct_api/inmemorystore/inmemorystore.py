@@ -93,16 +93,16 @@ class InMemoryDataproductIndex(Store):
             if not start_date <= product_date <= end_date:
                 continue
             if (
-                metadata_key_value_pairs[0].metadata_key == "*"
-                and metadata_key_value_pairs[0].metadata_value == "*"
+                metadata_key_value_pairs[0]["metadata_key"] == "*"
+                and metadata_key_value_pairs[0]["metadata_value"] == "*"
             ):
                 search_results.append(product)
                 continue
             try:
                 product_value = product[
-                    metadata_key_value_pairs[0].metadata_key
+                    metadata_key_value_pairs[0]["metadata_key"]
                 ]
-                if product_value == metadata_key_value_pairs[0].metadata_value:
+                if product_value == metadata_key_value_pairs[0]["metadata_value"]:
                     search_results.append(product)
             except KeyError:
                 continue
@@ -111,9 +111,9 @@ class InMemoryDataproductIndex(Store):
             for product in search_results:
                 for key_value_pair in metadata_key_value_pairs[1:]:
                     try:
-                        product_value = product[key_value_pair.metadata_key]
-                        if product_value != key_value_pair.metadata_value:
+                        product_value = product[key_value_pair["metadata_key"]]
+                        if product_value != key_value_pair["metadata_value"]:
                             search_results_cpy.remove(product)
                     except KeyError:
                         continue
-        return json.dumps(search_results)
+        return json.dumps(search_results_cpy)
