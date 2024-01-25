@@ -105,7 +105,7 @@ class InMemoryDataproductIndex(Store):
             except KeyError:
                 continue
         search_results_cpy = copy.deepcopy(search_results)
-        if len(metadata_key_value_pairs) > 0:
+        if len(metadata_key_value_pairs) > 1:
             for product in search_results:
                 for key_value_pair in metadata_key_value_pairs[1:]:
                     try:
