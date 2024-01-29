@@ -4,74 +4,8 @@ SDP Data Product API Overview
 This API is used to provide a list of SDP data products (files) that are hosted at a configurable storage location <PERSISTANT_STORAGE_PATH>.
 
 
-Deployment
-----------
-
-Local Deployment
-~~~~~~~~~~~~~~~~
-**Tooling Pre-requisites**
-Below are some tools that will be required to work with the data product API:
-
-- Python 3.10 or later versions: Install page URL: https://www.python.org/downloads/
-- Poetry 1.2 or later versions: Install page URL: https://python-poetry.org/docs/#installation
-- GNU make 4.2 or later versions: Install page URL: https://www.gnu.org/software/make/
-- Elasticsearch 8.6.0 or later versions: (optional)
-
-**Installation**
-
-Clone the repository and its submodules:
-
-.. code-block:: bash
-
-    git clone git@gitlab.com:ska-telescope/sdp/ska-sdp-dataproduct-api.git
-    git submodule update --init --recursive
-
-**Running the application**
-
-Configure the environmental variables in the .evn file under the root folder according to your requirements and environment. The default values are:
-
-.. code-block:: bash
-
-    REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL=http://localhost
-    REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT=8100
-    PERSISTANT_STORAGE_PATH=./tests/test_files/product
-    METADATA_FILE_NAME=ska-data-product.yaml
-    METADATA_ES_SCHEMA_FILE=./src/ska_sdp_dataproduct_api/elasticsearch/data_product_metadata_schema.json
-    METADATA_JSON_SCHEMA_FILE=./src/ska_sdp_dataproduct_api/core/data_product_metadata_json_schema.json
-    ES_HOST=http://localhost:9200
-    STREAM_CHUNK_SIZE=65536
-
-*To run the application directly on your host machine:*
-
-.. code-block:: bash
-
-    cd ska-sdp-dataproduct-api
-    poetry shell
-    poetry install
-    uvicorn src.ska_sdp_dataproduct_api.main:app --reload
-
-*To run the application inside a docker container on your host machine:*
-
-NOTE: When running the application in a docker container, the <PERSISTANT_STORAGE_PATH> needs to be accessible from within the container. You can mount the test folder into this location as done below:
-
-.. code-block:: bash
-
-    docker build -t ska-sdp-dataproduct-api .
-    docker run -p 8000:8000 -v <YOUR_PROJECT_DIR>/ska-sdp-dataproduct-api/tests:/usr/src/ska_sdp_dataproduct_api/tests ska-sdp-dataproduct-api
-
-Uvicorn will then be running on http://127.0.0.1:8000
-
-Kubernetes Deployment
-~~~~~~~~~~~~~~~~~~~~~
-
-
-
-The SDP Data Product API is deployed as part of the helm chart of the `SDP Data Product Dashboard <https://gitlab.com/ska-telescope/sdp/ska-sdp-dataproduct-dashboard>`_. In the Kubernetes deployment, the environmental variables are updated from the values files of the deployment and not the .env file in the project. Please see the documentation in the `SDP Data Product Dashboard documentation <https://developer.skao.int/projects/ska-sdp-dataproduct-dashboard/en/latest/?badge=latest>`_ for more information.
-
-
-
 Automatic API Documentation
------
+---------------------------
 For detailed documentation of the API, see the FastAPI Swagger UI documentation. This interactive API documentation can be accessed at http://127.0.0.1:8000/docs when running the application locally or https://<domain>/<namespace>/api/docs when deployed behind an ingress.
 
 Basic Usage
@@ -87,7 +21,13 @@ To retrieve the status of the API, you can send a get request to the status endp
 
     GET /status
 
-    {"API_running":true,"Search_enabled":false}
+    {
+    "API_running": true,
+    "Indexing": false,
+    "Search_enabled": false,
+    "Date_modified": "2024-01-29T09:41:10.268830",
+    "Version": "0.6.2"
+    }
 
 
 
@@ -209,7 +149,7 @@ The post request endpoint:
 
 
 API User
------------
+--------
 
 The Data Product Dashboard (DPD) will usually be used via the GUI, for certain systems and users direct access to the API may be useful and desired. This guide will help users get up to speed with the Data Product Dashboard API.
 
