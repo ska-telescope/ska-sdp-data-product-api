@@ -21,13 +21,12 @@ Clone the repository and its submodules:
 
 .. code-block:: bash
 
-    git clone git@gitlab.com:ska-telescope/sdp/ska-sdp-dataproduct-api.git
-    git submodule update --init --recursive
+    git clone --recursive git@gitlab.com:ska-telescope/sdp/ska-sdp-dataproduct-api.git
 
 Running the application
 =======================
 
-Configure the environmental variables in the .evn file under the root folder according to your requirements and environment. The default values are:
+Configure the environmental variables in the .env file under the root folder according to your requirements and environment. The default values are:
 
 .. code-block:: bash
 
