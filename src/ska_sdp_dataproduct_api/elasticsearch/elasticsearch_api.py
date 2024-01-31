@@ -113,6 +113,9 @@ class ElasticsearchMetadataStore(Store):
         check_date_format(start_date, DATE_FORMAT)
         check_date_format(end_date, DATE_FORMAT)
 
+        check_date_format(start_date, DATE_FORMAT)
+        check_date_format(end_date, DATE_FORMAT)
+
         query_body = {
             "query": {
                 "bool": {
