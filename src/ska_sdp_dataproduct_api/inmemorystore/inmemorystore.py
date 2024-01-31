@@ -84,7 +84,10 @@ class InMemoryDataproductIndex(Store):
 
         print(self.metadata_list)
 
-        if metadata_key_value_pairs is None or len(metadata_key_value_pairs) is 0:
+        if (
+            metadata_key_value_pairs is None
+            or len(metadata_key_value_pairs) is 0
+        ):
             return json.dumps(self.metadata_list)
 
         search_results = copy.deepcopy(self.metadata_list)

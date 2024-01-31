@@ -50,7 +50,10 @@ async def data_products_search(search_parameters: SearchParametersClass):
     in the PERSISTANT_STORAGE_PATH
     """
     metadata_key_value_pairs = []
-    if search_parameters.key_value_pairs is not None and len(search_parameters.key_value_pairs) > 0:
+    if (
+        search_parameters.key_value_pairs is not None
+        and len(search_parameters.key_value_pairs) > 0
+    ):
         for key_value_pair in search_parameters.key_value_pairs:
             if ":" not in key_value_pair:
                 raise HTTPException(

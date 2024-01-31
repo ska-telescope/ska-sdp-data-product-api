@@ -146,14 +146,14 @@ def test_search_metadata_blank_list():
 
     assert json.loads(metadata_list) == expected_value
 
+
 def test_search_metadata_no_value():
     """Method to test search of metadata if metadata_key_value_pair is not given"""
     metadata_store = ElasticsearchMetadataStore(DPD_API_Status)
     metadata_store.es_client = MockElasticsearch()
     metadata_store.es_client.ping = lambda: True
     metadata_list = metadata_store.search_metadata(
-        start_date="2020-01-01",
-        end_date="2100-01-01"
+        start_date="2020-01-01", end_date="2100-01-01"
     )
 
     expected_value = [

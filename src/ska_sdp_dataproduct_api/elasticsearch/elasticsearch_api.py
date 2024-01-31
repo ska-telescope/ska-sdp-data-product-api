@@ -84,7 +84,10 @@ class ElasticsearchMetadataStore(Store):
 
         must = []
         meta_data_keys = []
-        if metadata_key_value_pairs is not None and len(metadata_key_value_pairs) > 0:
+        if (
+            metadata_key_value_pairs is not None
+            and len(metadata_key_value_pairs) > 0
+        ):
             for key_value in metadata_key_value_pairs:
                 if (
                     key_value["metadata_key"] != "*"
