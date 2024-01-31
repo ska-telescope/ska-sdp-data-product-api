@@ -1,0 +1,176 @@
+{
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "config": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "cmdline": {
+                    "type": ["string", "null"]
+                },
+                "commit": {
+                    "type": ["string", "null"]
+                },
+                "image": {
+                    "type": "string"
+                },
+                "processing_block": {
+                    "type": "string"
+                },
+                "processing_script": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "cmdline",
+                "commit",
+                "image",
+                "processing_block",
+                "processing_script",
+                "version"
+            ]
+        },
+        "context": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "observer": {
+                    "type": "string"
+                },
+                "intent": {
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                }
+            },
+            "required": [
+            ]
+        },
+        "execution_block": {
+            "type": "string"
+        },
+        "files": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "description": {
+                        "type": "string"
+                    },
+                    "path": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "description",
+                    "path",
+                    "status"
+                ]
+            }
+        },
+        "interface": {
+            "type": "string",
+            "format": "uri"
+        },
+        "obscore": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "dataproduct_type": {
+                    "type": "string"
+                },
+                "calib_level": {
+                    "type": "string"
+                },
+                "obs_collection": {
+                    "type": "string"
+                },
+                "obs_id": {
+                    "type": "string"
+                },
+                "access_url": {
+                    "type": "string",
+                    "format": "uri",
+                    "qt-uri-protocols": [
+                        "https"
+                    ]
+                },
+                "access_format": {
+                    "type": "string"
+                },
+                "access_estsize": {
+                    "type": "integer"
+                },
+                "target_name": {
+                    "type": "string"
+                },
+                "s_ra": {
+                    "type": "number"
+                },
+                "s_dec": {
+                    "type": "number"
+                },
+                "t_min": {
+                    "type": "number"
+                },
+                "t_max": {
+                    "type": "number"
+                },
+                "t_exptime": {
+                    "type": "number"
+                },
+                "o_ucd": {
+                    "type": "string"
+                },
+                "pol_states": {
+                    "type": "string"
+                },
+                "pol_xel": {
+                    "type": "integer"
+                },
+                "facility_name": {
+                    "type": "string"
+                },
+                "instrument_name": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "access_estsize",
+                "access_format",
+                "access_url",
+                "calib_level",
+                "dataproduct_type",
+                "facility_name",
+                "instrument_name",
+                "o_ucd",
+                "obs_collection",
+                "obs_id",
+                "pol_states",
+                "pol_xel",
+                "s_dec",
+                "s_ra",
+                "t_exptime",
+                "t_max",
+                "t_min",
+                "target_name"
+            ]
+        }
+    },
+    "required": [
+        "config",
+        "context",
+        "execution_block",
+        "files",
+        "interface"
+    ]
+}
