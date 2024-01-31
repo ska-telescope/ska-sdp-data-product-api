@@ -149,11 +149,7 @@ The post request endpoint:
 
 
 API User
-<<<<<<< HEAD
 -----------
-=======
---------
->>>>>>> main
 
 The Data Product Dashboard (DPD) will usually be used via the GUI, for certain systems and users direct access to the API may be useful and desired. This guide will help users get up to speed with the Data Product Dashboard API.
 
