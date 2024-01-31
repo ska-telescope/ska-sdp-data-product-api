@@ -148,7 +148,8 @@ def test_search_metadata_blank_list():
 
 
 def test_search_metadata_no_value():
-    """Method to test search of metadata if metadata_key_value_pair is not given"""
+    """Method to test search of metadata 
+    if metadata_key_value_pair is not given"""
     metadata_store = ElasticsearchMetadataStore(DPD_API_Status)
     metadata_store.es_client = MockElasticsearch()
     metadata_store.es_client.ping = lambda: True

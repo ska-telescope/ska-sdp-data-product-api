@@ -86,7 +86,7 @@ class InMemoryDataproductIndex(Store):
 
         if (
             metadata_key_value_pairs is None
-            or len(metadata_key_value_pairs) is 0
+            or len(metadata_key_value_pairs) == 0
         ):
             return json.dumps(self.metadata_list)
 
