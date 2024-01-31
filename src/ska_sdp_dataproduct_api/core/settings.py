@@ -56,6 +56,12 @@ VERSION: str = config(
 )
 
 API_URL_SUBDIRECTORY: str = config("API_URL_SUBDIRECTORY", default="")
+STREAM_CHUNK_SIZE: int = int(
+    config(
+        "STREAM_CHUNK_SIZE",
+        default=65536,
+    )
+)
 
 app = FastAPI()
 

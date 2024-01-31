@@ -9,7 +9,7 @@ from ska_sdp_dataproduct_api.core.helperfunctions import (
     DPDAPIStatus,
     FileUrl,
     SearchParametersClass,
-    download_file,
+    stream_file,
 )
 from ska_sdp_dataproduct_api.core.settings import ES_HOST, app
 from ska_sdp_dataproduct_api.metadatastore.store_factory import (
@@ -68,7 +68,7 @@ async def data_products_list():
 async def download(file_object: FileUrl):
     """This API endpoint returns a FileResponse that is used by a
     frontend to download a file"""
-    return download_file(file_object)
+    return stream_file(file_object)
 
 
 @app.post("/dataproductmetadata", response_class=Response)
