@@ -58,6 +58,13 @@ STREAM_CHUNK_SIZE: int = int(
     )
 )
 
+DATE_FORMAT: str = config(
+    "DATE_FORMAT",
+    default="%Y-%m-%d"
+)
+
+API_URL_SUBDIRECTORY: str = config("API_URL_SUBDIRECTORY", default="")
+
 app = FastAPI()
 
 app = FastAPI(root_path=API_URL_SUBDIRECTORY)
