@@ -69,11 +69,35 @@ def test_in_memory_search(test_app):
     data = {
         "start_date": "2001-12-12",
         "end_date": "2032-12-12",
-        "key_pair": "execution_block:eb-m001-20191031-12345",
+        "key_value_pairs": ["execution_block:eb-m001-20191031-12345"],
     }
     response = test_app.post("/dataproductsearch", json=data)
     assert response.status_code == 200
+    print(response.json())
     assert response.json()[0]["execution_block"] == "eb-m001-20191031-12345"
+
+
+def test_in_memory_search_empty_key_value_list(test_app):
+    """This tests the in-memory precise search."""
+    data = {
+        "start_date": "2001-12-12",
+        "end_date": "2032-12-12",
+        "key_value_pairs": [],
+    }
+    response = test_app.post("/dataproductsearch", json=data)
+    assert response.status_code == 200
+    assert len(response.json()) > 0
+
+
+def test_in_memory_search_no_key_value_list(test_app):
+    """This tests the in-memory precise search."""
+    data = {
+        "start_date": "2001-12-12",
+        "end_date": "2032-12-12",
+    }
+    response = test_app.post("/dataproductsearch", json=data)
+    assert response.status_code == 200
+    assert len(response.json()) > 0
 
 
 def test_in_faulty_data_search(test_app):
@@ -81,7 +105,7 @@ def test_in_faulty_data_search(test_app):
     data = {
         "start_date": "2001-12-13",
         "end_date": "2032-12-13",
-        "key_pair": "execution_blockeb-m001-20191031-12345",
+        "key_value_pairs": ["execution_blockeb-m001-20191031-12345"],
     }
     response = test_app.post("/dataproductsearch", json=data)
     assert response.status_code == 400

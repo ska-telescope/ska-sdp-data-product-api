@@ -130,7 +130,7 @@ class SearchParametersClass(BaseModel):
 
     start_date: str = "2020-01-01"
     end_date: str = "2100-01-01"
-    key_pair: str = ""
+    key_value_pairs: list[str] = None
 
 
 def generate_data_stream(file_path: pathlib.Path):

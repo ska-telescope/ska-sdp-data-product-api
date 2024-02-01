@@ -17,7 +17,7 @@ class MockIndices:
         self.values[index] = {"schema": body}
 
     def get(self, index):
-        """Retrive Index."""
+        """Retrieve Index."""
         if index in self.values:
             return self.values[index]["schema"]
         raise elasticsearch.NotFoundError("message", "meta", "body")
