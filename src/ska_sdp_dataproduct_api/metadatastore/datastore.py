@@ -59,6 +59,12 @@ class Store:
             self.dpd_api_status.indexing = False
             raise exception
 
+    def sort_metadata_list(self, key: str, reverse: bool) -> None:
+        """This method sorts the metadata_list according to the set key"""
+        self.metadata_list.sort(key=lambda x: x[key])
+        if reverse:
+            self.metadata_list.reverse()
+
     def ingest_file(self, path: pathlib.Path):
         """This function gets the file information of a data product and
         structure the information to be inserted into the metadata store.
@@ -91,6 +97,7 @@ class Store:
         dataproduct_paths = self.find_folders_with_metadata_files()
         for product_path in dataproduct_paths:
             self.ingest_file(product_path)
+        self.sort_metadata_list(key="date_created", reverse=True)
 
     def add_dataproduct(self, metadata_file, query_key_list):
         """Populate a list of data products and its metadata"""
@@ -126,16 +133,6 @@ class Store:
             self.metadata_list.append(data_product_details)
             return
 
-        # Iterates through all the items in the metadata_list to see if an
-        # entry exist, if it is found, it is replaced, else added to the end.
-        for i, product in enumerate(self.metadata_list):
-            if (
-                product["execution_block"]
-                == data_product_details["execution_block"]
-            ):
-                data_product_details["id"] = product["id"]
-                self.metadata_list[i] = data_product_details
-                return
         data_product_details["id"] = len(self.metadata_list) + 1
         self.metadata_list.append(data_product_details)
         return

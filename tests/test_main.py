@@ -29,11 +29,16 @@ def test_data_product_list(test_app):
     assert "eb-m001-20221212-12345/ska-data-product.yaml" in str(
         response.json()
     )
-
+    assert "pb-notebookpo-20240201-54576/ska-data-product.yaml" in str(
+        response.json()
+    )
+    assert "pb-notebookvr-20240201-54576/ska-data-product.yaml" in str(
+        response.json()
+    )
     # make sure that the response JSON contains 7 data products,
     # and therefore that the 3 YAML files missing execution_block attributes
     # have not been ingested
-    assert len(response.json()) == 9
+    assert len(response.json()) == 11
 
 
 def test_download_file(test_app):
@@ -43,6 +48,11 @@ def test_download_file(test_app):
         "eb-m001-20221212-12345/ska-sub-system/scan_id_1/pb_id_1'
         + '/TestDataFile1.txt"}'
     )
+    response = test_app.post("/download", data=data)
+    assert response.status_code == 200
+
+    data = '{"fileName": "pb-notebookvr-20240201-54576","relativePathName": \
+        "eb-notebook-20240201-54576/ska-sdp/pb-notebookvr-20240201-54576"}'
     response = test_app.post("/download", data=data)
     assert response.status_code == 200
 

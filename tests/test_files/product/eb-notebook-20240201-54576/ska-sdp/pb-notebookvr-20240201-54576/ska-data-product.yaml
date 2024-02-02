@@ -1,0 +1,55 @@
+config:
+  cmdline: null
+  commit: null
+  image: artefact.skao.int/ska-sdp-script-vis-receive
+  processing_block: pb-notebookvr-20240201-54576
+  processing_script: vis-receive
+  version: 2.3.0
+context: {}
+execution_block: eb-notebook-20240201-54576
+files:
+- crc: null
+  description: MS for scan 1
+  path: output.scan-1.ms
+  status: working
+- crc: null
+  description: MS for scan 2
+  path: output.scan-2.ms
+  status: working
+- crc: null
+  description: MS for scan 3
+  path: output.scan-3.ms
+  status: working
+- crc: null
+  description: MS for scan 4
+  path: output.scan-4.ms
+  status: working
+- crc: null
+  description: MS for scan 5
+  path: output.scan-5.ms
+  status: working
+- crc: null
+  description: MS for scan 6
+  path: output.scan-6.ms
+  status: finished
+interface: http://schema.skao.int/ska-data-product-meta/0.1
+obscore:
+  access_estsize: null
+  access_format: application/unknown
+  access_url: null
+  calib_level: 0
+  dataproduct_type: Unknown
+  facility_name: SKA-Observatory
+  instrument_name: Unknown
+  o_ucd: null
+  obs_collection: Unknown
+  obs_id: ''
+  pol_states: null
+  pol_xel: null
+  s_dec: null
+  s_ra: null
+  t_exptime: null
+  t_max: null
+  t_min: null
+  t_resolution: null
+  target_name: null
