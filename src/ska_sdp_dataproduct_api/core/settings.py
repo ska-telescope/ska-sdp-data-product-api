@@ -11,9 +11,7 @@ from starlette.config import Config
 
 import ska_sdp_dataproduct_api
 
-configure_logging(
-    level=uvicorn.config.LOGGING_CONFIG["loggers"]["uvicorn.error"]["level"]
-)
+configure_logging(level=uvicorn.config.LOGGING_CONFIG["loggers"]["uvicorn.error"]["level"])
 logger = logging.getLogger(__name__)
 
 config = Config(".env")

@@ -14,10 +14,7 @@ from ska_sdp_dataproduct_api.core.helperfunctions import (
     get_date_from_name,
     get_relative_path,
 )
-from ska_sdp_dataproduct_api.core.settings import (
-    METADATA_FILE_NAME,
-    PERSISTANT_STORAGE_PATH,
-)
+from ska_sdp_dataproduct_api.core.settings import METADATA_FILE_NAME, PERSISTANT_STORAGE_PATH
 
 logger = logging.getLogger(__name__)
 
@@ -117,9 +114,7 @@ class Store:
         for query_key in query_key_list:
             query_metadata = find_metadata(metadata_file, query_key)
             if query_metadata is not None:
-                data_product_details[query_metadata["key"]] = query_metadata[
-                    "value"
-                ]
+                data_product_details[query_metadata["key"]] = query_metadata["value"]
         self.update_dataproduct_list(data_product_details)
 
     def update_dataproduct_list(self, data_product_details):
@@ -157,9 +152,7 @@ class Store:
             )
             return {}
         try:
-            with open(
-                file_object.fullPathName, "r", encoding="utf-8"
-            ) as metadata_yaml_file:
+            with open(file_object.fullPathName, "r", encoding="utf-8") as metadata_yaml_file:
                 metadata_yaml_object = yaml.safe_load(
                     metadata_yaml_file
                 )  # yaml_object will be a list or a dict
@@ -179,9 +172,7 @@ class Store:
             return {}
 
         # validate the metadata against the schema
-        validation_errors = MetaData.validator.iter_errors(
-            metadata_yaml_object
-        )
+        validation_errors = MetaData.validator.iter_errors(metadata_yaml_object)
         # Loop over the errors
         for validation_error in validation_errors:
             logger.debug(
@@ -192,8 +183,7 @@ class Store:
 
             if (
                 str(validation_error.validator) == "required"
-                or str(validation_error.message)
-                == "None is not of type 'object'"
+                or str(validation_error.message) == "None is not of type 'object'"
             ):
                 logger.warning(
                     "Not loading dataproduct due to schema validation error \
@@ -203,15 +193,9 @@ class Store:
                 )
                 return {}
 
-        metadata_date = get_date_from_name(
-            metadata_yaml_object["execution_block"]
-        )
+        metadata_date = get_date_from_name(metadata_yaml_object["execution_block"])
         metadata_yaml_object.update({"date_created": metadata_date})
-        metadata_yaml_object.update(
-            {"dataproduct_file": str(file_object.relativePathName.parent)}
-        )
-        metadata_yaml_object.update(
-            {"metadata_file": str(file_object.relativePathName)}
-        )
+        metadata_yaml_object.update({"dataproduct_file": str(file_object.relativePathName.parent)})
+        metadata_yaml_object.update({"metadata_file": str(file_object.relativePathName)})
         metadata_json = json.dumps(metadata_yaml_object)
         return metadata_json

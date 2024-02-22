@@ -5,14 +5,8 @@ import logging
 import elasticsearch
 from elasticsearch import Elasticsearch
 
-from ska_sdp_dataproduct_api.core.helperfunctions import (
-    DPDAPIStatus,
-    check_date_format,
-)
-from ska_sdp_dataproduct_api.core.settings import (
-    DATE_FORMAT,
-    METADATA_ES_SCHEMA_FILE,
-)
+from ska_sdp_dataproduct_api.core.helperfunctions import DPDAPIStatus, check_date_format
+from ska_sdp_dataproduct_api.core.settings import DATE_FORMAT, METADATA_ES_SCHEMA_FILE
 from ska_sdp_dataproduct_api.metadatastore.datastore import Store
 
 logger = logging.getLogger(__name__)
@@ -51,9 +45,7 @@ class ElasticsearchMetadataStore(Store):
         try:
             _ = self.es_client.indices.get(index=index)
         except elasticsearch.NotFoundError:
-            with open(
-                METADATA_ES_SCHEMA_FILE, "r", encoding="utf-8"
-            ) as metadata_schema:
+            with open(METADATA_ES_SCHEMA_FILE, "r", encoding="utf-8") as metadata_schema:
                 metadata_schema_json = json.load(metadata_schema)
             self.es_client.indices.create(  # pylint: disable=E1123
                 index=index, ignore=400, body=metadata_schema_json
@@ -61,17 +53,13 @@ class ElasticsearchMetadataStore(Store):
 
     def clear_metadata_indecise(self):
         """Clear out all indices from elasticsearch instance"""
-        self.es_client.options(ignore_status=[400, 404]).indices.delete(
-            index=self.metadata_index
-        )
+        self.es_client.options(ignore_status=[400, 404]).indices.delete(index=self.metadata_index)
         self.metadata_list = []
 
     def insert_metadata(self, metadata_file_json):
         """Method to insert metadata into Elasticsearch."""
         # Add new metadata to es
-        result = self.es_client.index(
-            index=self.metadata_index, document=metadata_file_json
-        )
+        result = self.es_client.index(index=self.metadata_index, document=metadata_file_json)
         return result
 
     def search_metadata(
@@ -84,21 +72,11 @@ class ElasticsearchMetadataStore(Store):
 
         must = []
         meta_data_keys = []
-        if (
-            metadata_key_value_pairs is not None
-            and len(metadata_key_value_pairs) > 0
-        ):
+        if metadata_key_value_pairs is not None and len(metadata_key_value_pairs) > 0:
             for key_value in metadata_key_value_pairs:
-                if (
-                    key_value["metadata_key"] != "*"
-                    and key_value["metadata_value"] != "*"
-                ):
+                if key_value["metadata_key"] != "*" and key_value["metadata_value"] != "*":
                     match_criteria = {
-                        "match": {
-                            key_value["metadata_key"]: key_value[
-                                "metadata_value"
-                            ]
-                        }
+                        "match": {key_value["metadata_key"]: key_value["metadata_value"]}
                     }
                 else:
                     match_criteria = {"match_all": {}}

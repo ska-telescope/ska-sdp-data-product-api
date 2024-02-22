@@ -115,9 +115,7 @@ class FileUrl(BaseModel):
 
         """
         if full_path_name is None:
-            derived_full_path_name = PERSISTANT_STORAGE_PATH.joinpath(
-                values["relativePathName"]
-            )
+            derived_full_path_name = PERSISTANT_STORAGE_PATH.joinpath(values["relativePathName"])
             verify_file_path(derived_full_path_name)
         else:
             verify_file_path(full_path_name)
@@ -183,9 +181,7 @@ def get_relative_path(absolute_path):
     absolute path = PERSISTANT_STORAGE_PATH + relative_path"""
     persistant_storage_path_len = len(PERSISTANT_STORAGE_PATH.parts)
     relative_path = str(
-        pathlib.Path(
-            *pathlib.Path(absolute_path).parts[(persistant_storage_path_len):]
-        )
+        pathlib.Path(*pathlib.Path(absolute_path).parts[(persistant_storage_path_len):])
     )
     return pathlib.Path(relative_path)
 
@@ -228,11 +224,9 @@ def find_metadata(metadata, query_key):
 
 
 def check_date_format(date, date_format):
-    """Given a date, check that it is in the expected YYYY-MM-DD format and return a 
+    """Given a date, check that it is in the expected YYYY-MM-DD format and return a
     datatime object"""
     try:
         return datetime.datetime.strptime(date, date_format)
     except ValueError:
-        return logger.error(
-            json.dumps({"Error": "Invalid date format, expected YYYY-MM-DD"})
-        )
+        return logger.error(json.dumps({"Error": "Invalid date format, expected YYYY-MM-DD"}))

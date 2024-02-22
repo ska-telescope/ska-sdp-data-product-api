@@ -2,13 +2,9 @@
 import copy
 import json
 import logging
-import time
 from collections.abc import MutableMapping
 
-from ska_sdp_dataproduct_api.core.helperfunctions import (
-    DPDAPIStatus,
-    check_date_format,
-)
+from ska_sdp_dataproduct_api.core.helperfunctions import DPDAPIStatus, check_date_format
 from ska_sdp_dataproduct_api.core.settings import DATE_FORMAT
 from ska_sdp_dataproduct_api.metadatastore.datastore import Store
 
@@ -44,27 +40,21 @@ class InMemoryDataproductIndex(Store):
         metadata_file = json.loads(metadata_file_json)
 
         # generate a list of keys from this object
-        query_key_list = self.generate_metadata_keys_list(
-            metadata_file, [], "", "."
-        )
+        query_key_list = self.generate_metadata_keys_list(metadata_file, [], "", ".")
 
         self.add_dataproduct(
             metadata_file=metadata_file,
             query_key_list=query_key_list,
         )
 
-    def generate_metadata_keys_list(
-        self, metadata, ignore_keys, parent_key="", sep="_"
-    ):
+    def generate_metadata_keys_list(self, metadata, ignore_keys, parent_key="", sep="_"):
         """Given a nested dict, return the flattened list of keys"""
         items = []
         for key, value in metadata.items():
             new_key = parent_key + sep + key if parent_key else key
             if isinstance(value, MutableMapping):
                 items.extend(
-                    self.generate_metadata_keys_list(
-                        value, ignore_keys, new_key, sep=sep
-                    )
+                    self.generate_metadata_keys_list(value, ignore_keys, new_key, sep=sep)
                 )
             else:
                 if new_key not in ignore_keys:
@@ -81,10 +71,7 @@ class InMemoryDataproductIndex(Store):
         start_date = check_date_format(start_date, DATE_FORMAT)
         end_date = check_date_format(end_date, DATE_FORMAT)
 
-        if (
-            metadata_key_value_pairs is None
-            or len(metadata_key_value_pairs) == 0
-        ):
+        if metadata_key_value_pairs is None or len(metadata_key_value_pairs) == 0:
             search_results = copy.deepcopy(self.metadata_list)
             for product in self.metadata_list:
                 product_date = check_date_format(product["date_created"], DATE_FORMAT)
