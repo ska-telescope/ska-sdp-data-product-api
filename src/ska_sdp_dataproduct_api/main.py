@@ -12,14 +12,8 @@ from ska_sdp_dataproduct_api.core.helperfunctions import (
     SearchParametersClass,
     download_file,
 )
-from ska_sdp_dataproduct_api.core.settings import (
-    DEFAULT_DISPLAY_LAYOUT,
-    ES_HOST,
-    app,
-)
-from ska_sdp_dataproduct_api.metadatastore.store_factory import (
-    select_correct_store_class,
-)
+from ska_sdp_dataproduct_api.core.settings import DEFAULT_DISPLAY_LAYOUT, ES_HOST, app
+from ska_sdp_dataproduct_api.metadatastore.store_factory import select_correct_store_class
 
 logger = logging.getLogger(__name__)
 
@@ -56,9 +50,7 @@ async def data_products_search(search_parameters: SearchParametersClass):
     ):
         for key_value_pair in search_parameters.key_value_pairs:
             if ":" not in key_value_pair:
-                raise HTTPException(
-                    status_code=400, detail="Invalid search key pair."
-                )
+                raise HTTPException(status_code=400, detail="Invalid search key pair.")
             metadata_key_value_pairs.append(
                 {
                     "metadata_key": key_value_pair.split(":")[0],
@@ -104,9 +96,7 @@ async def ingest_new_data_product(file_object: FileUrl):
     a specified data product."""
     DPD_API_Status.update_data_store_date_modified()
     store.ingest_metadata_files(file_object.fullPathName)
-    logger.info(
-        "New data product metadata file loaded and store index updated"
-    )
+    logger.info("New data product metadata file loaded and store index updated")
     return "New data product metadata file loaded and store index updated"
 
 
