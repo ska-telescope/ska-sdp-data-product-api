@@ -83,7 +83,6 @@ def test_in_memory_search(test_app):
     }
     response = test_app.post("/dataproductsearch", json=data)
     assert response.status_code == 200
-    print(response.json())
     assert response.json()[0]["execution_block"] == "eb-m001-20191031-12345"
 
 

@@ -78,21 +78,26 @@ class InMemoryDataproductIndex(Store):
         metadata_key_value_pairs=None,
     ):
         """Metadata Search method."""
-
         start_date = check_date_format(start_date, DATE_FORMAT)
         end_date = check_date_format(end_date, DATE_FORMAT)
-
-        print(self.metadata_list)
 
         if (
             metadata_key_value_pairs is None
             or len(metadata_key_value_pairs) == 0
         ):
-            return json.dumps(self.metadata_list)
+            search_results = copy.deepcopy(self.metadata_list)
+            for product in self.metadata_list:
+                product_date = check_date_format(product["date_created"], DATE_FORMAT)
+                if not start_date <= product_date <= end_date:
+                    search_results.remove(product)
+                    continue
+
+            return json.dumps(search_results)
 
         search_results = copy.deepcopy(self.metadata_list)
         for product in self.metadata_list:
-            product_date = time.strptime(product["date_created"], DATE_FORMAT)
+            product_date = check_date_format(product["date_created"], DATE_FORMAT)
+
             if not start_date <= product_date <= end_date:
                 search_results.remove(product)
                 continue
