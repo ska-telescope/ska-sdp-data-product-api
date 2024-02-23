@@ -69,7 +69,7 @@ v0.7.0
 
 **Fixed**
 
-* 
+* None
 
 **Test Evidence**
 
