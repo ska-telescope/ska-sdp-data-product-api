@@ -10,3 +10,4 @@ The `ska-sdp-dataproduct-api` repository contains the code for the API that is u
    overview
    Development
    Deployment
+   Changelog
