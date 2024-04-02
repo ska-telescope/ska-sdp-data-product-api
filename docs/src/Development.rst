@@ -32,7 +32,7 @@ Configure the environmental variables in the .env file under the root folder acc
 
     REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL=http://localhost
     REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT=8100
-    PERSISTANT_STORAGE_PATH=./tests/test_files/product
+    PERSISTENT_STORAGE_PATH=./tests/test_files/product
     METADATA_FILE_NAME=ska-data-product.yaml
     METADATA_ES_SCHEMA_FILE=./src/ska_sdp_dataproduct_api/elasticsearch/data_product_metadata_schema.json
     METADATA_JSON_SCHEMA_FILE=./src/ska_sdp_dataproduct_api/core/data_product_metadata_json_schema.json
@@ -50,7 +50,7 @@ Configure the environmental variables in the .env file under the root folder acc
 
 *To run the application inside a docker container on your host machine:*
 
-NOTE: When running the application in a docker container, the <PERSISTANT_STORAGE_PATH> needs to be accessible from within the container. You can mount the test folder into this location as done below:
+NOTE: When running the application in a docker container, the <PERSISTENT_STORAGE_PATH> needs to be accessible from within the container. You can mount the test folder into this location as done below:
 
 .. code-block:: bash
 

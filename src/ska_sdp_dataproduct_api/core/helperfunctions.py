@@ -13,7 +13,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from ska_sdp_dataproduct_api.core.settings import (
-    PERSISTANT_STORAGE_PATH,
+    PERSISTENT_STORAGE_PATH,
     STREAM_CHUNK_SIZE,
     VERSION,
 )
@@ -93,7 +93,7 @@ class FileUrl(BaseModel):
             HTTPException: If the path is invalid.
 
         """
-        path = PERSISTANT_STORAGE_PATH.joinpath(relative_path)
+        path = PERSISTENT_STORAGE_PATH.joinpath(relative_path)
         verify_file_path(path)
         return relative_path
 
@@ -115,7 +115,7 @@ class FileUrl(BaseModel):
 
         """
         if full_path_name is None:
-            derived_full_path_name = PERSISTANT_STORAGE_PATH.joinpath(values["relativePathName"])
+            derived_full_path_name = PERSISTENT_STORAGE_PATH.joinpath(values["relativePathName"])
             verify_file_path(derived_full_path_name)
         else:
             verify_file_path(full_path_name)
@@ -178,10 +178,10 @@ def verify_file_path(file_path: pathlib.Path):
 
 def get_relative_path(absolute_path):
     """This function returns the relative path of an absolute path where the
-    absolute path = PERSISTANT_STORAGE_PATH + relative_path"""
-    persistant_storage_path_len = len(PERSISTANT_STORAGE_PATH.parts)
+    absolute path = PERSISTENT_STORAGE_PATH + relative_path"""
+    persistent_storage_path_len = len(PERSISTENT_STORAGE_PATH.parts)
     relative_path = str(
-        pathlib.Path(*pathlib.Path(absolute_path).parts[(persistant_storage_path_len):])
+        pathlib.Path(*pathlib.Path(absolute_path).parts[(persistent_storage_path_len):])
     )
     return pathlib.Path(relative_path)
 
