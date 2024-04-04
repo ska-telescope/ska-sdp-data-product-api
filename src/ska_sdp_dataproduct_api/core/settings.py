@@ -1,14 +1,21 @@
 """API SDP Settings"""
 
+import logging
 import pathlib
 
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from ska_ser_logging import configure_logging
 from starlette.config import Config
 
 import ska_sdp_dataproduct_api
 
+configure_logging(level=uvicorn.config.LOGGING_CONFIG["loggers"]["uvicorn.error"]["level"])
+logger = logging.getLogger(__name__)
+
 config = Config(".env")
+REINDEXING_DELAY = 300  # Only allow reindexing after 5 minutes
 PERSISTANT_STORAGE_PATH: pathlib.Path = pathlib.Path(
     config("PERSISTANT_STORAGE_PATH", default="./tests/test_files"),
 )
@@ -41,7 +48,21 @@ VERSION: str = config(
     default=ska_sdp_dataproduct_api.__version__,
 )
 
+API_URL_SUBDIRECTORY: str = config("API_URL_SUBDIRECTORY", default="")
+STREAM_CHUNK_SIZE: int = int(
+    config(
+        "STREAM_CHUNK_SIZE",
+        default=65536,
+    )
+)
+
+DATE_FORMAT: str = config("DATE_FORMAT", default="%Y-%m-%d")
+
+API_URL_SUBDIRECTORY: str = config("API_URL_SUBDIRECTORY", default="")
+
 app = FastAPI()
+
+app = FastAPI(root_path=API_URL_SUBDIRECTORY)
 
 origins = [
     "http://localhost",
@@ -59,3 +80,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+DEFAULT_DISPLAY_LAYOUT = [
+    {"name": "execution_block", "width": 250},
+    {"name": "date_created", "width": 150},
+    {"name": "observer", "width": 150},
+    {"name": "processing_block", "width": 250},
+    {"name": "Intent", "width": 300},
+    {"name": "notes", "width": 500},
+    {"name": "file_size", "width": 80},
+    {"name": "status", "width": 80},
+]

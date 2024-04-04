@@ -1,0 +1,22 @@
+config:
+  cmdline: null
+  commit: null
+  image: registry.gitlab.com/ska-telescope/sdp/ska-sdp-script/ska-sdp-script-pointing-offset
+  processing_block: pb-notebookpo-20240201-54576
+  processing_script: pointing-offset
+  version: 0.3.2
+context: {}
+execution_block: eb-notebook-20240201-54576
+files:
+- crc: null
+  description: 'Pointing offsets for scans: [1, 2, 3, 4, 5]'
+  path: /product/eb-notebook-20240201-54576/ska-sdp/pb-notebookpo-20240201-54576/eb-notebook-20240201-54576_pointing_offsets_scans_1-5.hdf5
+  status: done
+interface: http://schema.skao.int/ska-data-product-meta/0.1
+obscore:
+  access_format: application/x-hdf5
+  calib_level: 0
+  dataproduct_type: POINTING-OFFSETS
+  facility_name: SKA-Observatory
+  instrument_name: SKA-MID
+  obs_collection: Unknown

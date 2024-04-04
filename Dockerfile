@@ -1,7 +1,7 @@
 # Using multi stage build to update the requirements.txt from the project.toml.
 FROM python:3.10-slim as builder
 WORKDIR /usr/src/app
-RUN pip install --no-cache-dir poetry==1.3.2
+RUN pip install --no-cache-dir poetry==1.8.2
 COPY pyproject.toml poetry.lock ./
 RUN poetry export -f requirements.txt --without-hashes --output requirements.txt
 
@@ -21,4 +21,4 @@ RUN set -eux \
     && rm -rf /root/.cache/pip
 
 # start app
-CMD ["uvicorn", "ska_sdp_dataproduct_api.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000", "--app-dir", "/usr/src"]
+CMD ["uvicorn", "ska_sdp_dataproduct_api.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000", "--app-dir", "/usr/src",  "--log-level", "warning"]

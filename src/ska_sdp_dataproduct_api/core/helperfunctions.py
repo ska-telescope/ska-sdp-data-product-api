@@ -1,24 +1,26 @@
 """Module to insert data into Elasticsearch instance."""
 import datetime
-import gzip
 import json
+import logging
 import pathlib
-import tarfile
-from io import BytesIO
+import subprocess
 from typing import Optional
 
 # pylint: disable=no-name-in-module
 import pydantic
-import requests
-import yaml
-from fastapi import HTTPException, Response
+from fastapi import HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from ska_sdp_dataproduct_api.core.settings import (
-    METADATA_FILE_NAME,
     PERSISTANT_STORAGE_PATH,
+    STREAM_CHUNK_SIZE,
     VERSION,
 )
+
+# get reference to the logging object
+logger = logging.getLogger(__name__)
+
 
 # pylint: disable=too-few-public-methods
 
@@ -29,6 +31,7 @@ class DPDAPIStatus:
 
     api_running: bool = True
     search_enabled: bool = False
+    indexing: bool = False
     date_modified: datetime.datetime = datetime.datetime.now()
     version: str = VERSION
 
@@ -37,13 +40,14 @@ class DPDAPIStatus:
         self.search_enabled = es_search_enabled
         return {
             "API_running": True,
+            "Indexing": self.indexing,
             "Search_enabled": self.search_enabled,
             "Date_modified": self.date_modified,
             "Version": self.version,
         }
 
     def update_data_store_date_modified(self):
-        """This mothod update the timestamp of the last time that data was
+        """This method update the timestamp of the last time that data was
         added or modified in the data product store by this API"""
         self.date_modified = datetime.datetime.now()
 
@@ -62,7 +66,7 @@ class FileUrl(BaseModel):
 
     fileName: str
     relativePathName: pathlib.Path = None
-    fullPathName: Optional[pathlib.Path]
+    fullPathName: Optional[pathlib.Path] = None
     metaDataFile: Optional[pathlib.Path] = None
 
     class Config:
@@ -70,7 +74,7 @@ class FileUrl(BaseModel):
 
         arbitrary_types_allowed = True
         validate_assignment = True
-        validate_all = True
+        validate_default = True
         extra = "forbid"
 
     @pydantic.validator("relativePathName")
@@ -111,9 +115,7 @@ class FileUrl(BaseModel):
 
         """
         if full_path_name is None:
-            derived_full_path_name = PERSISTANT_STORAGE_PATH.joinpath(
-                values["relativePathName"]
-            )
+            derived_full_path_name = PERSISTANT_STORAGE_PATH.joinpath(values["relativePathName"])
             verify_file_path(derived_full_path_name)
         else:
             verify_file_path(full_path_name)
@@ -125,7 +127,7 @@ class SearchParametersClass(BaseModel):
 
     start_date: str = "2020-01-01"
     end_date: str = "2100-01-01"
-    key_pair: str = ""
+    key_value_pairs: list[str] = None
 
 
 class DataProductMetaData(BaseModel):
@@ -188,14 +190,27 @@ def gzip_file(file_path: pathlib.Path):
     return gzip_response
 
 
+def generate_data_stream(file_path: pathlib.Path):
+    """This function creates a subprocess that stream a specified file in
+    chunks"""
+    # create a subprocess to run the tar command
+    with subprocess.Popen(
+        ["tar", "-C", str(file_path.parent), "-c", str(file_path.name)],
+        stdout=subprocess.PIPE,
+    ) as process:
+        # stream the data from the process output
+        chunk = process.stdout.read(STREAM_CHUNK_SIZE)
+        while chunk:
+            yield chunk
+            chunk = process.stdout.read(STREAM_CHUNK_SIZE)
+
+
 def download_file(file_object: FileUrl):
     """This function returns a response that can be used to download a file
     pointed to by the file_object"""
-    response = gzip_file(file_object.fullPathName)
-    return Response(
-        content=response.raw.read(),
-        status_code=response.status_code,
-        headers=response.headers,
+    return StreamingResponse(
+        generate_data_stream(file_object.fullPathName),
+        media_type="application/x-tar",
     )
 
 
@@ -226,60 +241,29 @@ def get_relative_path(absolute_path):
     absolute path = PERSISTANT_STORAGE_PATH + relative_path"""
     persistant_storage_path_len = len(PERSISTANT_STORAGE_PATH.parts)
     relative_path = str(
-        pathlib.Path(
-            *pathlib.Path(absolute_path).parts[(persistant_storage_path_len):]
-        )
+        pathlib.Path(*pathlib.Path(absolute_path).parts[(persistant_storage_path_len):])
     )
     return pathlib.Path(relative_path)
 
 
-def get_date_from_name(filename: str):
-    """This function extracts the date from the file named according to the
-    following format: type-generatorID-datetime-localSeq.
+def get_date_from_name(execution_block: str):
+    """This function extracts the date from the execution_block named according
+    to the following format: type-generatorID-datetime-localSeq.
     https://confluence.skatelescope.org/display/SWSI/SKA+Unique+Identifiers"""
-    metadata_date_str = filename.split("-")[2]
+    metadata_date_str = execution_block.split("-")[2]
     year = metadata_date_str[0:4]
     month = metadata_date_str[4:6]
     day = metadata_date_str[6:8]
     try:
         datetime.datetime(int(year), int(month), int(day))
         return year + "-" + month + "-" + day
-    except ValueError:
-        return datetime.date.today().strftime("%Y-%m-%d")
-
-
-def load_metadata_file(file_object: FileUrl):
-    """This function loads the content of a yaml file and return it as
-    json."""
-    if (file_object.fullPathName).is_file():
-        with open(
-            file_object.fullPathName, "r", encoding="utf-8"
-        ) as metadata_yaml_file:
-            metadata_yaml_object = yaml.safe_load(
-                metadata_yaml_file
-            )  # yaml_object will be a list or a dict
-
-        # abort if metadata is empty
-        if metadata_yaml_object is None:
-            return {}
-
-        # abort if metadata does not contain an execution_block attribute
-        if "execution_block" not in metadata_yaml_object:
-            return {}
-
-        metadata_date = get_date_from_name(
-            metadata_yaml_object["execution_block"]
+    except ValueError as error:
+        logger.warning(
+            "Date retrieved from execution_block '%s' caused and error: %s",
+            execution_block,
+            error,
         )
-        metadata_yaml_object.update({"date_created": metadata_date})
-        metadata_yaml_object.update(
-            {"dataproduct_file": str(file_object.relativePathName.parent)}
-        )
-        metadata_yaml_object.update(
-            {"metadata_file": str(file_object.relativePathName)}
-        )
-        metadata_json = json.dumps(metadata_yaml_object)
-        return metadata_json
-    return {}
+        raise
 
 
 def save_metadata_file(dataproduct: DataProductMetaData):
@@ -421,3 +405,10 @@ def ingest_json(metadata_store_object, dataproduct: DataProductMetaData):
     metadata_store_object.insert_metadata(dataproduct.json())
 
     return dataproduct.dict()
+def check_date_format(date, date_format):
+    """Given a date, check that it is in the expected YYYY-MM-DD format and return a
+    datatime object"""
+    try:
+        return datetime.datetime.strptime(date, date_format)
+    except ValueError:
+        return logger.error(json.dumps({"Error": "Invalid date format, expected YYYY-MM-DD"}))

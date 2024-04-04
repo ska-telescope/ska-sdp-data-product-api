@@ -10,3 +10,9 @@ Contributions are welcome, please see the SKAO developer portal for guidance. ht
 
 ## Project status
 In development.
+
+## Changelog
+
+Check out our changelog for details on recent updates! [Changelog](./docs/src/Changelog.rst )
+
+More information on releases can be found here: https://jira.skatelescope.org/issues/?jql=project%20%3D%20REL%20AND%20Product%20~%20ska-sdp-dataproduct-api%20ORDER%20BY%20updated%20DESC

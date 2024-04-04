@@ -8,7 +8,22 @@ config:
 context: {}
 execution_block: eb-test-20200325-00001
 files:
-- description: raw visibilities
-  path: vis.ms
-  status: working
+  -
+    crc: 2a890fbe
+    description: This is test file 1
+    path: ska-sub-system/scan_id_1/pb_id_1/TestDataFile1.txt
+    size: 19
+    status: done
+  -
+    crc: b3805e04
+    description: This is test file 2
+    path: ska-sub-system/scan_id_1/pb_id_1/TestDataFile2.txt
+    size: 19
+    status: done
+  -
+    crc: c4876e92
+    description: This is test file 3
+    path: ska-sub-system/scan_id_1/pb_id_1/TestDataFile3.txt
+    size: 19
+    status: done
 interface: http://schema.skao.int/ska-data-product-meta/0.1

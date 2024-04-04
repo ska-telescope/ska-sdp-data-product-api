@@ -17,11 +17,21 @@ config: # Configuration of generating software
   cmdline: -dump /product/eb-m002-20221212-12345/ska-sdp/pb-m002-20221212-12345/vis.ms
  
 files:
-  - # Path to files. Can be a directory, in which case it applies to all nested files.
-    path: vis.ms
-    # Indicate current file status
-    # * working = processes still running, files might be missing or incomplete
-    # * done = processes finished, files should be complete
-    # * failure = not finished sucessfully, files might be incomplete or corrupt
-    status: working
-    description: "Raw visibility dump from receive"
+  -
+    crc: 5ae3fb31
+    description: This is test file 4
+    path: ska-sub-system/scan_id_2/pb_id_2/TestDataFile4.txt
+    size: 19
+    status: done
+  -
+    crc: 2de4cba7
+    description: This is test file 5
+    path: ska-sub-system/scan_id_2/pb_id_2/TestDataFile5.txt
+    size: 19
+    status: done
+  -
+    crc: b4ed9a1d
+    description: This is test file 6
+    path: ska-sub-system/scan_id_2/pb_id_2/TestDataFile6.txt
+    size: 19
+    status: done
