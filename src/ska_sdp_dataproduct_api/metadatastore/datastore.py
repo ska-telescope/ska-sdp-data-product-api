@@ -99,26 +99,26 @@ class Store:
             self.ingest_file(product_path)
         self.sort_metadata_list(key="date_created", reverse=True)
 
-    def ingest_metadata_object(self, dataproduct: DataProductMetaData):
+    def ingest_metadata_object(self, metadata: DataProductMetaData):
         """
-        Ingest a single dataproduct
+        Ingest a single metadata object
         """
         # if no date_created, set to today
-        if dataproduct.date_created is None:
-            dataproduct.date_created = datetime.date.today().strftime("%Y-%m-%d")
+        if metadata.date_created is None:
+            metadata.date_created = datetime.date.today().strftime("%Y-%m-%d")
 
         # determine a path on which to store the file
         path = f"{PERSISTANT_STORAGE_PATH}/product/"
-        path += f"{dataproduct.execution_block}/{METADATA_FILE_NAME}"
-        dataproduct.metadata_file = pathlib.Path(path)
+        path += f"{metadata.execution_block}/{METADATA_FILE_NAME}"
+        metadata.metadata_file = pathlib.Path(path)
 
         # save to disk
-        save_metadata_file(dataproduct)
+        save_metadata_file(metadata)
 
-        # store
-        self.insert_metadata(dataproduct.json())
+        # insert into datastore
+        self.insert_metadata(metadata.json())
 
-        return dataproduct.dict()
+        return metadata.dict()
 
     def add_dataproduct(self, metadata_file, query_key_list):
         """Populate a list of data products and its metadata"""
