@@ -12,16 +12,6 @@ from ska_sdp_dataproduct_api.core.helperfunctions import (
     FileUrl,
     SearchParametersClass,
     download_file,
-    ingest_json,
-    ingest_metadata_files,
-    load_metadata_file,
-)
-from ska_sdp_dataproduct_api.core.settings import ES_HOST, app
-from ska_sdp_dataproduct_api.elasticsearch.elasticsearch_api import (
-    ElasticsearchMetadataStore,
-)
-from ska_sdp_dataproduct_api.inmemorystore.inmemorystore import (
-    InMemoryDataproductIndex,
 )
 from ska_sdp_dataproduct_api.core.settings import DEFAULT_DISPLAY_LAYOUT, ES_HOST, app
 from ska_sdp_dataproduct_api.metadatastore.store_factory import select_correct_store_class
@@ -106,28 +96,19 @@ async def ingest_new_data_product(file_object: FileUrl):
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
     DPD_API_Status.update_data_store_date_modified()
-    if elasticsearch_metadata_store.es_search_enabled:
-        ingest_metadata_files(
-            elasticsearch_metadata_store, file_object.fullPathName
-        )
-    else:
-        ingest_metadata_files(
-            in_memory_metadata_store, file_object.fullPathName
-        )
-    return "Data product metadata file loaded and store index updated"
-
-
-@app.post("/ingestjson")
-async def ingest_json_dataproduct(dataproduct: DataProductMetaData):
-    """This API endpoint takes JSON dataproduct metadata and ingests into
-    the appropriate store."""
-    if elasticsearch_metadata_store.es_search_enabled:
-        return ingest_json(elasticsearch_metadata_store, dataproduct)
-
-    return ingest_json(in_memory_metadata_store, dataproduct)
     store.ingest_metadata_files(file_object.fullPathName)
     logger.info("New data product metadata file loaded and store index updated")
     return "New data product metadata file loaded and store index updated"
+
+
+@app.post("/ingestnewmetadata")
+async def ingest_new_metadata(data_product: DataProductMetaData):
+    """This API endpoint takes JSON data product metadata and ingests into
+    the appropriate store."""
+    DPD_API_Status.update_data_store_date_modified()
+    store.ingest_metadata_object(data_product)
+    logger.info("New data product metadata received and store index updated")
+    return "New data product metadata received and store index updated"
 
 
 @app.get("/layout")

@@ -76,11 +76,12 @@ def test_in_memory_search(test_app):
         "key_value_pairs": ["execution_block:eb-m001-20191031-12345"],
     }
     response = test_app.post("/dataproductsearch", json=data)
-    assert response.status_code == 503
+    assert response.status_code == 200
+    assert response.json()[0]["execution_block"] == "eb-m001-20191031-12345"
 
 
-def test_ingestjson(test_app):
-    """Test if metadata for a new dataproduct can be ingested via the
+def test_ingest_new_metadata(test_app):
+    """Test if metadata for a new data product can be ingested via the
     REST API
     """
     execution_block_id = "eb-rest-00000000-99999"
@@ -122,7 +123,7 @@ def test_ingestjson(test_app):
         },
     }
 
-    response = test_app.post("/ingestjson", json=data)
+    response = test_app.post("/ingestnewmetadata", json=data)
     assert response.status_code == 200
     assert response.json()["execution_block"] == execution_block_id
 
@@ -131,8 +132,6 @@ def test_ingestjson(test_app):
     path = os.path.dirname(response.json()["metadata_file"])
     if os.path.exists(path):
         shutil.rmtree(path)
-    assert response.status_code == 200
-    assert response.json()[0]["execution_block"] == "eb-m001-20191031-12345"
 
 
 def test_in_memory_search_empty_key_value_list(test_app):

@@ -1,4 +1,5 @@
 """Module to capture commonality between in memory and elasticsearch stores."""
+import datetime
 import json
 import logging
 import pathlib
@@ -8,11 +9,13 @@ import yaml
 from ska_sdp_dataproduct_metadata import MetaData
 
 from ska_sdp_dataproduct_api.core.helperfunctions import (
+    DataProductMetaData,
     DPDAPIStatus,
     FileUrl,
     find_metadata,
     get_date_from_name,
     get_relative_path,
+    save_metadata_file,
 )
 from ska_sdp_dataproduct_api.core.settings import METADATA_FILE_NAME, PERSISTANT_STORAGE_PATH
 
@@ -95,6 +98,27 @@ class Store:
         for product_path in dataproduct_paths:
             self.ingest_file(product_path)
         self.sort_metadata_list(key="date_created", reverse=True)
+
+    def ingest_metadata_object(self, dataproduct: DataProductMetaData):
+        """
+        Ingest a single dataproduct
+        """
+        # if no date_created, set to today
+        if dataproduct.date_created is None:
+            dataproduct.date_created = datetime.date.today().strftime("%Y-%m-%d")
+
+        # determine a path on which to store the file
+        path = f"{PERSISTANT_STORAGE_PATH}/product/"
+        path += f"{dataproduct.execution_block}/{METADATA_FILE_NAME}"
+        dataproduct.metadata_file = pathlib.Path(path)
+
+        # save to disk
+        save_metadata_file(dataproduct)
+
+        # store
+        self.insert_metadata(dataproduct.json())
+
+        return dataproduct.dict()
 
     def add_dataproduct(self, metadata_file, query_key_list):
         """Populate a list of data products and its metadata"""
