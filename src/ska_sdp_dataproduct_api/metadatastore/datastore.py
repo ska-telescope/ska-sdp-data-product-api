@@ -2,6 +2,7 @@
 import json
 import logging
 import pathlib
+from pathlib import Path
 from time import time
 
 import yaml
@@ -141,16 +142,30 @@ class Store:
                 folders.append(file_path)
         return folders
 
-    @staticmethod
-    def load_metadata_file(file_object: FileUrl):
-        """This function loads the content of a yaml file and return it as
-        json."""
-        if not file_object.fullPathName.is_file():
+    def check_file_exists(self, file_object: Path) -> bool:
+        """
+        Checks if the given file path points to an existing file.
+
+        Args:
+            file_object (Path): The full path to the file.
+
+        Returns:
+            Bool: True if the file exists, otherwise False.
+        """
+        if not file_object.is_file():
             logger.warning(
                 "Metadata file path '%s' not pointing to a file.",
-                str(file_object.fullPathName),
+                str(file_object),
             )
+            return False
+        return True
+
+    def load_metadata_file(self, file_object: FileUrl):
+        """This function loads the content of a yaml file and return it as
+        json."""
+        if not self.check_file_exists(file_object.fullPathName):
             return {}
+
         try:
             with open(file_object.fullPathName, "r", encoding="utf-8") as metadata_yaml_file:
                 metadata_yaml_object = yaml.safe_load(
