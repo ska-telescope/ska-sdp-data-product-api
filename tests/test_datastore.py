@@ -59,8 +59,8 @@ class TestDatastore:
             "tests/test_files/product/eb-m001-20230921-245/ska-data-product.yaml"
         )
 
-        loaded_metadata = my_instance.load_metadata_file(test_metadata_file)
-        assert loaded_metadata == expected_metadata
+        loaded_metadata_from_file = my_instance.load_metadata_file(test_metadata_file)
+        assert loaded_metadata_from_file == expected_metadata
 
     def test_load_metadata_from_file_file_not_found(self):
         """
@@ -76,7 +76,7 @@ class TestDatastore:
         with pytest.raises(FileNotFoundError):
             my_instance.load_metadata_file(test_metadata_file)
 
-    def test_load_metadata_from_file_yaml_error(self, tmp_path):
+    def test_load_metadata_from_file_yaml_error(self, tmp_path: Path):
         """
         Test handling YAML parsing errors.
         """
@@ -109,7 +109,7 @@ class TestDatastore:
 
         with open(
             "tests/test_files/example_files/expected_appended_metadata.json", "r", encoding="utf-8"
-        ) as user_file:
-            expected_appended_metadata = user_file.read()
+        ) as metadata_file:
+            expected_appended_metadata = metadata_file.read()
 
         assert loaded_metadata == expected_appended_metadata
