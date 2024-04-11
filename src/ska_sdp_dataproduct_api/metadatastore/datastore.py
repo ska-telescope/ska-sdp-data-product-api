@@ -227,7 +227,11 @@ class Store:
                 )
                 return {}
 
-        metadata_date = get_date_from_name(metadata_yaml_object["execution_block"])
+        try:
+            metadata_date = get_date_from_name(metadata_yaml_object["execution_block"])
+        except Exception:  # pylint: disable=W0718
+            return {}
+
         metadata_yaml_object.update({"date_created": metadata_date})
         metadata_yaml_object.update({"dataproduct_file": str(file_object.relativePathName.parent)})
         metadata_yaml_object.update({"metadata_file": str(file_object.relativePathName)})

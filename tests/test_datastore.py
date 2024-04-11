@@ -1,4 +1,4 @@
-"""Basic test for the datastore methods."""
+"""Test for the datastore methods."""
 
 from pathlib import Path
 
