@@ -92,3 +92,24 @@ class TestDatastore:
 
         with pytest.raises(yaml.YAMLError):
             my_instance.load_metadata_file(test_metadata_file)
+
+    def test_load_metadata(self):
+        """
+        Test handling YAML parsing errors.
+        """
+        dpd_api_status = DPDAPIStatus()
+        my_instance = Store(dpd_api_status)
+        test_metadata_file = FileUrl
+        test_metadata_file.fileName = "ska-data-product.yaml"
+        test_metadata_file.fullPathName = Path(
+            "tests/test_files/product/eb-m001-20230921-245/ska-data-product.yaml"
+        )
+
+        loaded_metadata = my_instance.load_metadata(test_metadata_file)
+
+        with open(
+            "tests/test_files/example_files/expected_appended_metadata.json", "r", encoding="utf-8"
+        ) as user_file:
+            expected_appended_metadata = user_file.read()
+
+        assert loaded_metadata == expected_appended_metadata
