@@ -87,7 +87,7 @@ async def download(file_object: FileUrl):
 async def data_product_metadata(file_object: FileUrl):
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
-    return store.load_metadata_file(file_object)
+    return store.load_metadata(file_object)
 
 
 @app.post("/ingestnewdataproduct")

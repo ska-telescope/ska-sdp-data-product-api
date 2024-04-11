@@ -4,6 +4,7 @@ import logging
 import pathlib
 from pathlib import Path
 from time import time
+from typing import Any, Dict
 
 import yaml
 from ska_sdp_dataproduct_metadata import MetaData
@@ -73,7 +74,7 @@ class Store:
             get_relative_path(metadata_file)
         )
         metadata_file_name.relativePathName = get_relative_path(metadata_file)
-        metadata_file_json = self.load_metadata_file(
+        metadata_file_json = self.load_metadata(
             metadata_file_name,
         )
         # return if no metadata was read
@@ -160,34 +161,52 @@ class Store:
             return False
         return True
 
-    def load_metadata_file(self, file_object: FileUrl):
+    def load_metadata_file(self, file_object: FileUrl) -> Dict[str, Any]:
+        """
+        Load metadata from a YAML file.
+
+        Args:
+            file_object: An object representing the file to read metadata from.
+
+        Returns:
+            A dictionary containing the loaded metadata, or an empty dictionary if an error occurs
+            during loading.
+        """
+        try:
+            with open(file_object.fullPathName, "r", encoding="utf-8") as metadata_yaml_file:
+                metadata_yaml_object = yaml.safe_load(metadata_yaml_file)
+                return metadata_yaml_object
+        except FileNotFoundError as file_not_found_error:
+            logger.warning("Metadata file not found: %s", str(file_object.fullPathName))
+            raise file_not_found_error
+        except yaml.YAMLError as yaml_error:
+            logger.warning("Error while parsing YAML: %s", yaml_error)
+            raise yaml_error
+        except Exception as other_error:
+            logger.warning("Unexpected error occurred: %s", other_error)
+            raise other_error
+
+    def load_metadata(self, file_object: FileUrl):
         """This function loads the content of a yaml file and return it as
         json."""
+        # Test that the metadata file exists
         if not self.check_file_exists(file_object.fullPathName):
             return {}
 
+        # Load the metadata file into memory
         try:
-            with open(file_object.fullPathName, "r", encoding="utf-8") as metadata_yaml_file:
-                metadata_yaml_object = yaml.safe_load(
-                    metadata_yaml_file
-                )  # yaml_object will be a list or a dict
+            metadata_yaml_object = self.load_metadata_file(file_object)
         except Exception as error:  # pylint: disable=W0718
-            # pylint: disable=W0511
-            # TODO: The exception is too broad we should strive
-            # TODO: to only handle errors we think are reasonable.
-            # pylint: enable=W0511
-            # Expecting that there will be some errors on ingest of metadata
-            # and don't want to break the application when it occurs.
-            # Therefore, logging the error to log and returning {}
-            logger.warning(
+            logger.exception(
                 "Load of metadata file failed for: %s, %s",
                 str(file_object.fullPathName),
                 error,
             )
             return {}
 
-        # validate the metadata against the schema
+        # Validate the metadata against the schema
         validation_errors = MetaData.validator.iter_errors(metadata_yaml_object)
+
         # Loop over the errors
         for validation_error in validation_errors:
             logger.debug(
