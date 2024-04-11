@@ -176,14 +176,21 @@ def verify_file_path(file_path: pathlib.Path):
     return True
 
 
-def get_relative_path(absolute_path):
-    """This function returns the relative path of an absolute path where the
-    absolute path = PERSISTENT_STORAGE_PATH + relative_path"""
+def get_relative_path(absolute_path: pathlib.Path) -> pathlib.Path:
+    """
+    Converts an absolute path to a relative path based on a predefined persistent storage path.
+
+    Args:
+        absolute_path (pathlib.Path): The absolute path to be converted.
+
+    Returns:
+        pathlib.Path: The corresponding relative path. If the `absolute_path` does not start with
+        the `PERSISTENT_STORAGE_PATH`, the original `absolute_path` is returned unchanged.
+    """
     persistent_storage_path_len = len(PERSISTENT_STORAGE_PATH.parts)
-    relative_path = str(
-        pathlib.Path(*pathlib.Path(absolute_path).parts[(persistent_storage_path_len):])
-    )
-    return pathlib.Path(relative_path)
+    if absolute_path.parts[:persistent_storage_path_len] == PERSISTENT_STORAGE_PATH.parts:
+        return pathlib.Path(*absolute_path.parts[persistent_storage_path_len:])
+    return absolute_path
 
 
 def get_date_from_name(execution_block: str) -> str:
