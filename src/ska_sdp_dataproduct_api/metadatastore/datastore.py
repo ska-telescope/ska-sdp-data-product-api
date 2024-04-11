@@ -14,7 +14,7 @@ from ska_sdp_dataproduct_api.core.helperfunctions import (
     get_date_from_name,
     get_relative_path,
 )
-from ska_sdp_dataproduct_api.core.settings import METADATA_FILE_NAME, PERSISTANT_STORAGE_PATH
+from ska_sdp_dataproduct_api.core.settings import METADATA_FILE_NAME, PERSISTENT_STORAGE_PATH
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ class Store:
         try:
             self.clear_metadata_indecise()
             self.dpd_api_status.indexing = True
-            self.ingest_metadata_files(PERSISTANT_STORAGE_PATH)
+            self.ingest_metadata_files(PERSISTENT_STORAGE_PATH)
             self.indexing_timestamp = time()
             self.dpd_api_status.update_data_store_date_modified()
             self.dpd_api_status.indexing = False
@@ -68,7 +68,7 @@ class Store:
         """
         metadata_file = path
         metadata_file_name = FileUrl
-        metadata_file_name.fullPathName = PERSISTANT_STORAGE_PATH.joinpath(
+        metadata_file_name.fullPathName = PERSISTENT_STORAGE_PATH.joinpath(
             get_relative_path(metadata_file)
         )
         metadata_file_name.relativePathName = get_relative_path(metadata_file)
@@ -136,7 +136,7 @@ class Store:
     def find_folders_with_metadata_files():
         """This function lists all folders containing a metadata file"""
         folders = []
-        for file_path in PERSISTANT_STORAGE_PATH.rglob(METADATA_FILE_NAME):
+        for file_path in PERSISTENT_STORAGE_PATH.rglob(METADATA_FILE_NAME):
             if file_path not in folders:
                 folders.append(file_path)
         return folders
