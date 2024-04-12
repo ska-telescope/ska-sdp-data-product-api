@@ -20,3 +20,8 @@ include .make/base.mk
 -include PrivateRules.mak
 
 PYTHON_LINE_LENGTH = 99
+
+# Run the application in a virtual environment on the host for development use.
+run-dev:
+	poetry install; \
+	poetry run uvicorn ska_sdp_dataproduct_api.main:app --reload --port 8000 --host 0.0.0.0 --app-dir ./src --log-level debug

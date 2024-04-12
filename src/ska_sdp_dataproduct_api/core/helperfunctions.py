@@ -176,27 +176,49 @@ def verify_file_path(file_path: pathlib.Path):
     return True
 
 
-def get_relative_path(absolute_path):
-    """This function returns the relative path of an absolute path where the
-    absolute path = PERSISTENT_STORAGE_PATH + relative_path"""
+def get_relative_path(absolute_path: pathlib.Path) -> pathlib.Path:
+    """
+    Converts an absolute path to a relative path based on a predefined persistent storage path.
+
+    Args:
+        absolute_path (pathlib.Path): The absolute path to be converted.
+
+    Returns:
+        pathlib.Path: The corresponding relative path. If the `absolute_path` does not start with
+        the `PERSISTENT_STORAGE_PATH`, the original `absolute_path` is returned unchanged.
+    """
     persistent_storage_path_len = len(PERSISTENT_STORAGE_PATH.parts)
-    relative_path = str(
-        pathlib.Path(*pathlib.Path(absolute_path).parts[(persistent_storage_path_len):])
-    )
-    return pathlib.Path(relative_path)
+    if absolute_path.parts[:persistent_storage_path_len] == PERSISTENT_STORAGE_PATH.parts:
+        return pathlib.Path(*absolute_path.parts[persistent_storage_path_len:])
+    return absolute_path
 
 
-def get_date_from_name(execution_block: str):
-    """This function extracts the date from the execution_block named according
-    to the following format: type-generatorID-datetime-localSeq.
-    https://confluence.skatelescope.org/display/SWSI/SKA+Unique+Identifiers"""
+def get_date_from_name(execution_block: str) -> str:
+    """
+    Extracts a date string from an execution block (type-generatorID-datetime-localSeq from
+    https://confluence.skatelescope.org/display/SWSI/SKA+Unique+Identifiers) and converts it
+    to the format 'YYYY-MM-DD'.
+
+    Args:
+        execution_block (str): A string containing metadata information.
+
+    Returns:
+        str: The formatted date string in 'YYYY-MM-DD' format.
+
+    Raises:
+        ValueError: If the date cannot be parsed from the execution block.
+
+    Example:
+        >>> get_date_from_name("type-generatorID-20230411-localSeq")
+        '2023-04-11'
+    """
     metadata_date_str = execution_block.split("-")[2]
     year = metadata_date_str[0:4]
     month = metadata_date_str[4:6]
     day = metadata_date_str[6:8]
     try:
-        datetime.datetime(int(year), int(month), int(day))
-        return year + "-" + month + "-" + day
+        date_obj = datetime.datetime(int(year), int(month), int(day))
+        return date_obj.strftime("%Y-%m-%d")
     except ValueError as error:
         logger.warning(
             "Date retrieved from execution_block '%s' caused and error: %s",
