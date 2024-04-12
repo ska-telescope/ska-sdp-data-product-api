@@ -4,7 +4,7 @@ import logging
 import pathlib
 from pathlib import Path
 from time import time
-from typing import Any, Dict
+from typing import Any
 
 import yaml
 from ska_sdp_dataproduct_metadata import MetaData
@@ -161,7 +161,7 @@ class Store:
             return False
         return True
 
-    def load_metadata_file(self, file_object: FileUrl) -> Dict[str, Any]:
+    def load_metadata_file(self, file_object: FileUrl) -> dict[str, Any]:
         """
         Load metadata from a YAML file.
 
