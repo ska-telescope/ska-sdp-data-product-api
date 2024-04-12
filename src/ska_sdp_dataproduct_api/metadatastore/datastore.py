@@ -197,8 +197,8 @@ class Store:
         try:
             metadata_yaml_object = self.load_metadata_file(file_object)
         except Exception as error:  # pylint: disable=W0718
-            logger.exception(
-                "Load of metadata file failed for: %s, %s",
+            logger.error(
+                "Not loading dataproduct due to a loading of metadata failure: %s, %s",
                 str(file_object.fullPathName),
                 error,
             )
@@ -209,8 +209,9 @@ class Store:
 
         # Loop over the errors
         for validation_error in validation_errors:
-            logger.debug(
-                "Dataproduct schema validation error when ingesting: %s : %s",
+            logger.error(
+                "Not loading dataproduct due to schema validation error \
+when ingesting: %s : %s",
                 str(file_object.fullPathName),
                 str(validation_error.message),
             )
@@ -219,9 +220,9 @@ class Store:
                 str(validation_error.validator) == "required"
                 or str(validation_error.message) == "None is not of type 'object'"
             ):
-                logger.warning(
+                logger.error(
                     "Not loading dataproduct due to schema validation error \
-    when ingesting: %s : %s",
+when ingesting: %s : %s",
                     str(file_object.fullPathName),
                     str(validation_error.message),
                 )
@@ -229,7 +230,13 @@ class Store:
 
         try:
             metadata_date = get_date_from_name(metadata_yaml_object["execution_block"])
-        except Exception:  # pylint: disable=W0718
+        except Exception as error:  # pylint: disable=W0718
+            logger.error(
+                "Not loading dataproduct due to failure to extract the date from execution block\
+: %s : %s",
+                str(file_object.fullPathName),
+                error,
+            )
             return {}
 
         metadata_yaml_object.update({"date_created": metadata_date})
