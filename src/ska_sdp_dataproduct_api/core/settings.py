@@ -48,7 +48,6 @@ VERSION: str = config(
     default=ska_sdp_dataproduct_api.__version__,
 )
 
-API_URL_SUBDIRECTORY: str = config("API_URL_SUBDIRECTORY", default="")
 STREAM_CHUNK_SIZE: int = int(
     config(
         "STREAM_CHUNK_SIZE",
