@@ -5,6 +5,14 @@ Changelog
 Current Development
 -------------------
 
+
+
+Released
+========
+
+v0.8.0
+------
+
 * [Test Evidence] `NAL-1012 <https://jira.skatelescope.org/browse/NAL-1012>`_ 
 
   - Addition of unit tests for datastore.
