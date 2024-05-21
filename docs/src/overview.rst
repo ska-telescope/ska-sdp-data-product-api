@@ -147,6 +147,57 @@ The post request endpoint:
         ]
     }
 
+Ingest metadata endpoint
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Sending a post request to the ingestmetadata endpoint will parse the supplied JSON data as data product metadata, and add the data product to the metadata store.
+
+The request will also cause a new metadata file to be created on the local disk. This is crucial to allow the dataproduct-api to include this new metadata when re-ingesting at a future time.
+
+For example, the post request body:
+
+.. code-block:: bash
+
+    {
+        "interface": "http://schema.skao.int/ska-data-product-meta/0.1",
+        "execution_block": "eb-rest-00000000-99999",
+        "context": {
+            "observer": "REST ingest",
+            "intent": "",
+            "notes": ""
+        },
+        "config": {
+            "processing_block": "",
+            "processing_script": "",
+            "image": "",
+            "version": "",
+            "commit": "",
+            "cmdline": "",
+        },
+        "files": [],
+        "obscore": {
+            "access_estsize": 0,
+            "access_format": "application/unknown",
+            "access_url": "0",
+            "calib_level": 0,
+            "dataproduct_type": "MS",
+            "facility_name": "SKA",
+            "instrument_name": "SKA-LOW",
+            "o_ucd": "stat.fourier",
+            "obs_collection": "Unknown",
+            "obs_id": "",
+            "obs_publisher_did": "",
+            "pol_states": "XX/XY/YX/YY",
+            "pol_xel": 0,
+            "s_dec": 0,
+            "s_ra": 0.0,
+            "t_exptime": 5.0,
+            "t_max": 57196.962848574476,
+            "t_min": 57196.96279070411,
+            "t_resolution": 0.9,
+            "target_name": "",
+        }
+    }
 
 API User
 -----------
