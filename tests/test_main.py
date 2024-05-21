@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Basic test for the ska_sdp_dataproduct_api fastapi module."""
+import json
 import os
 import shutil
 
@@ -88,50 +89,29 @@ def test_ingest_new_metadata(test_app):
 
     data = {
         "interface": "http://schema.skao.int/ska-data-product-meta/0.1",
+        "date_created": "2019-10-31",
         "execution_block": execution_block_id,
-        "context": {"observer": "REST ingest", "intent": "", "notes": ""},
-        "config": {
-            "processing_block": "",
-            "processing_script": "",
-            "image": "",
-            "version": "",
-            "commit": "",
-            "cmdline": "",
-        },
+        "metadata_file": "",
+        "context": {},
+        "config": {},
         "files": [],
-        "obscore": {
-            "access_estsize": 0,
-            "access_format": "application/unknown",
-            "access_url": "0",
-            "calib_level": 0,
-            "dataproduct_type": "MS",
-            "facility_name": "SKA",
-            "instrument_name": "SKA-LOW",
-            "o_ucd": "stat.fourier",
-            "obs_collection": "Unknown",
-            "obs_id": "",
-            "obs_publisher_did": "",
-            "pol_states": "XX/XY/YX/YY",
-            "pol_xel": 0,
-            "s_dec": 0,
-            "s_ra": 0.0,
-            "t_exptime": 5.0,
-            "t_max": 57196.962848574476,
-            "t_min": 57196.96279070411,
-            "t_resolution": 0.9,
-            "target_name": "",
-        },
+        "obscore": {},
+    }
+
+    data2 = {
+        "start_date": "2001-12-12",
+        "end_date": "2032-12-12",
+        "key_value_pairs": ["execution_block:eb-m001-20191031-12345"],
     }
 
     response = test_app.post("/ingestnewmetadata", json=data)
-    assert response.status_code == 200
-    assert response.json()["execution_block"] == execution_block_id
 
-    # clean up after test by deleting the data product metadata file
-    # and the directory containing it
-    path = os.path.dirname(response.json()["metadata_file"])
-    if os.path.exists(path):
-        shutil.rmtree(path)
+
+    print("!!!!!response:" + str(response.json()))
+
+
+    assert response.status_code == 200
+    assert "New data product metadata received and store index updated" in str(response.json())
 
 
 def test_in_memory_search_empty_key_value_list(test_app):

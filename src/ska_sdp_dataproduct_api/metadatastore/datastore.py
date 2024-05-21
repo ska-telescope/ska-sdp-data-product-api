@@ -108,7 +108,7 @@ class Store:
             metadata.date_created = datetime.date.today().strftime("%Y-%m-%d")
 
         # determine a path on which to store the file
-        path = f"{PERSISTANT_STORAGE_PATH}/product/"
+        path = f"{PERSISTANT_STORAGE_PATH}/"
         path += f"{metadata.execution_block}/{METADATA_FILE_NAME}"
         metadata.metadata_file = pathlib.Path(path)
 

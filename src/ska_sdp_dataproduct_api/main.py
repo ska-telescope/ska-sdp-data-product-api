@@ -105,6 +105,9 @@ async def ingest_new_data_product(file_object: FileUrl):
 async def ingest_new_metadata(metadata: DataProductMetaData):
     """This API endpoint takes JSON data product metadata and ingests into
     the appropriate store."""
+
+    print("!!!!!james")
+
     DPD_API_Status.update_data_store_date_modified()
     store.ingest_metadata_object(metadata)
     logger.info("New data product metadata received and store index updated")
