@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 """Basic test for the ska_sdp_dataproduct_api fastapi module."""
-import json
 import os
 import shutil
+
+from ska_sdp_dataproduct_api.core.settings import PERSISTANT_STORAGE_PATH
 
 
 def test_ping_main(test_app):
@@ -98,20 +99,15 @@ def test_ingest_new_metadata(test_app):
         "obscore": {},
     }
 
-    data2 = {
-        "start_date": "2001-12-12",
-        "end_date": "2032-12-12",
-        "key_value_pairs": ["execution_block:eb-m001-20191031-12345"],
-    }
-
     response = test_app.post("/ingestnewmetadata", json=data)
-
-
-    print("!!!!!response:" + str(response.json()))
-
-
     assert response.status_code == 200
     assert "New data product metadata received and store index updated" in str(response.json())
+
+    # clean up after test by deleting the data product metadata file
+    # and the directory containing it
+    path = os.path.dirname(f"{PERSISTANT_STORAGE_PATH}/" + f"{execution_block_id}/")
+    if os.path.exists(path):
+        shutil.rmtree(path)
 
 
 def test_in_memory_search_empty_key_value_list(test_app):
