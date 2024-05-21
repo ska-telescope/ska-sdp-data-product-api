@@ -3,7 +3,7 @@
 import os
 import shutil
 
-from ska_sdp_dataproduct_api.core.settings import PERSISTANT_STORAGE_PATH
+from ska_sdp_dataproduct_api.core.settings import PERSISTENT_STORAGE_PATH
 
 
 def test_ping_main(test_app):
@@ -105,7 +105,7 @@ def test_ingest_new_metadata(test_app):
 
     # clean up after test by deleting the data product metadata file
     # and the directory containing it
-    path = os.path.dirname(f"{PERSISTANT_STORAGE_PATH}/" + f"{execution_block_id}/")
+    path = os.path.dirname(f"{PERSISTENT_STORAGE_PATH}/" + f"{execution_block_id}/")
     if os.path.exists(path):
         shutil.rmtree(path)
 
