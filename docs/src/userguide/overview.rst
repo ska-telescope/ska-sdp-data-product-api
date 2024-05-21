@@ -1,7 +1,7 @@
 SDP Data Product API Overview
 =============================
 
-This API is used to provide a list of SDP data products (files) that are hosted at a configurable storage location <PERSISTANT_STORAGE_PATH>.
+This API is used to provide a list of SDP data products (files) that are hosted at a configurable storage location <PERSISTENT_STORAGE_PATH>.
 
 
 Automatic API Documentation

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ska-sdp-dataproduct-api"
-version = "0.7.0"
+version = "0.8.0"
 description = "This repository contain the API that exposes SDP Data Products to the SDP Data Product Dashboard"
 authors = ["Andre Odendaal <andre@vivosa.co.za>"]
 license = "BSD-3-Clause"
@@ -44,6 +44,8 @@ build = "^0.8.0"
 [tool.poetry.group.docs.dependencies]
 sphinx = "^7.2.6"
 ska-ser-sphinx-theme = "^0.1.2"
+sphinx-copybutton = "^0.5.2"
+sphinx-new-tab-link = "^0.4.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

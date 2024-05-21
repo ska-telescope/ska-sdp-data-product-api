@@ -42,7 +42,7 @@ async def reindex_data_products(background_tasks: BackgroundTasks):
 @app.post("/dataproductsearch", response_class=Response)
 async def data_products_search(search_parameters: SearchParametersClass):
     """This API endpoint returns a list of all the data products
-    in the PERSISTANT_STORAGE_PATH
+    in the PERSISTENT_STORAGE_PATH
     """
     metadata_key_value_pairs = []
     if (
@@ -72,7 +72,7 @@ async def data_products_search(search_parameters: SearchParametersClass):
 @app.get("/dataproductlist", response_class=Response)
 async def data_products_list():
     """This API endpoint returns a list of all the data products
-    in the PERSISTANT_STORAGE_PATH
+    in the PERSISTENT_STORAGE_PATH
     """
     return json.dumps(store.metadata_list)
 
@@ -88,7 +88,7 @@ async def download(file_object: FileUrl):
 async def data_product_metadata(file_object: FileUrl):
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
-    return store.load_metadata_file(file_object)
+    return store.load_metadata(file_object)
 
 
 @app.post("/ingestnewdataproduct")

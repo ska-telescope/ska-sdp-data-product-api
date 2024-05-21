@@ -2135,6 +2135,44 @@ lint = ["docutils-stubs", "flake8 (>=3.5.0)", "flake8-simplify", "isort", "mypy 
 test = ["cython (>=3.0)", "filelock", "html5lib", "pytest (>=4.6)", "setuptools (>=67.0)"]
 
 [[package]]
+name = "sphinx-copybutton"
+version = "0.5.2"
+description = "Add a copy button to each of your code cells."
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "sphinx-copybutton-0.5.2.tar.gz", hash = "sha256:4cf17c82fb9646d1bc9ca92ac280813a3b605d8c421225fd9913154103ee1fbd"},
+    {file = "sphinx_copybutton-0.5.2-py3-none-any.whl", hash = "sha256:fb543fd386d917746c9a2c50360c7905b605726b9355cd26e9974857afeae06e"},
+]
+
+[package.dependencies]
+sphinx = ">=1.8"
+
+[package.extras]
+code-style = ["pre-commit (==2.12.1)"]
+rtd = ["ipython", "myst-nb", "sphinx", "sphinx-book-theme", "sphinx-examples"]
+
+[[package]]
+name = "sphinx-new-tab-link"
+version = "0.4.0"
+description = "Open external links in new tabs of the browser in Sphinx HTML documents"
+optional = false
+python-versions = "*"
+files = [
+    {file = "sphinx-new-tab-link-0.4.0.tar.gz", hash = "sha256:aaefd94d5aa75c60a6c1e94b80d75c4281c3b6f95669b8e606f212744818b916"},
+    {file = "sphinx_new_tab_link-0.4.0-py3-none-any.whl", hash = "sha256:2353bfd3a171fdbd9dcdf33e5f26b4447607293ff2b57e0f6a2dc18d1507598e"},
+]
+
+[package.dependencies]
+sphinxcontrib-extdevhelper-kasane = "*"
+
+[package.extras]
+dev = ["build", "twine", "wheel"]
+lint = ["black", "flake8", "isort"]
+testing = ["beautifulsoup4", "pytest"]
+typecheck = ["mypy", "types-beautifulsoup"]
+
+[[package]]
 name = "sphinx-rtd-theme"
 version = "1.3.0"
 description = "Read the Docs theme for Sphinx"
@@ -2184,6 +2222,23 @@ files = [
 lint = ["docutils-stubs", "flake8", "mypy"]
 standalone = ["Sphinx (>=5)"]
 test = ["pytest"]
+
+[[package]]
+name = "sphinxcontrib-extdevhelper-kasane"
+version = "0.2.0"
+description = "襲 - Provide dynamic inheritance shortcuts to make Sphinx extension development easier"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "sphinxcontrib-extdevhelper-kasane-0.2.0.tar.gz", hash = "sha256:4dc7b00327f33c7b421c27122b40278eeaca43f24601b572cee5616d31b206a9"},
+    {file = "sphinxcontrib_extdevhelper_kasane-0.2.0-py3-none-any.whl", hash = "sha256:20f94e3b209cddec24596234458ea3887e7a7ad45b54a4d0a5bf169ff45a38f1"},
+]
+
+[package.dependencies]
+Sphinx = "*"
+
+[package.extras]
+dev = ["autoflake", "black", "flake8", "isort", "mypy", "pytest", "pytest-randomly", "pyupgrade", "taskipy"]
 
 [[package]]
 name = "sphinxcontrib-htmlhelp"
@@ -2542,4 +2597,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "33e23dd2bfddfdde9e03da5d69d4610be6304f520992cc2a591d688088101d2b"
+content-hash = "09d069609b637309653af51a24e190de2b10a906ee33f481f0b1bda1646e4c34"
