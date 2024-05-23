@@ -290,7 +290,7 @@ def find_metadata(metadata, query_key):
 
 def check_date_format(date, date_format):
     """Given a date, check that it is in the expected YYYY-MM-DD format and return a
-    datatime object"""
+    datetime object"""
     try:
         return datetime.datetime.strptime(date, date_format)
     except ValueError:
