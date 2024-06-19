@@ -1,5 +1,4 @@
 """Module to capture commonality between in memory and elasticsearch stores."""
-import datetime
 import json
 import logging
 import pathlib
@@ -104,16 +103,6 @@ class Store:
         """
         Ingest a single metadata object
         """
-        # if no date_created, set to today
-        if metadata.date_created is None:
-            metadata.date_created = datetime.date.today().strftime("%Y-%m-%d")
-
-        # determine a path on which to store the file
-        path = f"{PERSISTENT_STORAGE_PATH}/"
-        path += f"{metadata.execution_block}/{METADATA_FILE_NAME}"
-        metadata.metadata_file = pathlib.Path(path)
-
-        # insert into datastore
         self.insert_metadata(metadata.json())
 
         return metadata.dict()
