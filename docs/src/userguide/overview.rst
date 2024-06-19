@@ -165,8 +165,6 @@ Ingest new metadata endpoint
 
 Sending a POST request to the ingestnewmetadata endpoint will parse the supplied JSON data as data product metadata, and add the data product to the metadata store.
 
-The request will also cause a new metadata file to be created on the local disk. This is crucial to allow the dataproduct-api to include this new metadata when re-ingesting at a future time.
-
 For example, the post request body:
 
 .. code-block:: bash

@@ -8,7 +8,6 @@ from typing import Optional
 
 # pylint: disable=no-name-in-module
 import pydantic
-import yaml
 from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -145,21 +144,6 @@ class DataProductMetaData(BaseModel):
     files: list
     obscore: dict | None = None
 
-    def metadata_only(self):
-        """
-        Returns a dict containing only those attributes of the
-        DataProductMetaData that are suitable to be written to
-        a YAML metadata file
-        """
-        return {
-            "interface": self.interface,
-            "execution_block": self.execution_block,
-            "context": self.context,
-            "config": self.config,
-            "files": self.files,
-            "obscore": self.obscore,
-        }
-
 
 def generate_data_stream(file_path: pathlib.Path):
     """This function creates a subprocess that stream a specified file in
@@ -257,18 +241,6 @@ def get_date_from_name(execution_block: str) -> str:
             error,
         )
         raise
-
-
-def save_metadata_file(dataproduct: DataProductMetaData):
-    """
-    Save the contents of a DataProductMetaData object to disk
-    """
-    # create the parent directory for the metadata file (if required)
-    dataproduct.metadata_file.parent.mkdir(parents=True, exist_ok=True)
-
-    # write the file
-    with open(dataproduct.metadata_file, "w", encoding="utf-8") as metadata_yaml_file:
-        metadata_yaml_file.write(yaml.safe_dump(dataproduct.metadata_only()))
 
 
 def find_metadata(metadata, query_key):

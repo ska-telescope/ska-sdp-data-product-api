@@ -17,7 +17,6 @@ from ska_sdp_dataproduct_api.core.helperfunctions import (
     find_metadata,
     get_date_from_name,
     get_relative_path,
-    save_metadata_file,
 )
 from ska_sdp_dataproduct_api.core.settings import METADATA_FILE_NAME, PERSISTENT_STORAGE_PATH
 
@@ -113,9 +112,6 @@ class Store:
         path = f"{PERSISTENT_STORAGE_PATH}/"
         path += f"{metadata.execution_block}/{METADATA_FILE_NAME}"
         metadata.metadata_file = pathlib.Path(path)
-
-        # save to disk
-        save_metadata_file(metadata)
 
         # insert into datastore
         self.insert_metadata(metadata.json())
