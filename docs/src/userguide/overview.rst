@@ -148,7 +148,7 @@ The post request endpoint:
     }
 
 Ingest new data product
-~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Sending a POST request to the ingestnewdataproduct endpoint will load and parse a file at the supplied filename, and add the data product to the metadata store.
 
@@ -161,11 +161,13 @@ Sending a POST request to the ingestnewdataproduct endpoint will load and parse 
 
 
 Ingest new metadata endpoint
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. note:: In this release, ingested metadata is not persistently stored. This means any data you add will be cleared when the API restarts. This functionality will be changed in future releases.
 
 Sending a POST request to the ingestnewmetadata endpoint will parse the supplied JSON data as data product metadata, and add the data product to the metadata store.
 
-For example, the post request body:
+For example, the POST request body:
 
 .. code-block:: bash
 
@@ -211,7 +213,7 @@ For example, the post request body:
     }
 
 API User
------------
+--------
 
 The Data Product Dashboard (DPD) will usually be used via the GUI, for certain systems and users direct access to the API may be useful and desired. This guide will help users get up to speed with the Data Product Dashboard API.
 
