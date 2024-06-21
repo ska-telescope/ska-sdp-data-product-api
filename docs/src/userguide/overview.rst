@@ -147,9 +147,73 @@ The post request endpoint:
         ]
     }
 
+Ingest new data product
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Sending a POST request to the ingestnewdataproduct endpoint will load and parse a file at the supplied filename, and add the data product to the metadata store.
+
+.. code-block:: bash
+
+    {
+        "fileName": "eb-test-20200325-00001",
+        "relativePathName": "product/eb-test-20200325-00001"
+    }
+
+
+Ingest new metadata endpoint
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. note:: In this release, ingested metadata is not persistently stored. This means any data you add will be cleared when the API restarts. This functionality will be changed in future releases.
+
+Sending a POST request to the ingestnewmetadata endpoint will parse the supplied JSON data as data product metadata, and add the data product to the metadata store.
+
+For example, the POST request body:
+
+.. code-block:: bash
+
+    {
+        "interface": "http://schema.skao.int/ska-data-product-meta/0.1",
+        "execution_block": "eb-rest-00000000-99999",
+        "context": {
+            "observer": "REST ingest",
+            "intent": "",
+            "notes": ""
+        },
+        "config": {
+            "processing_block": "",
+            "processing_script": "",
+            "image": "",
+            "version": "",
+            "commit": "",
+            "cmdline": "",
+        },
+        "files": [],
+        "obscore": {
+            "access_estsize": 0,
+            "access_format": "application/unknown",
+            "access_url": "0",
+            "calib_level": 0,
+            "dataproduct_type": "MS",
+            "facility_name": "SKA",
+            "instrument_name": "SKA-LOW",
+            "o_ucd": "stat.fourier",
+            "obs_collection": "Unknown",
+            "obs_id": "",
+            "obs_publisher_did": "",
+            "pol_states": "XX/XY/YX/YY",
+            "pol_xel": 0,
+            "s_dec": 0,
+            "s_ra": 0.0,
+            "t_exptime": 5.0,
+            "t_max": 57196.962848574476,
+            "t_min": 57196.96279070411,
+            "t_resolution": 0.9,
+            "target_name": "",
+        }
+    }
 
 API User
------------
+--------
 
 The Data Product Dashboard (DPD) will usually be used via the GUI, for certain systems and users direct access to the API may be useful and desired. This guide will help users get up to speed with the Data Product Dashboard API.
 

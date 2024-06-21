@@ -7,6 +7,7 @@ from fastapi import BackgroundTasks, Response
 from fastapi.exceptions import HTTPException
 
 from ska_sdp_dataproduct_api.core.helperfunctions import (
+    DataProductMetaData,
     DPDAPIStatus,
     FileUrl,
     SearchParametersClass,
@@ -98,6 +99,16 @@ async def ingest_new_data_product(file_object: FileUrl):
     store.ingest_metadata_files(file_object.fullPathName)
     logger.info("New data product metadata file loaded and store index updated")
     return "New data product metadata file loaded and store index updated"
+
+
+@app.post("/ingestnewmetadata")
+async def ingest_new_metadata(metadata: DataProductMetaData):
+    """This API endpoint takes JSON data product metadata and ingests into
+    the appropriate store."""
+    DPD_API_Status.update_data_store_date_modified()
+    store.ingest_metadata_object(metadata)
+    logger.info("New data product metadata received and store index updated")
+    return "New data product metadata received and store index updated"
 
 
 @app.get("/layout")

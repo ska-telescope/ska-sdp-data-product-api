@@ -78,6 +78,28 @@ def test_in_memory_search(test_app):
     assert response.json()[0]["execution_block"] == "eb-m001-20191031-12345"
 
 
+def test_ingest_new_metadata(test_app):
+    """Test if metadata for a new data product can be ingested via the
+    REST API
+    """
+    execution_block_id = "eb-rest-00000000-99999"
+
+    data = {
+        "interface": "http://schema.skao.int/ska-data-product-meta/0.1",
+        "date_created": "2019-10-31",
+        "execution_block": execution_block_id,
+        "metadata_file": "",
+        "context": {},
+        "config": {},
+        "files": [],
+        "obscore": {},
+    }
+
+    response = test_app.post("/ingestnewmetadata", json=data)
+    assert response.status_code == 200
+    assert "New data product metadata received and store index updated" in str(response.json())
+
+
 def test_in_memory_search_empty_key_value_list(test_app):
     """This tests the in-memory precise search."""
     data = {

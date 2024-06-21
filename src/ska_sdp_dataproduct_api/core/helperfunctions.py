@@ -130,6 +130,21 @@ class SearchParametersClass(BaseModel):
     key_value_pairs: list[str] = None
 
 
+class DataProductMetaData(BaseModel):
+    """
+    Class containing all information from a MetaData object
+    """
+
+    interface: str
+    date_created: Optional[str]
+    execution_block: str
+    metadata_file: Optional[pathlib.Path]
+    context: dict
+    config: dict
+    files: list
+    obscore: dict | None = None
+
+
 def generate_data_stream(file_path: pathlib.Path):
     """This function creates a subprocess that stream a specified file in
     chunks"""
@@ -247,7 +262,7 @@ def find_metadata(metadata, query_key):
 
 def check_date_format(date, date_format):
     """Given a date, check that it is in the expected YYYY-MM-DD format and return a
-    datatime object"""
+    datetime object"""
     try:
         return datetime.datetime.strptime(date, date_format)
     except ValueError:

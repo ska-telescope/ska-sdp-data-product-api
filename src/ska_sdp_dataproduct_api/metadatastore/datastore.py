@@ -10,6 +10,7 @@ import yaml
 from ska_sdp_dataproduct_metadata import MetaData
 
 from ska_sdp_dataproduct_api.core.helperfunctions import (
+    DataProductMetaData,
     DPDAPIStatus,
     FileUrl,
     find_metadata,
@@ -97,6 +98,14 @@ class Store:
         for product_path in dataproduct_paths:
             self.ingest_file(product_path)
         self.sort_metadata_list(key="date_created", reverse=True)
+
+    def ingest_metadata_object(self, metadata: DataProductMetaData):
+        """
+        Ingest a single metadata object
+        """
+        self.insert_metadata(metadata.json())
+
+        return metadata.dict()
 
     def add_dataproduct(self, metadata_file, query_key_list):
         """Populate a list of data products and its metadata"""
