@@ -2,10 +2,12 @@
 
 import json
 import logging
+from typing import Dict, List, Optional
 
-from fastapi import BackgroundTasks, Response
+from fastapi import BackgroundTasks, Body, Response
 from fastapi.exceptions import HTTPException
 
+from ska_sdp_dataproduct_api.configuration.mui_datagrid import muiDataGridinstance
 from ska_sdp_dataproduct_api.core.helperfunctions import (
     DPDAPIStatus,
     FileUrl,
@@ -66,6 +68,43 @@ async def data_products_search(search_parameters: SearchParametersClass):
         metadata_key_value_pairs=metadata_key_value_pairs,
     )
     return filtered_data_product_list
+
+
+@app.post("/filterdataproducts")
+async def filter_data(body: Optional[Dict] = Body(...)) -> List:
+    """
+    Filters product data based on provided criteria.
+
+    This endpoint receives a JSON object containing filter parameters in the request body.
+    It applies filters to the in-memory data store.
+
+    Args:
+        filter_data (Optional[List]): The filter criteria.
+            Defaults to None.
+
+    Returns:
+        List: A list of filtered product data objects.
+    """
+    muiDataGridinstance.load_inmemory_store_data(store)
+    filter_model = body.get("filterModel", {})
+    filtered_data = store.apply_filters(muiDataGridinstance.rows.copy(), filter_model)
+
+    return filtered_data
+
+
+@app.get("/muidatagridconfig")
+async def get_muidatagridconfig() -> Dict:
+    """
+    Retrieves the MUI DataGrid configuration.
+
+    This endpoint returns the configuration object used by the MUI DataGrid component,
+    providing information about columns, sorting, filtering, and other aspects of the grid.
+
+    Returns:
+        Dict: The MUI DataGrid configuration object.
+    """
+
+    return muiDataGridinstance.table_config
 
 
 @app.get("/dataproductlist", response_class=Response)

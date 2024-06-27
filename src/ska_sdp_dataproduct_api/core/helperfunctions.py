@@ -4,7 +4,7 @@ import json
 import logging
 import pathlib
 import subprocess
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 # pylint: disable=no-name-in-module
 import pydantic
@@ -243,6 +243,58 @@ def find_metadata(metadata, query_key):
             return None
 
     return {"key": query_key, "value": subsection}
+
+
+def filter_by_item(
+    data: List[Dict[str, Any]], field: str, operator: str, value: Any
+) -> List[Dict[str, Any]]:
+    """
+    Filters a list of dictionaries based on a single field, operator, and value.
+
+    Args:
+        data: The list of dictionaries to filter.
+        field: The field name to filter on.
+        operator: The filtering operation to perform (e.g., "contains", "equals", "startsWith",
+        "endsWith", "isEmpty", "isNotEmpty", "isAnyOf").
+        value: The value to compare with the field.
+
+    Raises:
+        ValueError: If an unsupported filter operator is provided.
+
+    Returns:
+        A new list containing only the dictionaries that match the filter criteria.
+    """
+
+    filtered_data: List[Dict[str, Any]] = []
+    for item in data:
+        item_value = item.get(field)
+
+        match operator:
+            case "contains":
+                if value in str(item_value):
+                    filtered_data.append(item)
+            case "equals":
+                if item_value == value:
+                    filtered_data.append(item)
+            case "startsWith":
+                if str(item_value).startswith(value):
+                    filtered_data.append(item)
+            case "endsWith":
+                if str(item_value).endswith(value):
+                    filtered_data.append(item)
+            case "isEmpty":
+                if not item_value:
+                    filtered_data.append(item)
+            case "isNotEmpty":
+                if item_value:
+                    filtered_data.append(item)
+            case "isAnyOf":
+                if item_value in str(value).split(","):
+                    filtered_data.append(item)
+            case _:
+                raise ValueError(f"Unsupported filter operator: {operator}")
+
+    return filtered_data
 
 
 def check_date_format(date, date_format):

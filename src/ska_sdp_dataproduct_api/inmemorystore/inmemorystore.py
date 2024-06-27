@@ -3,8 +3,13 @@ import copy
 import json
 import logging
 from collections.abc import MutableMapping
+from typing import Any, Dict, List
 
-from ska_sdp_dataproduct_api.core.helperfunctions import DPDAPIStatus, check_date_format
+from ska_sdp_dataproduct_api.core.helperfunctions import (
+    DPDAPIStatus,
+    check_date_format,
+    filter_by_item,
+)
 from ska_sdp_dataproduct_api.core.settings import DATE_FORMAT
 from ska_sdp_dataproduct_api.metadatastore.datastore import Store
 
@@ -101,3 +106,46 @@ class InMemoryDataproductIndex(Store):
                 except KeyError:
                     continue
         return json.dumps(search_results)
+
+    def apply_filters(
+        self, data: List[Dict[str, Any]], filters: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
+        """
+        Filters a list of dictionaries based on a provided set of filter criteria.
+
+        Args:
+            data: The list of dictionaries to filter.
+            filters: A dictionary containing filter criteria. This dictionary should have the
+            following keys:
+                * logicOperator (optional, defaults to "and"): The logical operator to use when
+                combining multiple filters (e.g., "and", "or").
+                * items: A list of dictionaries representing individual filter items. Each filter
+                item dictionary should have the following keys:
+                    * field: The field name to filter on.
+                    * operator: The filtering operation to perform (e.g., "contains", "equals",
+                    "startsWith", "endsWith", "isEmpty", "isNotEmpty", "isAnyOf").
+                    * value: The value to compare with the field.
+
+        Returns:
+            A new list containing only the dictionaries that match all filters (for "and") or at
+            least one filter (for "or").
+
+        Raises:
+            ValueError: If a filter item is missing required fields ("field", "operator", or
+            "value").
+        """
+
+        # logic_operator = filters.get("logicOperator", "and").lower()
+        filtered_data = data
+
+        for filter_item in filters.get("items", []):
+            field = filter_item.get("field")
+            value = filter_item.get("value")
+            operator = filter_item.get("operator")
+
+            if field and operator and value:
+                filtered_data = filter_by_item(filtered_data, field, operator, value)
+
+            # Implement logic based on logicOperator (and or or)
+
+        return filtered_data

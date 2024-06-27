@@ -128,3 +128,7 @@ class ElasticsearchMetadataStore(Store):
                         query_key_list=meta_data_keys,
                     )
         return json.dumps(self.metadata_list)
+
+    def apply_filters(self, data, filters):
+        """This is implemented in Elasticsearch."""
+        raise NotImplementedError

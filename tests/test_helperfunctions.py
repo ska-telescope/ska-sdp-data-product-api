@@ -4,7 +4,11 @@ import pathlib
 
 import pytest
 
-from ska_sdp_dataproduct_api.core.helperfunctions import get_date_from_name, get_relative_path
+from ska_sdp_dataproduct_api.core.helperfunctions import (
+    filter_by_item,
+    get_date_from_name,
+    get_relative_path,
+)
 from ska_sdp_dataproduct_api.core.settings import PERSISTENT_STORAGE_PATH
 
 
@@ -39,3 +43,53 @@ class TestHelperfunctions:  # pylint: disable=R0903
         absolute_path_2 = pathlib.Path("/other/path/file.txt")
         expected_relative_path_2 = pathlib.Path("/other/path/file.txt")  # No change
         assert get_relative_path(absolute_path_2) == expected_relative_path_2
+
+
+def test_filter_by_item():
+    """Tests for the filter_by_item method"""
+    data = [
+        {"name": "Alice", "age": 30, "city": "New York"},
+        {"name": "Bob", "age": 25, "city": "Los Angeles"},
+        {"name": "Charlie", "age": 30, "city": "Chicago"},
+        {"name": "John", "age": 50},
+    ]
+
+    # Test contains operator
+    filtered_data = filter_by_item(data, "name", "contains", "ice")
+    assert filtered_data == [{"name": "Alice", "age": 30, "city": "New York"}]
+
+    # Test equals operator
+    filtered_data = filter_by_item(data, "age", "equals", 30)
+    assert filtered_data == [
+        {"name": "Alice", "age": 30, "city": "New York"},
+        {"name": "Charlie", "age": 30, "city": "Chicago"},
+    ]
+
+    # Test startsWith operator
+    filtered_data = filter_by_item(data, "city", "startsWith", "Los")
+    assert filtered_data == [{"name": "Bob", "age": 25, "city": "Los Angeles"}]
+
+    # Test endsWith operator
+    filtered_data = filter_by_item(data, "name", "endsWith", "ie")
+    assert filtered_data == [{"name": "Charlie", "age": 30, "city": "Chicago"}]
+
+    # Test isEmpty operator
+    filtered_data = filter_by_item(data, "city", "isEmpty", False)
+    assert filtered_data == [{"age": 50, "name": "John"}]
+
+    # Test isNotEmpty operator
+    filtered_data = filter_by_item(data, "age", "isNotEmpty", True)
+    assert filtered_data == data
+
+    # Test isAnyOf operator
+    filtered_data = filter_by_item(data, "city", "isAnyOf", "New York,Chicago")
+    print(filtered_data)
+    assert filtered_data == [
+        {"name": "Alice", "age": 30, "city": "New York"},
+        {"name": "Charlie", "age": 30, "city": "Chicago"},
+    ]
+
+    # Test unsupported operator
+    with pytest.raises(ValueError) as excinfo:
+        filter_by_item(data, "name", "not_supported", "value")
+    assert "Unsupported filter operator: not_supported" in str(excinfo.value)
