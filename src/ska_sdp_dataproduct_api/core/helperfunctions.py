@@ -441,8 +441,8 @@ def filter_by_key_value_pair(
     filtered_data = data.copy()  # Avoid modifying the original data
 
     for key_value_pair in key_value_pairs:
-        searched_key = key_value_pair.get("keyPair")
-        searched_value = key_value_pair.get("valuePair")
+        searched_key = key_value_pair.get("keyPair", "")
+        searched_value = key_value_pair.get("valuePair", "")
 
         filtered_data = [
             item for item in filtered_data if has_nested_status(item, searched_key, searched_value)

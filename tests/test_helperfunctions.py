@@ -7,6 +7,7 @@ import pytest
 
 from ska_sdp_dataproduct_api.core.helperfunctions import (
     filter_by_item,
+    filter_by_key_value_pair,
     get_date_from_name,
     get_relative_path,
     parse_valid_date,
@@ -115,3 +116,82 @@ def test_parse_valid_date_invalid_date():
         parse_valid_date(invalid_date_string, expected_format)
 
     assert "time data '2024-13-02' does not match format '%Y-%m-%d'" in str(excinfo.value)
+
+
+def test_filter_by_key_value_pair_empty_data():
+    """Tests the function with empty data list."""
+    data = []
+    key_value_pairs = [{"keyPair": "name", "valuePair": "Alice"}]
+    expected_output = []
+
+    assert filter_by_key_value_pair(data, key_value_pairs) == expected_output
+
+
+def test_filter_by_key_value_pair_single_match():
+    """Tests the function with a single matching element."""
+    data = [{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]
+    key_value_pairs = [{"keyPair": "name", "valuePair": "Alice"}]
+    expected_output = [{"name": "Alice", "age": 30}]
+
+    assert filter_by_key_value_pair(data.copy(), key_value_pairs) == expected_output
+
+
+def test_filter_by_key_value_pair_multiple_matches():
+    """Tests the function with multiple matching elements."""
+    data = [
+        {"name": "Alice", "age": 30},
+        {"name": "Alice", "city": "New York"},
+        {"name": "Bob", "age": 25},
+    ]
+    key_value_pairs = [{"keyPair": "name", "valuePair": "Alice"}]
+    expected_output = [{"name": "Alice", "age": 30}, {"name": "Alice", "city": "New York"}]
+
+    assert filter_by_key_value_pair(data.copy(), key_value_pairs) == expected_output
+
+
+def test_filter_by_key_value_pair_no_match():
+    """Tests the function with no matching elements."""
+    data = [{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]
+    key_value_pairs = [{"keyPair": "city", "valuePair": "New York"}]
+    expected_output = []
+
+    assert filter_by_key_value_pair(data.copy(), key_value_pairs) == expected_output
+
+
+def test_filter_by_key_value_pair_missing_key():
+    """Tests the function with a missing key in key_value_pair."""
+    data = [{"name": "Alice", "age": 30}]
+    key_value_pairs = [{"valuePair": "Alice"}]  # missing "keyPair"
+    expected_output = [{"age": 30, "name": "Alice"}]
+
+    assert filter_by_key_value_pair(data.copy(), key_value_pairs) == expected_output
+
+
+def test_filter_by_key_value_pair_missing_value():
+    """Tests the function with a missing value in key_value_pair."""
+    data = [{"name": "Alice", "age": 30}]
+    key_value_pairs = [{"keyPair": "name"}]  # missing "valuePair"
+    expected_output = [{"age": 30, "name": "Alice"}]
+
+    assert filter_by_key_value_pair(data.copy(), key_value_pairs) == expected_output
+
+
+def test_filter_by_key_value_pair_nested_match():
+    """Tests the function with a nested matching element."""
+    data = [
+        {
+            "name": "Alice",
+            "age": 30,
+            "files": [{"name": "Bob", "age": 25}, {"name": "Zuma", "age": 99}],
+        }
+    ]
+    key_value_pairs = [{"keyPair": "name", "valuePair": "Zuma"}]
+    expected_output = [
+        {
+            "name": "Alice",
+            "age": 30,
+            "files": [{"name": "Bob", "age": 25}, {"name": "Zuma", "age": 99}],
+        }
+    ]
+
+    assert filter_by_key_value_pair(data.copy(), key_value_pairs) == expected_output
