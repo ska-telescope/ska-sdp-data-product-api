@@ -124,7 +124,7 @@ class InMemoryDataproductIndex(Store):
                 item dictionary should have the following keys:
                     * field: The field name to filter on.
                     * operator: The filtering operation to perform (e.g., "contains", "equals",
-                    "startsWith", "endsWith", "isEmpty", "isNotEmpty", "isAnyOf").
+                    "startsWith", "endsWith", "isAnyOf").
                     * value: The value to compare with the field.
 
         Returns:

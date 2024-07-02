@@ -1,6 +1,5 @@
 """Module to insert data into Elasticsearch instance."""
 import datetime
-import json
 import logging
 import pathlib
 import subprocess
@@ -270,6 +269,7 @@ def filter_integers(item: int, operator: str, value: int) -> bool:
     return False
 
 
+# pylint: disable=too-many-return-statements
 def filter_strings(item: str, operator: str, value: str) -> bool:
     """
     Filters a list of values based on a single field, operator, and string value.
@@ -296,12 +296,6 @@ def filter_strings(item: str, operator: str, value: str) -> bool:
                 return True
         case "endsWith":
             if str(item).endswith(value):
-                return True
-        case "isEmpty":
-            if not item:
-                return True
-        case "isNotEmpty":
-            if item:
                 return True
         case "isAnyOf":
             if item in value.split(","):
@@ -363,7 +357,7 @@ def filter_by_item(
         data: The list of dictionaries to filter.
         field: The field name to filter on.
         operator: The filtering operation to perform (e.g., "contains", "equals", "startsWith",
-        "endsWith", "isEmpty", "isNotEmpty", "isAnyOf").
+        "endsWith", "isAnyOf").
         value: The value to compare with the field.
 
     Raises:
@@ -436,12 +430,12 @@ def filter_by_key_value_pair(
 
     Args:
         data: A list of dictionaries where each dictionary represents a data point.
-        key_value_pairs: A list of dictionaries where each dictionary contains a "keyPair" key and 
+        key_value_pairs: A list of dictionaries where each dictionary contains a "keyPair" key and
         a "valuePair" key.
             The function filters the "data" list based on these key-value pairs.
 
     Returns:
-        A new list of dictionaries containing elements from "data" that match all key-value pairs 
+        A new list of dictionaries containing elements from "data" that match all key-value pairs
         in "key_value_pairs".
     """
     filtered_data = data.copy()  # Avoid modifying the original data

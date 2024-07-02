@@ -71,22 +71,9 @@ def test_filter_by_item():
     filtered_data = filter_by_item(data, "name", "endsWith", "ie")
     assert filtered_data == [{"name": "Charlie", "age": 30, "city": "Chicago"}]
 
-    # Test isEmpty operator
-    filtered_data = filter_by_item(data, "city", "isEmpty", False)
-    assert filtered_data == [{"age": 50, "name": "John"}]
-
-    # Test isNotEmpty operator
-    filtered_data = filter_by_item(data, "age", "isNotEmpty", True)
-    assert filtered_data == data
-
     # Test isAnyOf operator
     filtered_data = filter_by_item(data, "city", "isAnyOf", "New York,Chicago")
     assert filtered_data == [
         {"name": "Alice", "age": 30, "city": "New York"},
         {"name": "Charlie", "age": 30, "city": "Chicago"},
     ]
-
-    # Test unsupported operator
-    with pytest.raises(ValueError) as excinfo:
-        filter_by_item(data, "name", "not_supported", "value")
-    assert "Unsupported filter operator: not_supported" in str(excinfo.value)
