@@ -89,9 +89,9 @@ async def filter_data(body: Optional[Dict] = Body(...)) -> List:
     mui_data_grid_filter_model = body.get("filterModel", {})
     search_panel_options = body.get("searchPanelOptions", {})
 
-    print(search_panel_options)
-
-    mui_filtered_data = store.apply_filters(muiDataGridinstance.rows.copy(), mui_data_grid_filter_model)
+    mui_filtered_data = store.apply_filters(
+        muiDataGridinstance.rows.copy(), mui_data_grid_filter_model
+    )
     serachbox_filtered_data = store.apply_filters(mui_filtered_data, search_panel_options)
 
     return serachbox_filtered_data

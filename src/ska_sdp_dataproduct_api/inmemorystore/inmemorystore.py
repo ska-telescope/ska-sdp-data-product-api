@@ -7,8 +7,9 @@ from typing import Any, Dict, List
 
 from ska_sdp_dataproduct_api.core.helperfunctions import (
     DPDAPIStatus,
-    parse_valid_date,
     filter_by_item,
+    filter_by_key_value_pair,
+    parse_valid_date,
 )
 from ska_sdp_dataproduct_api.core.settings import DATE_FORMAT
 from ska_sdp_dataproduct_api.metadatastore.datastore import Store
@@ -142,17 +143,30 @@ class InMemoryDataproductIndex(Store):
             field = filter_item.get("field")
             value = filter_item.get("value")
             operator = filter_item.get("operator")
+            key_pairs = filter_item.get("keyPairs")
 
             if field and operator and value:
                 match field:
                     case "date_created":
                         try:
-                            filtered_data = filter_by_item(filtered_data, field, operator, parse_valid_date(value, "%Y-%m-%d"))
+                            filtered_data = filter_by_item(
+                                filtered_data, field, operator, parse_valid_date(value, "%Y-%m-%d")
+                            )
                         except ValueError:
-                            filtered_data = []
+                            continue
                     case _:
-                        filtered_data = filter_by_item(filtered_data, field, operator, value)
+                        try:
+                            filtered_data = filter_by_item(filtered_data, field, operator, value)
+                        except ValueError:
+                            continue
 
+            if field and key_pairs:
+                match field:
+                    case "formFields":
+                        try:
+                            filtered_data = filter_by_key_value_pair(filtered_data, key_pairs)
+                        except ValueError:
+                            continue
 
             # Implement logic based on logicOperator (and or or)
 

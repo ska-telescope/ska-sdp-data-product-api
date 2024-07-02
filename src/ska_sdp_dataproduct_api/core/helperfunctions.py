@@ -269,6 +269,7 @@ def filter_integers(item: int, operator: str, value: int) -> bool:
             raise ValueError(f"Unsupported filter operator for integers: {operator}")
     return False
 
+
 def filter_strings(item: str, operator: str, value: str) -> bool:
     """
     Filters a list of values based on a single field, operator, and string value.
@@ -309,7 +310,10 @@ def filter_strings(item: str, operator: str, value: str) -> bool:
             raise ValueError(f"Unsupported filter operator for strings: {operator}")
     return False
 
-def filter_datetimes(item: datetime.datetime, operator: str, value: datetime.datetime) -> List[Dict[str, Any]]:
+
+def filter_datetimes(
+    item: datetime.datetime, operator: str, value: datetime.datetime
+) -> List[Dict[str, Any]]:
     """
     Filters a list of values based on a single field, operator, and datetime value.
 
@@ -337,7 +341,9 @@ def filter_datetimes(item: datetime.datetime, operator: str, value: datetime.dat
         case "isAnyOf":
             try:
                 # Attempt to convert string representation of datetime to datetime object
-                date_values = [datetime.datetime.strptime(v, "%Y-%m-%dT%H:%M:%S") for v in value.split(",")]
+                date_values = [
+                    datetime.datetime.strptime(v, "%Y-%m-%dT%H:%M:%S") for v in value.split(",")
+                ]
                 if item in date_values:
                     return True
             except ValueError as exception:
@@ -345,6 +351,7 @@ def filter_datetimes(item: datetime.datetime, operator: str, value: datetime.dat
         case _:
             raise ValueError(f"Unsupported filter operator for datetimes: {operator}")
     return False
+
 
 def filter_by_item(
     data: List[Dict[str, Any]], field: str, operator: str, value: Any
@@ -386,6 +393,66 @@ def filter_by_item(
         except ValueError:
             logging.error("Failed to filter on item %s", str(item))
 
+    return filtered_data
+
+
+def has_nested_status(item: dict | list, searched_key: str, searched_value: str) -> bool:
+    """
+    Searches for a nested key-value pair within a dictionary or list structure.
+
+    Args:
+        item (dict | list): The dictionary or list to search within.
+        searched_key (str): The key to search for within nested dictionaries.
+        searched_value (str): The value to search for within the nested dictionary
+                              associated with the searched_key.
+
+    Returns:
+        bool: True if the key-value pair is found nested within the item, False otherwise.
+
+    Raises:
+        TypeError: If the `item` is not a dictionary or list.
+    """
+
+    if not isinstance(item, (dict, list)):
+        raise TypeError(f"Expected item to be a dictionary or list, got {type(item)}")
+
+    for key, value in item.items() if isinstance(item, dict) else enumerate(item):
+        if key and value:
+            if searched_key in str(key) and searched_value in str(value):
+                return True
+
+            if isinstance(value, (dict, list)):
+                if has_nested_status(value, searched_key, searched_value):
+                    return True
+
+    return False
+
+
+def filter_by_key_value_pair(
+    data: List[Dict[str, Any]], key_value_pairs: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """
+    Filters a list of dictionaries based on key-value pairs.
+
+    Args:
+        data: A list of dictionaries where each dictionary represents a data point.
+        key_value_pairs: A list of dictionaries where each dictionary contains a "keyPair" key and 
+        a "valuePair" key.
+            The function filters the "data" list based on these key-value pairs.
+
+    Returns:
+        A new list of dictionaries containing elements from "data" that match all key-value pairs 
+        in "key_value_pairs".
+    """
+    filtered_data = data.copy()  # Avoid modifying the original data
+
+    for key_value_pair in key_value_pairs:
+        searched_key = key_value_pair.get("keyPair")
+        searched_value = key_value_pair.get("valuePair")
+
+        filtered_data = [
+            item for item in filtered_data if has_nested_status(item, searched_key, searched_value)
+        ]
 
     return filtered_data
 
@@ -398,7 +465,7 @@ def parse_valid_date(date_string: str, expected_format: str) -> datetime.datetim
         expected_format: The expected format of the date string (e.g., "%Y-%m-%d").
 
     Returns:
-        A datetime object if the date is valid in the specified format, otherwise raises a 
+        A datetime object if the date is valid in the specified format, otherwise raises a
         ValueError.
 
     Raises:

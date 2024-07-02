@@ -35,8 +35,6 @@ class TestHelperfunctions:  # pylint: disable=R0903
         absolute_path_1 = PERSISTENT_STORAGE_PATH / pathlib.Path("file.txt")
         expected_relative_path_1 = pathlib.Path("file.txt")
 
-        print(f"absolute_path_1: {absolute_path_1}")
-        print(f"expected_relative_path_1: {expected_relative_path_1}")
         assert get_relative_path(absolute_path_1) == expected_relative_path_1
 
         # Test case 2: Absolute path outside the persistent storage
@@ -83,7 +81,6 @@ def test_filter_by_item():
 
     # Test isAnyOf operator
     filtered_data = filter_by_item(data, "city", "isAnyOf", "New York,Chicago")
-    print(filtered_data)
     assert filtered_data == [
         {"name": "Alice", "age": 30, "city": "New York"},
         {"name": "Charlie", "age": 30, "city": "Chicago"},
