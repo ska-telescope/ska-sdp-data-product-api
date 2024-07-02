@@ -7,7 +7,7 @@ from typing import Any, Dict, List
 
 from ska_sdp_dataproduct_api.core.helperfunctions import (
     DPDAPIStatus,
-    check_date_format,
+    parse_valid_date,
     filter_by_item,
 )
 from ska_sdp_dataproduct_api.core.settings import DATE_FORMAT
@@ -73,13 +73,13 @@ class InMemoryDataproductIndex(Store):
         metadata_key_value_pairs=None,
     ):
         """Metadata Search method."""
-        start_date = check_date_format(start_date, DATE_FORMAT)
-        end_date = check_date_format(end_date, DATE_FORMAT)
+        start_date = parse_valid_date(start_date, DATE_FORMAT)
+        end_date = parse_valid_date(end_date, DATE_FORMAT)
 
         if metadata_key_value_pairs is None or len(metadata_key_value_pairs) == 0:
             search_results = copy.deepcopy(self.metadata_list)
             for product in self.metadata_list:
-                product_date = check_date_format(product["date_created"], DATE_FORMAT)
+                product_date = parse_valid_date(product["date_created"], DATE_FORMAT)
                 if not start_date <= product_date <= end_date:
                     search_results.remove(product)
                     continue
@@ -88,7 +88,7 @@ class InMemoryDataproductIndex(Store):
 
         search_results = copy.deepcopy(self.metadata_list)
         for product in self.metadata_list:
-            product_date = check_date_format(product["date_created"], DATE_FORMAT)
+            product_date = parse_valid_date(product["date_created"], DATE_FORMAT)
 
             if not start_date <= product_date <= end_date:
                 search_results.remove(product)
@@ -144,7 +144,15 @@ class InMemoryDataproductIndex(Store):
             operator = filter_item.get("operator")
 
             if field and operator and value:
-                filtered_data = filter_by_item(filtered_data, field, operator, value)
+                match field:
+                    case "date_created":
+                        try:
+                            filtered_data = filter_by_item(filtered_data, field, operator, parse_valid_date(value, "%Y-%m-%d"))
+                        except ValueError:
+                            filtered_data = []
+                    case _:
+                        filtered_data = filter_by_item(filtered_data, field, operator, value)
+
 
             # Implement logic based on logicOperator (and or or)
 

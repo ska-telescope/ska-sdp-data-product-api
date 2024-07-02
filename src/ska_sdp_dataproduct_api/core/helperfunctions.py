@@ -245,6 +245,107 @@ def find_metadata(metadata, query_key):
     return {"key": query_key, "value": subsection}
 
 
+def filter_integers(item: int, operator: str, value: int) -> bool:
+    """
+    Filters a list of values based on a single field, operator, and integer value.
+
+    Args:
+        item_values: The list of values to filter.
+        operator: The filtering operation to perform.
+        value: The integer value to compare with.
+
+    Returns:
+        A list of indexes of matching items in the original data list.
+    """
+
+    match operator:
+        case "equals":
+            if item == value:
+                return True
+        case "isAnyOf":
+            if str(value) in str(item).split(","):
+                return True
+        case _:
+            raise ValueError(f"Unsupported filter operator for integers: {operator}")
+    return False
+
+def filter_strings(item: str, operator: str, value: str) -> bool:
+    """
+    Filters a list of values based on a single field, operator, and string value.
+
+    Args:
+        item_values: The list of values to filter.
+        operator: The filtering operation to perform.
+        value: The string value to compare with.
+
+    Returns:
+        A list of indexes of matching items in the original data list.
+    """
+    if item is None:
+        item = ""  # Handle None values as empty strings
+    match operator:
+        case "contains":
+            if value in str(item):
+                return True
+        case "equals":
+            if item == value:
+                return True
+        case "startsWith":
+            if str(item).startswith(value):
+                return True
+        case "endsWith":
+            if str(item).endswith(value):
+                return True
+        case "isEmpty":
+            if not item:
+                return True
+        case "isNotEmpty":
+            if item:
+                return True
+        case "isAnyOf":
+            if item in value.split(","):
+                return True
+        case _:
+            raise ValueError(f"Unsupported filter operator for strings: {operator}")
+    return False
+
+def filter_datetimes(item: datetime.datetime, operator: str, value: datetime.datetime) -> List[Dict[str, Any]]:
+    """
+    Filters a list of values based on a single field, operator, and datetime value.
+
+    Args:
+        item_values: The list of values to filter.
+        operator: The filtering operation to perform (supports "equals" and "isAnyOf").
+        value: The datetime value to compare with.
+
+    Returns:
+        A list of indexes of matching items in the original data list.
+    """
+
+    if item is None:
+        return False  # Skip None values
+    match operator:
+        case "equals":
+            if item == value:
+                return True
+        case "greaterThan":
+            if item >= value:
+                return True
+        case "lessThan":
+            if item <= value:
+                return True
+        case "isAnyOf":
+            try:
+                # Attempt to convert string representation of datetime to datetime object
+                date_values = [datetime.datetime.strptime(v, "%Y-%m-%dT%H:%M:%S") for v in value.split(",")]
+                if item in date_values:
+                    return True
+            except ValueError as exception:
+                raise exception  # Re-raise the ValueError for the caller to handle
+        case _:
+            raise ValueError(f"Unsupported filter operator for datetimes: {operator}")
+    return False
+
 def filter_by_item(
     data: List[Dict[str, Any]], field: str, operator: str, value: Any
 ) -> List[Dict[str, Any]]:
@@ -266,41 +367,46 @@ def filter_by_item(
     """
 
     filtered_data: List[Dict[str, Any]] = []
-    for item in data:
-        item_value = item.get(field)
 
-        match operator:
-            case "contains":
-                if value in str(item_value):
+    for item in data:
+        try:
+            item_value = item.get(field)
+
+            # Delegate filtering based on value type (integer or string)
+            if isinstance(value, int):
+                if filter_integers(item_value, operator, value):
                     filtered_data.append(item)
-            case "equals":
-                if item_value == value:
+            elif isinstance(value, datetime.datetime):
+                date_value = parse_valid_date(item_value, "%Y-%m-%d")
+                if filter_datetimes(date_value, operator, value):
                     filtered_data.append(item)
-            case "startsWith":
-                if str(item_value).startswith(value):
+            else:
+                if filter_strings(item_value, operator, value):
                     filtered_data.append(item)
-            case "endsWith":
-                if str(item_value).endswith(value):
-                    filtered_data.append(item)
-            case "isEmpty":
-                if not item_value:
-                    filtered_data.append(item)
-            case "isNotEmpty":
-                if item_value:
-                    filtered_data.append(item)
-            case "isAnyOf":
-                if item_value in str(value).split(","):
-                    filtered_data.append(item)
-            case _:
-                raise ValueError(f"Unsupported filter operator: {operator}")
+        except ValueError:
+            logging.error("Failed to filter on item %s", str(item))
+
 
     return filtered_data
 
 
-def check_date_format(date, date_format):
-    """Given a date, check that it is in the expected YYYY-MM-DD format and return a
-    datatime object"""
+def parse_valid_date(date_string: str, expected_format: str) -> datetime.datetime:
+    """Parses a date string into a datetime object if the format is valid.
+
+    Args:
+        date_string: The date string to parse (e.g., "2023-07-01").
+        expected_format: The expected format of the date string (e.g., "%Y-%m-%d").
+
+    Returns:
+        A datetime object if the date is valid in the specified format, otherwise raises a 
+        ValueError.
+
+    Raises:
+        ValueError: If the date format is invalid.
+    """
+
     try:
-        return datetime.datetime.strptime(date, date_format)
-    except ValueError:
-        return logger.error(json.dumps({"Error": "Invalid date format, expected YYYY-MM-DD"}))
+        return datetime.datetime.strptime(date_string, expected_format)
+    except ValueError as exception:
+        logging.error("Invalid date format: %s. Expected format: %s", date_string, expected_format)
+        raise exception  # Re-raise the ValueError for the caller to handle
