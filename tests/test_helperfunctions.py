@@ -1,6 +1,7 @@
 """Test for the helperfunctions methods."""
 
 import pathlib
+from datetime import datetime
 
 import pytest
 
@@ -8,6 +9,7 @@ from ska_sdp_dataproduct_api.core.helperfunctions import (
     filter_by_item,
     get_date_from_name,
     get_relative_path,
+    parse_valid_date,
 )
 from ska_sdp_dataproduct_api.core.settings import PERSISTENT_STORAGE_PATH
 
@@ -77,3 +79,39 @@ def test_filter_by_item():
         {"name": "Alice", "age": 30, "city": "New York"},
         {"name": "Charlie", "age": 30, "city": "Chicago"},
     ]
+
+
+def test_parse_valid_date_success():
+    """Tests that the parse_valid_date function successfully parses a valid date string."""
+
+    valid_date_string = "2024-07-02"
+    expected_format = "%Y-%m-%d"
+    expected_datetime = datetime(year=2024, month=7, day=2)
+
+    parsed_datetime = parse_valid_date(valid_date_string, expected_format)
+
+    assert parsed_datetime == expected_datetime
+
+
+def test_parse_valid_date_invalid_format():
+    """Tests that the parse_valid_date function raises a ValueError for an invalid format."""
+
+    invalid_date_string = "02-07-2024"  # Incorrect format order
+    expected_format = "%Y-%m-%d"  # Correct format
+
+    with pytest.raises(ValueError) as excinfo:
+        parse_valid_date(invalid_date_string, expected_format)
+
+    assert "does not match format" in str(excinfo.value)
+
+
+def test_parse_valid_date_invalid_date():
+    """Tests that the parse_valid_date function raises a ValueError for an invalid date."""
+
+    invalid_date_string = "2024-13-02"  # Invalid month
+    expected_format = "%Y-%m-%d"
+
+    with pytest.raises(ValueError) as excinfo:
+        parse_valid_date(invalid_date_string, expected_format)
+
+    assert "time data '2024-13-02' does not match format '%Y-%m-%d'" in str(excinfo.value)
