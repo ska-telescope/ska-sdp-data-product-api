@@ -141,22 +141,27 @@ class InMemoryDataproductIndex(Store):
 
         for filter_item in filters.get("items", []):
             field = filter_item.get("field")
-            value = filter_item.get("value")
+            comparator = filter_item.get("value")
             operator = filter_item.get("operator")
             key_pairs = filter_item.get("keyPairs")
 
-            if field and operator and value:
+            if field and operator and comparator:
                 match field:
                     case "date_created":
                         try:
                             filtered_data = filter_by_item(
-                                filtered_data, field, operator, parse_valid_date(value, "%Y-%m-%d")
+                                filtered_data,
+                                field,
+                                operator,
+                                parse_valid_date(comparator, "%Y-%m-%d"),
                             )
                         except ValueError:
                             continue
                     case _:
                         try:
-                            filtered_data = filter_by_item(filtered_data, field, operator, value)
+                            filtered_data = filter_by_item(
+                                filtered_data, field, operator, comparator
+                            )
                         except ValueError:
                             continue
 

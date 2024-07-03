@@ -259,25 +259,30 @@ def find_metadata(metadata, query_key):
     return {"key": query_key, "value": subsection}
 
 
-def filter_integers(item: int, operator: str, value: int) -> bool:
+def compare_integer(operand: int, operator: str, comparator: int | list[int]) -> bool:
     """
-    Filters a list of values based on a single field, operator, and integer value.
+    Compares an integer operand with a comparator value(s) based on a specified operator.
 
     Args:
-        item_values: The list of values to filter.
-        operator: The filtering operation to perform.
-        value: The integer value to compare with.
+        operand (int): The integer data value to compare.
+        operator (str): The comparison operator to use. Supported operators are:
+        - "equals": Checks if the operand is equal to the comparator (int).
+        - "isAnyOf": Checks if the operand is present in the comparator list (list[int]).
+        comparator (int | list[int]): The value or list of values to compare the operand against.
 
     Returns:
-        A list of indexes of matching items in the original data list.
+        bool: True if the comparison succeeds based on the operator, False otherwise.
+
+    Raises:
+        ValueError: If an unsupported operator is provided.
     """
 
     match operator:
         case "equals":
-            if item == value:
+            if operand == comparator:
                 return True
         case "isAnyOf":
-            if str(value) in str(item).split(","):
+            if str(operand) in str(comparator).split(","):
                 return True
         case _:
             raise ValueError(f"Unsupported filter operator for integers: {operator}")
@@ -285,35 +290,45 @@ def filter_integers(item: int, operator: str, value: int) -> bool:
 
 
 # pylint: disable=too-many-return-statements
-def filter_strings(item: str, operator: str, value: str) -> bool:
+def filter_strings(operand: str, operator: str, comparator: str) -> bool:
     """
-    Filters a list of values based on a single field, operator, and string value.
+    This function filters strings based on a provided operator and comparator.
 
     Args:
-        item_values: The list of values to filter.
-        operator: The filtering operation to perform.
-        value: The string value to compare with.
+        operand: The string to be filtered.
+        operator: The operation to perform on the string. Supported operators are:
+            - "contains": Checks if the comparator substring is present within the operand string.
+            - "equals": Checks for exact string equality between operand and comparator.
+            - "startsWith": Checks if the operand string starts with the comparator substring.
+            - "endsWith": Checks if the operand string ends with the comparator substring.
+            - "isAnyOf": Checks if the operand string is present within a comma-separated list of
+            values in the comparator string.
+        comparator: The value to compare the operand string against.
 
     Returns:
-        A list of indexes of matching items in the original data list.
+        True if the filtering condition based on the operator and comparator is met, False
+        otherwise.
+
+    Raises:
+        ValueError: If an unsupported operator is provided.
     """
-    if item is None:
-        item = ""  # Handle None values as empty strings
+    if operand is None:
+        operand = ""  # Handle None values as empty strings
     match operator:
         case "contains":
-            if value in str(item):
+            if comparator in str(operand):
                 return True
         case "equals":
-            if item == value:
+            if operand == comparator:
                 return True
         case "startsWith":
-            if str(item).startswith(value):
+            if str(operand).startswith(comparator):
                 return True
         case "endsWith":
-            if str(item).endswith(value):
+            if str(operand).endswith(comparator):
                 return True
         case "isAnyOf":
-            if item in value.split(","):
+            if operand in comparator.split(","):
                 return True
         case _:
             raise ValueError(f"Unsupported filter operator for strings: {operator}")
@@ -321,49 +336,50 @@ def filter_strings(item: str, operator: str, value: str) -> bool:
 
 
 def filter_datetimes(
-    item: datetime.datetime, operator: str, value: datetime.datetime
+    operand: datetime.datetime, operator: str, comparator: datetime.datetime
 ) -> List[Dict[str, Any]]:
     """
-    Filters a list of values based on a single field, operator, and datetime value.
+    This function filters datetime objects based on a provided operator and comparator datetime
+    object.
 
     Args:
-        item_values: The list of values to filter.
-        operator: The filtering operation to perform (supports "equals" and "isAnyOf").
-        value: The datetime value to compare with.
+        operand: The datetime object to be filtered.
+        operator: The operation to perform on the datetime object. Supported operators are:
+            - "equals": Checks for exact equality between the operand datetime and the comparator
+            datetime.
+            - "greaterThan": Checks if the operand datetime is strictly greater than the
+            comparator datetime.
+            - "lessThan": Checks if the operand datetime is strictly less than the comparator
+            datetime.
 
     Returns:
-        A list of indexes of matching items in the original data list.
-    """
+        A list containing a single dictionary if the filtering condition is met (empty list
+        otherwise). The dictionary contains a single key "item" with the matching datetime object
+        as its value.
 
-    if item is None:
+    Raises:
+        ValueError: If an unsupported operator is provided or if the datetime string representation
+        in the comparator cannot be parsed.
+    """
+    if operand is None:
         return False  # Skip None values
     match operator:
         case "equals":
-            if item == value:
+            if operand == comparator:
                 return True
         case "greaterThan":
-            if item >= value:
+            if operand >= comparator:
                 return True
         case "lessThan":
-            if item <= value:
+            if operand <= comparator:
                 return True
-        case "isAnyOf":
-            try:
-                # Attempt to convert string representation of datetime to datetime object
-                date_values = [
-                    datetime.datetime.strptime(v, "%Y-%m-%dT%H:%M:%S") for v in value.split(",")
-                ]
-                if item in date_values:
-                    return True
-            except ValueError as exception:
-                raise exception  # Re-raise the ValueError for the caller to handle
         case _:
             raise ValueError(f"Unsupported filter operator for datetimes: {operator}")
     return False
 
 
 def filter_by_item(
-    data: List[Dict[str, Any]], field: str, operator: str, value: Any
+    data: List[Dict[str, Any]], field: str, operator: str, comparator: Any
 ) -> List[Dict[str, Any]]:
     """
     Filters a list of dictionaries based on a single field, operator, and value.
@@ -373,7 +389,7 @@ def filter_by_item(
         field: The field name to filter on.
         operator: The filtering operation to perform (e.g., "contains", "equals", "startsWith",
         "endsWith", "isAnyOf").
-        value: The value to compare with the field.
+        comparator: The value to compare with the field.
 
     Raises:
         ValueError: If an unsupported filter operator is provided.
@@ -386,18 +402,17 @@ def filter_by_item(
 
     for item in data:
         try:
-            item_value = item.get(field)
+            operand = item.get(field)  # “operand” (the data value)
 
-            # Delegate filtering based on value type (integer or string)
-            if isinstance(value, int):
-                if filter_integers(item_value, operator, value):
+            if isinstance(comparator, int):
+                if compare_integer(operand, operator, comparator):
                     filtered_data.append(item)
-            elif isinstance(value, datetime.datetime):
-                date_value = parse_valid_date(item_value, "%Y-%m-%d")
-                if filter_datetimes(date_value, operator, value):
+            elif isinstance(comparator, datetime.datetime):
+                date_value = parse_valid_date(operand, "%Y-%m-%d")
+                if filter_datetimes(date_value, operator, comparator):
                     filtered_data.append(item)
             else:
-                if filter_strings(item_value, operator, value):
+                if filter_strings(operand, operator, comparator):
                     filtered_data.append(item)
         except ValueError:
             logging.error("Failed to filter on item %s", str(item))
@@ -405,14 +420,14 @@ def filter_by_item(
     return filtered_data
 
 
-def has_nested_status(item: dict | list, searched_key: str, searched_value: str) -> bool:
+def has_nested_status(operand: dict | list, searched_key: str, comparator: str) -> bool:
     """
     Searches for a nested key-value pair within a dictionary or list structure.
 
     Args:
-        item (dict | list): The dictionary or list to search within.
+        operand (dict | list): The dictionary or list to search within.
         searched_key (str): The key to search for within nested dictionaries.
-        searched_value (str): The value to search for within the nested dictionary
+        comparator (str): The value to search for within the nested dictionary
                               associated with the searched_key.
 
     Returns:
@@ -422,16 +437,16 @@ def has_nested_status(item: dict | list, searched_key: str, searched_value: str)
         TypeError: If the `item` is not a dictionary or list.
     """
 
-    if not isinstance(item, (dict, list)):
-        raise TypeError(f"Expected item to be a dictionary or list, got {type(item)}")
+    if not isinstance(operand, (dict, list)):
+        raise TypeError(f"Expected item to be a dictionary or list, got {type(operand)}")
 
-    for key, value in item.items() if isinstance(item, dict) else enumerate(item):
+    for key, value in operand.items() if isinstance(operand, dict) else enumerate(operand):
         if key and value:
-            if searched_key in str(key) and searched_value in str(value):
+            if searched_key in str(key) and comparator in str(value):
                 return True
 
             if isinstance(value, (dict, list)):
-                if has_nested_status(value, searched_key, searched_value):
+                if has_nested_status(value, searched_key, comparator):
                     return True
 
     return False
@@ -460,7 +475,11 @@ def filter_by_key_value_pair(
         searched_value = key_value_pair.get("valuePair", "")
 
         filtered_data = [
-            item for item in filtered_data if has_nested_status(item, searched_key, searched_value)
+            item
+            for item in filtered_data
+            if has_nested_status(
+                operand=item, searched_key=searched_key, comparator=searched_value
+            )
         ]
 
     return filtered_data
