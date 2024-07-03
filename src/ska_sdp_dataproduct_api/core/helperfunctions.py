@@ -129,6 +129,21 @@ class SearchParametersClass(BaseModel):
     key_value_pairs: list[str] = None
 
 
+class DataProductMetaData(BaseModel):
+    """
+    Class containing all information from a MetaData object
+    """
+
+    interface: str
+    date_created: Optional[str]
+    execution_block: str
+    metadata_file: Optional[pathlib.Path]
+    context: dict
+    config: dict
+    files: list
+    obscore: dict | None = None
+
+
 def generate_data_stream(file_path: pathlib.Path):
     """This function creates a subprocess that stream a specified file in
     chunks"""
@@ -465,7 +480,6 @@ def parse_valid_date(date_string: str, expected_format: str) -> datetime.datetim
     Raises:
         ValueError: If the date format is invalid.
     """
-
     try:
         return datetime.datetime.strptime(date_string, expected_format)
     except ValueError as exception:
