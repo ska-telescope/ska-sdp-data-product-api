@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 from fastapi import BackgroundTasks, Body, Response
 from fastapi.exceptions import HTTPException
 
-from ska_sdp_dataproduct_api.configuration.mui_datagrid import muiDataGridinstance
+from ska_sdp_dataproduct_api.configuration.mui_datagrid import muiDataGridInstance
 from ska_sdp_dataproduct_api.core.helperfunctions import (
     DataProductMetaData,
     DPDAPIStatus,
@@ -86,16 +86,16 @@ async def filter_data(body: Optional[Dict] = Body(...)) -> List:
     Returns:
         List: A list of filtered product data objects.
     """
-    muiDataGridinstance.load_inmemory_store_data(store)
+    muiDataGridInstance.load_inmemory_store_data(store)
     mui_data_grid_filter_model = body.get("filterModel", {})
     search_panel_options = body.get("searchPanelOptions", {})
 
     mui_filtered_data = store.apply_filters(
-        muiDataGridinstance.rows.copy(), mui_data_grid_filter_model
+        muiDataGridInstance.rows.copy(), mui_data_grid_filter_model
     )
-    serachbox_filtered_data = store.apply_filters(mui_filtered_data, search_panel_options)
+    searchbox_filtered_data = store.apply_filters(mui_filtered_data, search_panel_options)
 
-    return serachbox_filtered_data
+    return searchbox_filtered_data
 
 
 @app.get("/muidatagridconfig")
@@ -110,7 +110,7 @@ async def get_muidatagridconfig() -> Dict:
         Dict: The MUI DataGrid configuration object.
     """
 
-    return muiDataGridinstance.table_config
+    return muiDataGridInstance.table_config
 
 
 @app.get("/dataproductlist", response_class=Response)

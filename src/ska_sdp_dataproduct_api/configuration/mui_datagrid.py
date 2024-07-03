@@ -120,4 +120,4 @@ class MuiDataGrid:
             self.add_datagrid_row(item)
 
 
-muiDataGridinstance = MuiDataGrid()
+muiDataGridInstance = MuiDataGrid()
