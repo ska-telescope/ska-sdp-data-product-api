@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from ska_ser_logging import configure_logging
 from starlette.config import Config
 
+# pylint: disable=consider-using-from-import
 import ska_sdp_dataproduct_api.api as api
 
 configure_logging(level=uvicorn.config.LOGGING_CONFIG["loggers"]["uvicorn.error"]["level"])
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 config = Config(".env")
 REINDEXING_DELAY = 300  # Only allow reindexing after 5 minutes
 PERSISTENT_STORAGE_PATH: pathlib.Path = pathlib.Path(
-    config("PERSISTENT_STORAGE_PATH", default="./tests/test_files"),
+    config("PERSISTENT_STORAGE_PATH", default="./tests/test_files/product"),
 )
 REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL: str = config(
     "REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL",
@@ -35,7 +36,10 @@ METADATA_FILE_NAME: str = config(
 
 METADATA_ES_SCHEMA_FILE: str = config(
     "METADATA_ES_SCHEMA_FILE",
-    default=".././components/elasticsearch/data_product_metadata_schema.json"
+    default=(
+        "./src/ska_sdp_dataproduct_api/components/elasticsearch/"
+        "data_product_metadata_schema.json"
+    ),
 )
 
 ES_HOST: str = config(

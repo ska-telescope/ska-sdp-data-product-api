@@ -30,8 +30,8 @@ Configure the environmental variables in the .env file under the root folder acc
 
 .. code-block:: bash
 
-    REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_URL=http://localhost
-    REACT_APP_SKA_SDP_DATA_PRODUCT_DASHBOARD_PORT=8100
+    REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL=http://localhost
+    REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_PORT=8100
     PERSISTENT_STORAGE_PATH=./tests/test_files/product
     METADATA_FILE_NAME=ska-data-product.yaml
     METADATA_ES_SCHEMA_FILE=./src/ska_sdp_dataproduct_api/elasticsearch/data_product_metadata_schema.json
