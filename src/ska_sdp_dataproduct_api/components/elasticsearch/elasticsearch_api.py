@@ -5,9 +5,9 @@ import logging
 import elasticsearch
 from elasticsearch import Elasticsearch
 
-from ska_sdp_dataproduct_api.core.helperfunctions import DPDAPIStatus, parse_valid_date
-from ska_sdp_dataproduct_api.core.settings import DATE_FORMAT, METADATA_ES_SCHEMA_FILE
-from ska_sdp_dataproduct_api.metadatastore.datastore import Store
+from ska_sdp_dataproduct_api.components.metadatastore.datastore import Store
+from ska_sdp_dataproduct_api.configuration.settings import DATE_FORMAT, METADATA_ES_SCHEMA_FILE
+from ska_sdp_dataproduct_api.utilities.helperfunctions import DPDAPIStatus, parse_valid_date
 
 logger = logging.getLogger(__name__)
 

@@ -35,7 +35,6 @@ Configure the environmental variables in the .env file under the root folder acc
     PERSISTENT_STORAGE_PATH=./tests/test_files/product
     METADATA_FILE_NAME=ska-data-product.yaml
     METADATA_ES_SCHEMA_FILE=./src/ska_sdp_dataproduct_api/elasticsearch/data_product_metadata_schema.json
-    METADATA_JSON_SCHEMA_FILE=./src/ska_sdp_dataproduct_api/core/data_product_metadata_json_schema.json
     ES_HOST=http://localhost:9200
     STREAM_CHUNK_SIZE=65536
 

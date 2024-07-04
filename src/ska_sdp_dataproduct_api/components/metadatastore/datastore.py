@@ -9,7 +9,11 @@ from typing import Any
 import yaml
 from ska_sdp_dataproduct_metadata import MetaData
 
-from ska_sdp_dataproduct_api.core.helperfunctions import (
+from ska_sdp_dataproduct_api.configuration.settings import (
+    METADATA_FILE_NAME,
+    PERSISTENT_STORAGE_PATH,
+)
+from ska_sdp_dataproduct_api.utilities.helperfunctions import (
     DataProductMetaData,
     DPDAPIStatus,
     FileUrl,
@@ -17,7 +21,6 @@ from ska_sdp_dataproduct_api.core.helperfunctions import (
     get_date_from_name,
     get_relative_path,
 )
-from ska_sdp_dataproduct_api.core.settings import METADATA_FILE_NAME, PERSISTENT_STORAGE_PATH
 
 logger = logging.getLogger(__name__)
 

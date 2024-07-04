@@ -5,6 +5,11 @@ Changelog
 Current Development
 -------------------
 
+* [Added] `NAL-1121 <https://jira.skatelescope.org/browse/NAL-1121>`_ 
+
+  - Refactored the git repository structure.
+  - Added initial ska_sdp_dataproduct_postgresql Docker file for the use of Postgresql for dev and test deployments.
+
 * **BREAKING** [Changed] `NAL-1093 <https://jira.skatelescope.org/browse/NAL-1093>`_ 
 
   - This update refactors the data structure used to serve data to the MUI DataGrid component. It now aligns with the structure expected by the MUI DataGrid itself. This brings several improvements:

@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from ska_ser_logging import configure_logging
 from starlette.config import Config
 
-import ska_sdp_dataproduct_api
+import ska_sdp_dataproduct_api.api as api
 
 configure_logging(level=uvicorn.config.LOGGING_CONFIG["loggers"]["uvicorn.error"]["level"])
 logger = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ METADATA_FILE_NAME: str = config(
 
 METADATA_ES_SCHEMA_FILE: str = config(
     "METADATA_ES_SCHEMA_FILE",
-    default="./elasticsearch/data_product_metadata_schema.json",
+    default=".././components/elasticsearch/data_product_metadata_schema.json"
 )
 
 ES_HOST: str = config(
@@ -45,7 +45,7 @@ ES_HOST: str = config(
 
 VERSION: str = config(
     "SKA_SDP_DATAPRODUCT_API_VERSION",
-    default=ska_sdp_dataproduct_api.__version__,
+    default=api.__version__,
 )
 
 STREAM_CHUNK_SIZE: int = int(

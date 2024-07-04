@@ -5,10 +5,10 @@ from pathlib import Path
 import pytest
 import yaml
 
-from ska_sdp_dataproduct_api.core.helperfunctions import DPDAPIStatus, FileUrl
-from ska_sdp_dataproduct_api.metadatastore.datastore import (
+from ska_sdp_dataproduct_api.components.metadatastore.datastore import (
     Store,  # Replace with the actual import path
 )
+from ska_sdp_dataproduct_api.utilities.helperfunctions import DPDAPIStatus, FileUrl
 
 from .test_files.example_files.expected_metadata import expected_metadata
 

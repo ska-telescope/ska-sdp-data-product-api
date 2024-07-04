@@ -11,7 +11,7 @@ from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from ska_sdp_dataproduct_api.core.settings import (
+from ska_sdp_dataproduct_api.configuration.settings import (
     PERSISTENT_STORAGE_PATH,
     STREAM_CHUNK_SIZE,
     VERSION,

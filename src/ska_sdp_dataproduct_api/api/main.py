@@ -7,16 +7,18 @@ from typing import Dict, List, Optional
 from fastapi import BackgroundTasks, Body, Response
 from fastapi.exceptions import HTTPException
 
-from ska_sdp_dataproduct_api.configuration.mui_datagrid import muiDataGridInstance
-from ska_sdp_dataproduct_api.core.helperfunctions import (
+from ska_sdp_dataproduct_api.components.metadatastore.store_factory import (
+    select_correct_store_class,
+)
+from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
+from ska_sdp_dataproduct_api.configuration.settings import DEFAULT_DISPLAY_LAYOUT, ES_HOST, app
+from ska_sdp_dataproduct_api.utilities.helperfunctions import (
     DataProductMetaData,
     DPDAPIStatus,
     FileUrl,
     SearchParametersClass,
     download_file,
 )
-from ska_sdp_dataproduct_api.core.settings import DEFAULT_DISPLAY_LAYOUT, ES_HOST, app
-from ska_sdp_dataproduct_api.metadatastore.store_factory import select_correct_store_class
 
 logger = logging.getLogger(__name__)
 

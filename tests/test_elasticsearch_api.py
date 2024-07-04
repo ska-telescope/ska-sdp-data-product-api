@@ -2,9 +2,11 @@
 
 import json
 
-from ska_sdp_dataproduct_api.core.helperfunctions import DPDAPIStatus
-from ska_sdp_dataproduct_api.core.settings import METADATA_ES_SCHEMA_FILE
-from ska_sdp_dataproduct_api.elasticsearch.elasticsearch_api import ElasticsearchMetadataStore
+from ska_sdp_dataproduct_api.components.elasticsearch.elasticsearch_api import (
+    ElasticsearchMetadataStore,
+)
+from ska_sdp_dataproduct_api.configuration.settings import METADATA_ES_SCHEMA_FILE
+from ska_sdp_dataproduct_api.utilities.helperfunctions import DPDAPIStatus
 from tests.mock_elasticsearch_api import MockElasticsearch
 
 DPD_API_Status = DPDAPIStatus()

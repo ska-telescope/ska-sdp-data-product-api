@@ -5,14 +5,14 @@ from datetime import datetime
 
 import pytest
 
-from ska_sdp_dataproduct_api.core.helperfunctions import (
+from ska_sdp_dataproduct_api.configuration.settings import PERSISTENT_STORAGE_PATH
+from ska_sdp_dataproduct_api.utilities.helperfunctions import (
     filter_by_item,
     filter_by_key_value_pair,
     get_date_from_name,
     get_relative_path,
     parse_valid_date,
 )
-from ska_sdp_dataproduct_api.core.settings import PERSISTENT_STORAGE_PATH
 
 
 # Assuming you have a logger instance in your class
