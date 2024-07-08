@@ -3,7 +3,6 @@
 import psycopg
 
 from ska_sdp_dataproduct_api.configuration.settings import (
-    POSTGRESQL_DATABASE,
     POSTGRESQL_HOST,
     POSTGRESQL_PASSWORD,
     POSTGRESQL_PORT,
@@ -19,7 +18,6 @@ class PostgresConnector:  # pylint: disable=too-many-instance-attributes
     def __init__(self):
         self.host: str = POSTGRESQL_HOST
         self.port: int = POSTGRESQL_PORT
-        self.database: str = POSTGRESQL_DATABASE
         self.user: str = POSTGRESQL_USER
         self.password: str = POSTGRESQL_PASSWORD
         self.conn = None
@@ -28,7 +26,7 @@ class PostgresConnector:  # pylint: disable=too-many-instance-attributes
         self.connection_established_at = ""
         self.connection_error = ""
 
-        # self.connect()
+        self.connect()
 
     def status(self) -> dict:
         """
@@ -53,19 +51,12 @@ class PostgresConnector:  # pylint: disable=too-many-instance-attributes
             A dictionary containing the current status information.
         """
 
-        if self.conn:
-            self.connection_established_at = (
-                self.conn.get_backend_pid()
-            )  # Assuming get_backend_pid provides a timestamp
-
         return {
             "host": self.host,
             "port": self.port,
-            "database": self.database,
             "user": self.user,
             "running": self.postgresql_running,
             "postgresql_version": self.postgresql_version,  # Optional
-            "connection_established_at": self.connection_established_at,  # Optional
             "connection_error": self.connection_error,  # Optional
         }
 
@@ -80,7 +71,6 @@ class PostgresConnector:  # pylint: disable=too-many-instance-attributes
             self.conn = psycopg.connect(
                 host=self.host,
                 port=self.port,
-                database=self.database,
                 user=self.user,
                 password=self.password,
             )

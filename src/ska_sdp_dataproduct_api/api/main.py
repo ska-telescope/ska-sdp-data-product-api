@@ -100,7 +100,6 @@ async def filter_data(body: Optional[Dict] = Body(...)) -> List:
     )
     searchbox_filtered_data = search_store.apply_filters(mui_filtered_data, search_panel_options)
 
-    print(searchbox_filtered_data)
     return searchbox_filtered_data
 
 

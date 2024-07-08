@@ -72,19 +72,14 @@ POSTGRESQL_PORT: int = int(
     )
 )
 
-POSTGRESQL_DATABASE: str = config(
-    "SDP_DATAPRODUCT_API_POSTGRESQL_DATABASE",
-    default="your_database",
-)
-
 POSTGRESQL_USER: str = config(
     "SDP_DATAPRODUCT_API_POSTGRESQL_USER",
-    default="your_user",
+    default="",
 )
 
 POSTGRESQL_PASSWORD: str = config(
     "SDP_DATAPRODUCT_API_POSTGRESQL_PASSWORD",
-    default="your_password",
+    default="",
 )
 # ----
 
