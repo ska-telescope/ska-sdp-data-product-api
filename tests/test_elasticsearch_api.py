@@ -14,7 +14,7 @@ DPD_API_Status = DPDAPIStatus()
 
 def test_create_schema():
     """Method to test creation of schema."""
-    metadata_store = ElasticsearchMetadataStore(DPD_API_Status)
+    metadata_store = ElasticsearchMetadataStore()
     metadata_store.es_client = MockElasticsearch()
 
     with open(
@@ -30,7 +30,7 @@ def test_create_schema():
 
 def test_insert_metadata():
     """Method to test insertion of metadata."""
-    metadata_store = ElasticsearchMetadataStore(DPD_API_Status)
+    metadata_store = ElasticsearchMetadataStore()
     metadata_store.es_client = MockElasticsearch()
 
     with open(
@@ -48,7 +48,7 @@ def test_insert_metadata():
 
 def test_update_dataproduct_list():
     """Method to test insertion of metadata."""
-    metadata_store = ElasticsearchMetadataStore(DPD_API_Status)
+    metadata_store = ElasticsearchMetadataStore()
     metadata_store.es_client = MockElasticsearch()
 
     with open(
@@ -75,7 +75,7 @@ def test_update_dataproduct_list():
 
 def test_search_metadata():
     """Method to test search of metadata"""
-    metadata_store = ElasticsearchMetadataStore(DPD_API_Status)
+    metadata_store = ElasticsearchMetadataStore()
     metadata_store.es_client = MockElasticsearch()
     metadata_store.es_client.ping = lambda: True
     metadata_list = metadata_store.search_metadata(
@@ -99,7 +99,7 @@ def test_search_metadata():
 
 def test_search_metadata_default_value():
     """Method to test search of metadata if metadata_key_value_pair is None"""
-    metadata_store = ElasticsearchMetadataStore(DPD_API_Status)
+    metadata_store = ElasticsearchMetadataStore()
     metadata_store.es_client = MockElasticsearch()
     metadata_store.es_client.ping = lambda: True
     metadata_list = metadata_store.search_metadata(
@@ -123,7 +123,7 @@ def test_search_metadata_default_value():
 
 def test_search_metadata_blank_list():
     """Method to test search of metadata if blank list is given."""
-    metadata_store = ElasticsearchMetadataStore(DPD_API_Status)
+    metadata_store = ElasticsearchMetadataStore()
     metadata_store.es_client = MockElasticsearch()
     metadata_store.es_client.ping = lambda: True
     metadata_list = metadata_store.search_metadata(
@@ -148,7 +148,7 @@ def test_search_metadata_blank_list():
 def test_search_metadata_no_value():
     """Method to test search of metadata
     if metadata_key_value_pair is not given"""
-    metadata_store = ElasticsearchMetadataStore(DPD_API_Status)
+    metadata_store = ElasticsearchMetadataStore()
     metadata_store.es_client = MockElasticsearch()
     metadata_store.es_client.ping = lambda: True
     metadata_list = metadata_store.search_metadata(start_date="2020-01-01", end_date="2100-01-01")

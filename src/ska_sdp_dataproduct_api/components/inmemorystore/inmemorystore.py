@@ -8,7 +8,6 @@ from typing import Any, Dict, List
 from ska_sdp_dataproduct_api.components.metadatastore.datastore import Store
 from ska_sdp_dataproduct_api.configuration.settings import DATE_FORMAT
 from ska_sdp_dataproduct_api.utilities.helperfunctions import (
-    DPDAPIStatus,
     filter_by_item,
     filter_by_key_value_pair,
     parse_valid_date,
@@ -26,9 +25,35 @@ class InMemoryDataproductIndex(Store):
     products.
     """
 
-    def __init__(self, dpd_api_status: DPDAPIStatus) -> None:
-        super().__init__(dpd_api_status)
+    def __init__(self) -> None:
+        super().__init__()
         self.reindex()
+        self.number_of_dataproducts: int
+
+    def status(self) -> dict:
+        """
+        Retrieves the current status of the in-memory data product indexing process.
+
+        This method returns a dictionary containing the following information about in-memory
+        data product indexing:
+
+        * `metadata_store_in_use`: Indicates that "InMemoryDataproductIndex" is being used for
+        data product metadata storage.
+        * `indexing`: A boolean indicating whether data product indexing is currently in progress.
+        * `indexing_timestamp` (optional): A timestamp representing when the last data product
+        indexing operation started (if available).
+        * `number_of_data_products`: The number of data products currently indexed in memory.
+
+        Returns:
+            A dictionary containing the current in-memory data product indexing status.
+        """
+
+        return {
+            "metadata_store_in_use": "InMemoryDataproductIndex",
+            "indexing": self.indexing,
+            "indexing_timestamp": self.indexing_timestamp,  # Optional
+            "number_of_data_products": self.number_of_dataproducts,
+        }
 
     @property
     def es_search_enabled(self):
@@ -38,6 +63,7 @@ class InMemoryDataproductIndex(Store):
     def clear_metadata_indecise(self):
         """Clear out all indices from in memory instance"""
         self.metadata_list.clear()
+        self.number_of_dataproducts = 0
 
     def insert_metadata(self, metadata_file_json):
         """This method loads the metadata file of a data product, creates a

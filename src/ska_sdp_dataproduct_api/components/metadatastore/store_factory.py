@@ -5,12 +5,12 @@ from ska_sdp_dataproduct_api.components.elasticsearch.elasticsearch_api import (
     ElasticsearchMetadataStore,
 )
 from ska_sdp_dataproduct_api.components.inmemorystore.inmemorystore import InMemoryDataproductIndex
-from ska_sdp_dataproduct_api.utilities.helperfunctions import DPDAPIStatus
+from ska_sdp_dataproduct_api.configuration.settings import ES_HOST
 
 
-def select_correct_store_class(hosts, dpd_api_status: DPDAPIStatus):
+def select_correct_store_class():
     """Select the store based on elasticsearch availability."""
-    es_client = Elasticsearch(hosts=hosts)
+    es_client = Elasticsearch(hosts=ES_HOST)
     if es_client.ping():
-        return ElasticsearchMetadataStore(dpd_api_status, hosts)
-    return InMemoryDataproductIndex(dpd_api_status)
+        return ElasticsearchMetadataStore()
+    return InMemoryDataproductIndex()

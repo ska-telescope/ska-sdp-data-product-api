@@ -1,4 +1,5 @@
 """Module to capture commonality between in memory and elasticsearch stores."""
+import datetime
 import json
 import logging
 import pathlib
@@ -15,7 +16,6 @@ from ska_sdp_dataproduct_api.configuration.settings import (
 )
 from ska_sdp_dataproduct_api.utilities.helperfunctions import (
     DataProductMetaData,
-    DPDAPIStatus,
     FileUrl,
     find_metadata,
     get_date_from_name,
@@ -28,10 +28,12 @@ logger = logging.getLogger(__name__)
 class Store:
     """Common store class (superclass to elastic search and in memory store)"""
 
-    def __init__(self, dpd_api_status):
+    def __init__(self):
         self.indexing_timestamp = 0
         self.metadata_list = []
-        self.dpd_api_status: DPDAPIStatus = dpd_api_status
+        self.indexing = False
+        self.date_modified = datetime.datetime.now()
+        self.number_of_dataproducts: int = 0
 
     @property
     def es_search_enabled(self):
@@ -56,15 +58,20 @@ class Store:
         appended since the initial load of the data"""
         try:
             self.clear_metadata_indecise()
-            self.dpd_api_status.indexing = True
+            self.indexing = True
             self.ingest_metadata_files(PERSISTENT_STORAGE_PATH)
             self.indexing_timestamp = time()
-            self.dpd_api_status.update_data_store_date_modified()
-            self.dpd_api_status.indexing = False
+            self.update_data_store_date_modified()
+            self.indexing = False
             logger.info("Metadata store cleared and re-indexed")
         except Exception as exception:
-            self.dpd_api_status.indexing = False
+            self.indexing = False
             raise exception
+
+    def update_data_store_date_modified(self):
+        """This method updates the timestamp of the last time that data was
+        added or modified in the data product store by this API"""
+        self.date_modified = datetime.datetime.now()
 
     def sort_metadata_list(self, key: str, reverse: bool) -> None:
         """This method sorts the metadata_list according to the set key"""
@@ -143,6 +150,7 @@ class Store:
             if query_metadata is not None:
                 data_product_details[query_metadata["key"]] = query_metadata["value"]
         self.update_dataproduct_list(data_product_details)
+        self.number_of_dataproducts = self.number_of_dataproducts + 1
 
     def update_dataproduct_list(self, data_product_details):
         """

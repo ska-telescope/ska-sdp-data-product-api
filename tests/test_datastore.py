@@ -8,7 +8,7 @@ import yaml
 from ska_sdp_dataproduct_api.components.metadatastore.datastore import (
     Store,  # Replace with the actual import path
 )
-from ska_sdp_dataproduct_api.utilities.helperfunctions import DPDAPIStatus, FileUrl
+from ska_sdp_dataproduct_api.utilities.helperfunctions import FileUrl
 
 from .test_files.example_files.expected_metadata import expected_metadata
 
@@ -22,10 +22,9 @@ class TestDatastore:
         # Create a temporary file for testing
         temp_file = Path("test_file.txt")
         temp_file.touch()
-        dpd_api_status = DPDAPIStatus()
 
         # Instantiate your class (replace with actual instantiation)
-        my_instance = Store(dpd_api_status)
+        my_instance = Store()
 
         # Call the method with an existing file
         result = my_instance.check_file_exists(temp_file)
@@ -38,9 +37,8 @@ class TestDatastore:
     def test_non_existing_file(self):
         """Test the non exsiting file / unhappy path"""
         # Instantiate your class (replace with actual instantiation)
-        dpd_api_status = DPDAPIStatus()
 
-        my_instance = Store(dpd_api_status)
+        my_instance = Store()
 
         # Call the method with a non-existing file
         result = my_instance.check_file_exists(Path("non_existent_file.txt"))
@@ -51,8 +49,7 @@ class TestDatastore:
         """
         Test loading metadata from a valid YAML file.
         """
-        dpd_api_status = DPDAPIStatus()
-        my_instance = Store(dpd_api_status)
+        my_instance = Store()
         test_metadata_file = FileUrl
         test_metadata_file.fileName = "ska-data-product.yaml"
         test_metadata_file.fullPathName = (
@@ -66,8 +63,7 @@ class TestDatastore:
         """
         Test loading metadata from a valid YAML file.
         """
-        dpd_api_status = DPDAPIStatus()
-        my_instance = Store(dpd_api_status)
+        my_instance = Store()
         test_metadata_file = FileUrl
         test_metadata_file.fileName = "nonexistent_file_name"
         test_metadata_file.fullPathName = "/path/to/nonexistent/file.yaml"
@@ -80,8 +76,7 @@ class TestDatastore:
         """
         Test handling YAML parsing errors.
         """
-        dpd_api_status = DPDAPIStatus()
-        my_instance = Store(dpd_api_status)
+        my_instance = Store()
         test_metadata_file = FileUrl
         test_metadata_file.fileName = "ska-data-product.yaml"
         test_metadata_file.fullPathName = tmp_path / "ska-data-product.yaml"

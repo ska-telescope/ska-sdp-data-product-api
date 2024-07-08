@@ -11,7 +11,8 @@ from ska_sdp_dataproduct_api.components.metadatastore.store_factory import (
     select_correct_store_class,
 )
 from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
-from ska_sdp_dataproduct_api.configuration.settings import DEFAULT_DISPLAY_LAYOUT, ES_HOST, app
+from ska_sdp_dataproduct_api.components.postgresql.postgresql import PostgresConnector
+from ska_sdp_dataproduct_api.configuration.settings import DEFAULT_DISPLAY_LAYOUT, app
 from ska_sdp_dataproduct_api.utilities.helperfunctions import (
     DataProductMetaData,
     DPDAPIStatus,
@@ -22,24 +23,26 @@ from ska_sdp_dataproduct_api.utilities.helperfunctions import (
 
 logger = logging.getLogger(__name__)
 
-DPD_API_Status = DPDAPIStatus()
-
-store = select_correct_store_class(ES_HOST, DPD_API_Status)
+search_store = select_correct_store_class()
+postgresql_connector = PostgresConnector()
+DPD_API_Status = DPDAPIStatus(
+    search_store=search_store.status, postgresql_status=postgresql_connector.status
+)
 
 
 @app.get("/status")
 async def root():
     """An enpoint that just returns confirmation that the
     application is running"""
-    return DPD_API_Status.status(store.es_search_enabled)
+    return DPD_API_Status.status(search_store.es_search_enabled)
 
 
 @app.get("/reindexdataproducts", status_code=202)
 async def reindex_data_products(background_tasks: BackgroundTasks):
     """This endpoint clears the list of data products from memory and
     re-ingest the metadata of all data products found"""
-    background_tasks.add_task(store.reindex)
-    logger.info("Metadata store cleared and re-indexed")
+    background_tasks.add_task(search_store.reindex)
+    logger.info("Metadata search_store cleared and re-indexed")
     return "Metadata is set to be cleared and re-indexed"
 
 
@@ -65,7 +68,7 @@ async def data_products_search(search_parameters: SearchParametersClass):
     else:
         metadata_key_value_pairs = None
 
-    filtered_data_product_list = store.search_metadata(
+    filtered_data_product_list = search_store.search_metadata(
         start_date=search_parameters.start_date,
         end_date=search_parameters.end_date,
         metadata_key_value_pairs=metadata_key_value_pairs,
@@ -79,7 +82,7 @@ async def filter_data(body: Optional[Dict] = Body(...)) -> List:
     Filters product data based on provided criteria.
 
     This endpoint receives a JSON object containing filter parameters in the request body.
-    It applies filters to the in-memory data store.
+    It applies filters to the in-memory data search_store.
 
     Args:
         filter_data (Optional[List]): The filter criteria.
@@ -88,15 +91,16 @@ async def filter_data(body: Optional[Dict] = Body(...)) -> List:
     Returns:
         List: A list of filtered product data objects.
     """
-    muiDataGridInstance.load_inmemory_store_data(store)
+    muiDataGridInstance.load_inmemory_store_data(search_store)
     mui_data_grid_filter_model = body.get("filterModel", {})
     search_panel_options = body.get("searchPanelOptions", {})
 
-    mui_filtered_data = store.apply_filters(
+    mui_filtered_data = search_store.apply_filters(
         muiDataGridInstance.rows.copy(), mui_data_grid_filter_model
     )
-    searchbox_filtered_data = store.apply_filters(mui_filtered_data, search_panel_options)
+    searchbox_filtered_data = search_store.apply_filters(mui_filtered_data, search_panel_options)
 
+    print(searchbox_filtered_data)
     return searchbox_filtered_data
 
 
@@ -120,7 +124,7 @@ async def data_products_list():
     """This API endpoint returns a list of all the data products
     in the PERSISTENT_STORAGE_PATH
     """
-    return json.dumps(store.metadata_list)
+    return json.dumps(search_store.metadata_list)
 
 
 @app.post("/download")
@@ -134,27 +138,27 @@ async def download(file_object: FileUrl):
 async def data_product_metadata(file_object: FileUrl):
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
-    return store.load_metadata(file_object)
+    return search_store.load_metadata(file_object)
 
 
 @app.post("/ingestnewdataproduct")
 async def ingest_new_data_product(file_object: FileUrl):
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
-    DPD_API_Status.update_data_store_date_modified()
-    store.ingest_metadata_files(file_object.fullPathName)
-    logger.info("New data product metadata file loaded and store index updated")
-    return "New data product metadata file loaded and store index updated"
+    search_store.update_data_store_date_modified()
+    search_store.ingest_metadata_files(file_object.fullPathName)
+    logger.info("New data product metadata file loaded and search_store index updated")
+    return "New data product metadata file loaded and search_store index updated"
 
 
 @app.post("/ingestnewmetadata")
 async def ingest_new_metadata(metadata: DataProductMetaData):
     """This API endpoint takes JSON data product metadata and ingests into
-    the appropriate store."""
-    DPD_API_Status.update_data_store_date_modified()
-    store.ingest_metadata_object(metadata)
-    logger.info("New data product metadata received and store index updated")
-    return "New data product metadata received and store index updated"
+    the appropriate search_store."""
+    search_store.update_data_store_date_modified()
+    search_store.ingest_metadata_object(metadata)
+    logger.info("New data product metadata received and search_store index updated")
+    return "New data product metadata received and search store index updated"
 
 
 @app.get("/layout")

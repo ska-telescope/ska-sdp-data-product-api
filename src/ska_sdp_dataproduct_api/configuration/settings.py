@@ -59,6 +59,35 @@ STREAM_CHUNK_SIZE: int = int(
     )
 )
 
+# --PostgreSQL Configuration--
+POSTGRESQL_HOST: str = config(
+    "SDP_DATAPRODUCT_API_POSTGRESQL_HOST",
+    default="localhost",
+)
+
+POSTGRESQL_PORT: int = int(
+    config(
+        "SDP_DATAPRODUCT_API_POSTGRESQL_PORT",
+        default=5432,
+    )
+)
+
+POSTGRESQL_DATABASE: str = config(
+    "SDP_DATAPRODUCT_API_POSTGRESQL_DATABASE",
+    default="your_database",
+)
+
+POSTGRESQL_USER: str = config(
+    "SDP_DATAPRODUCT_API_POSTGRESQL_USER",
+    default="your_user",
+)
+
+POSTGRESQL_PASSWORD: str = config(
+    "SDP_DATAPRODUCT_API_POSTGRESQL_PASSWORD",
+    default="your_password",
+)
+# ----
+
 DATE_FORMAT: str = config("DATE_FORMAT", default="%Y-%m-%d")
 
 API_ROOT_PATH: str = config("API_ROOT_PATH", default="")

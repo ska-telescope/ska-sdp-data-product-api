@@ -24,31 +24,49 @@ logger = logging.getLogger(__name__)
 # pylint: disable=too-few-public-methods
 
 
-class DPDAPIStatus:
+class DPDAPIStatus:  # pylint: disable=too-many-instance-attributes
     """This class contains the status and methods related to the Data Product
     dashboard's API"""
 
-    api_running: bool = True
-    search_enabled: bool = False
-    indexing: bool = False
-    date_modified: datetime.datetime = datetime.datetime.now()
-    version: str = VERSION
+    def __init__(self, search_store: object = None, postgresql_status: object = None):
+        self.api_running = True
+        self.search_enabled = False
 
-    def status(self, es_search_enabled: bool):
+        self.date_modified: datetime = datetime.datetime.now()
+        self.version: str = VERSION
+        self.postgresql_status = postgresql_status
+        self.search_store = search_store
+        self.startup_time: datetime = datetime.datetime.now()  # Added: Time API started
+        self.request_count: int = 0  # Added: Request count
+        self.error_count: int = 0  # Added: Error count
+
+    def status(self, es_search_enabled: bool) -> dict:
         """Returns the status of the Data Product API"""
         self.search_enabled = es_search_enabled
         return {
-            "API_running": True,
-            "Indexing": self.indexing,
-            "Search_enabled": self.search_enabled,
-            "Date_modified": self.date_modified,
-            "Version": self.version,
+            "api_running": True,
+            "api_version": self.version,
+            "startup_time": self.startup_time.isoformat(),
+            "request_count": self.request_count,  # Added: Request count
+            "error_rate": self.get_error_rate(),  # Added: Error rate
+            "last_metadata_update_time": self.date_modified,
+            "search_metadata_store_status": self.search_store(),
+            "persistent_metadata_store_status": self.postgresql_status(),
         }
 
-    def update_data_store_date_modified(self):
-        """This method update the timestamp of the last time that data was
-        added or modified in the data product store by this API"""
-        self.date_modified = datetime.datetime.now()
+    def increment_request_count(self):
+        """Increments the request count"""
+        self.request_count += 1
+
+    def increment_error_count(self):
+        """Increments the error count"""
+        self.error_count += 1
+
+    def get_error_rate(self) -> float:
+        """Calculates and returns the error rate as a percentage"""
+        if self.request_count == 0:
+            return 0.0
+        return (self.error_count / self.request_count) * 100
 
 
 class FileUrl(BaseModel):
