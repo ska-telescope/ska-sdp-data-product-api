@@ -1,5 +1,7 @@
 """Module adds a PostgreSQL interface for persistent storage of metadata files"""
 
+import logging
+
 import psycopg
 
 from ska_sdp_dataproduct_api.configuration.settings import (
@@ -8,6 +10,8 @@ from ska_sdp_dataproduct_api.configuration.settings import (
     POSTGRESQL_PORT,
     POSTGRESQL_USER,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class PostgresConnector:  # pylint: disable=too-many-instance-attributes
@@ -81,10 +85,10 @@ class PostgresConnector:  # pylint: disable=too-many-instance-attributes
                 cursor.execute("SELECT version()")
                 self.postgresql_version = cursor.fetchone()[0]
 
-        except (Exception, psycopg.Error) as error:
+        except (Exception, psycopg.Error):  # pylint: disable=broad-exception-caught
             self.conn = None
             self.postgresql_running = False
-            raise error  # Re-raise the error for handling
+            logger.error("PostgreSQL connection to %s:%s failed", str(self.host), str(self.port))
 
     def disconnect(self) -> None:
         """
@@ -110,10 +114,12 @@ class PostgresConnector:  # pylint: disable=too-many-instance-attributes
             cursor.execute("SELECT 1")
             cursor.close()
             return True
-        except (Exception, psycopg.Error) as error:  # pylint: disable=broad-exception-caught
-            print("Connection error, likely PostgreSQL instance is down:", error)
+        except (Exception, psycopg.Error):  # pylint: disable=broad-exception-caught
             self.conn.close()
             self.conn = None
+            logger.warning(
+                "PostgreSQL connection to %s:%s is down", str(self.host), str(self.port)
+            )
             return False
 
     def close(self):
