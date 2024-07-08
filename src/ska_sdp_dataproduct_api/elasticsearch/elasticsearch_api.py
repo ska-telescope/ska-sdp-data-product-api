@@ -5,7 +5,7 @@ import logging
 import elasticsearch
 from elasticsearch import Elasticsearch
 
-from ska_sdp_dataproduct_api.core.helperfunctions import DPDAPIStatus, check_date_format
+from ska_sdp_dataproduct_api.core.helperfunctions import DPDAPIStatus, parse_valid_date
 from ska_sdp_dataproduct_api.core.settings import DATE_FORMAT, METADATA_ES_SCHEMA_FILE
 from ska_sdp_dataproduct_api.metadatastore.datastore import Store
 
@@ -88,11 +88,11 @@ class ElasticsearchMetadataStore(Store):
             match_criteria = {"match_all": {}}
             must.append(match_criteria)
 
-        check_date_format(start_date, DATE_FORMAT)
-        check_date_format(end_date, DATE_FORMAT)
+        parse_valid_date(start_date, DATE_FORMAT)
+        parse_valid_date(end_date, DATE_FORMAT)
 
-        check_date_format(start_date, DATE_FORMAT)
-        check_date_format(end_date, DATE_FORMAT)
+        parse_valid_date(start_date, DATE_FORMAT)
+        parse_valid_date(end_date, DATE_FORMAT)
 
         query_body = {
             "query": {
@@ -128,3 +128,7 @@ class ElasticsearchMetadataStore(Store):
                         query_key_list=meta_data_keys,
                     )
         return json.dumps(self.metadata_list)
+
+    def apply_filters(self, data, filters):
+        """This is implemented in Elasticsearch."""
+        raise NotImplementedError

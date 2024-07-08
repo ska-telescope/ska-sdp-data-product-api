@@ -3,8 +3,14 @@ import copy
 import json
 import logging
 from collections.abc import MutableMapping
+from typing import Any, Dict, List
 
-from ska_sdp_dataproduct_api.core.helperfunctions import DPDAPIStatus, check_date_format
+from ska_sdp_dataproduct_api.core.helperfunctions import (
+    DPDAPIStatus,
+    filter_by_item,
+    filter_by_key_value_pair,
+    parse_valid_date,
+)
 from ska_sdp_dataproduct_api.core.settings import DATE_FORMAT
 from ska_sdp_dataproduct_api.metadatastore.datastore import Store
 
@@ -68,13 +74,13 @@ class InMemoryDataproductIndex(Store):
         metadata_key_value_pairs=None,
     ):
         """Metadata Search method."""
-        start_date = check_date_format(start_date, DATE_FORMAT)
-        end_date = check_date_format(end_date, DATE_FORMAT)
+        start_date = parse_valid_date(start_date, DATE_FORMAT)
+        end_date = parse_valid_date(end_date, DATE_FORMAT)
 
         if metadata_key_value_pairs is None or len(metadata_key_value_pairs) == 0:
             search_results = copy.deepcopy(self.metadata_list)
             for product in self.metadata_list:
-                product_date = check_date_format(product["date_created"], DATE_FORMAT)
+                product_date = parse_valid_date(product["date_created"], DATE_FORMAT)
                 if not start_date <= product_date <= end_date:
                     search_results.remove(product)
                     continue
@@ -83,7 +89,7 @@ class InMemoryDataproductIndex(Store):
 
         search_results = copy.deepcopy(self.metadata_list)
         for product in self.metadata_list:
-            product_date = check_date_format(product["date_created"], DATE_FORMAT)
+            product_date = parse_valid_date(product["date_created"], DATE_FORMAT)
 
             if not start_date <= product_date <= end_date:
                 search_results.remove(product)
@@ -101,3 +107,72 @@ class InMemoryDataproductIndex(Store):
                 except KeyError:
                     continue
         return json.dumps(search_results)
+
+    def apply_filters(
+        self, data: List[Dict[str, Any]], filters: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
+        """
+        Filters a list of dictionaries based on a provided set of filter criteria.
+
+        Args:
+            data: The list of dictionaries to filter.
+            filters: A dictionary containing filter criteria. This dictionary should have the
+            following keys:
+                * logicOperator (optional, defaults to "and"): The logical operator to use when
+                combining multiple filters (e.g., "and", "or").
+                * items: A list of dictionaries representing individual filter items. Each filter
+                item dictionary should have the following keys:
+                    * field: The field name to filter on.
+                    * operator: The filtering operation to perform (e.g., "contains", "equals",
+                    "startsWith", "endsWith", "isAnyOf").
+                    * value: The value to compare with the field.
+
+        Returns:
+            A new list containing only the dictionaries that match all filters (for "and") or at
+            least one filter (for "or").
+
+        Raises:
+            ValueError: If a filter item is missing required fields ("field", "operator", or
+            "value").
+        """
+
+        # logic_operator = filters.get("logicOperator", "and").lower()
+        filtered_data = data
+
+        for filter_item in filters.get("items", []):
+            field = filter_item.get("field")
+            comparator = filter_item.get("value")
+            operator = filter_item.get("operator")
+            key_pairs = filter_item.get("keyPairs")
+
+            if field and operator and comparator:
+                match field:
+                    case "date_created":
+                        try:
+                            filtered_data = filter_by_item(
+                                filtered_data,
+                                field,
+                                operator,
+                                parse_valid_date(comparator, "%Y-%m-%d"),
+                            )
+                        except ValueError:
+                            continue
+                    case _:
+                        try:
+                            filtered_data = filter_by_item(
+                                filtered_data, field, operator, comparator
+                            )
+                        except ValueError:
+                            continue
+
+            if field and key_pairs:
+                match field:
+                    case "formFields":
+                        try:
+                            filtered_data = filter_by_key_value_pair(filtered_data, key_pairs)
+                        except ValueError:
+                            continue
+
+            # Implement logic based on logicOperator (and or or)
+
+        return filtered_data

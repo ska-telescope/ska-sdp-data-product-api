@@ -43,6 +43,10 @@ class Store:
         """This is implemented in subclasses."""
         raise NotImplementedError
 
+    def apply_filters(self, data, filters):
+        """This is implemented in subclasses."""
+        raise NotImplementedError
+
     def reindex(self) -> None:
         """This method resets and recreates the metadata_list. This is added
         to enable the user to reindex if the data products were changed or
@@ -108,7 +112,16 @@ class Store:
         return metadata.dict()
 
     def add_dataproduct(self, metadata_file, query_key_list):
-        """Populate a list of data products and its metadata"""
+        """
+        Populates a list of data products with their associated metadata.
+
+        Args:
+            metadata_file: A dictionary containing the metadata for a data product.
+            query_key_list: A list of metadata keys to specifically extract and include.
+
+        Raises:
+            ValueError: If the provided metadata_file is not a dictionary.
+        """
         data_product_details = {}
         for key, value in metadata_file.items():
             if key in (
@@ -129,9 +142,19 @@ class Store:
         self.update_dataproduct_list(data_product_details)
 
     def update_dataproduct_list(self, data_product_details):
-        """This function looks if the new data product is in the metadata list,
-        if it is, the dataproduct entry is replaced, if it is new, it is
-        appended
+        """
+        Updates the internal list of data products with the provided metadata.
+
+        This method adds the provided `data_product_details` dictionary to the internal
+        `metadata_list` attribute. If the list is empty, it assigns an "id" of 1 to the
+        first data product. Otherwise, it assigns an "id" based on the current length
+        of the list + 1.
+
+        Args:
+            data_product_details: A dictionary containing the metadata for a data product.
+
+        Returns:
+            None
         """
         # Adds the first dictionary to the list
         if len(self.metadata_list) == 0:

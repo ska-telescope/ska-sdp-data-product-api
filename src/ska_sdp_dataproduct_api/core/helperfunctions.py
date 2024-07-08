@@ -1,10 +1,9 @@
 """Module to insert data into Elasticsearch instance."""
 import datetime
-import json
 import logging
 import pathlib
 import subprocess
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 # pylint: disable=no-name-in-module
 import pydantic
@@ -260,10 +259,248 @@ def find_metadata(metadata, query_key):
     return {"key": query_key, "value": subsection}
 
 
-def check_date_format(date, date_format):
-    """Given a date, check that it is in the expected YYYY-MM-DD format and return a
-    datetime object"""
+def compare_integer(operand: int, operator: str, comparator: int | list[int]) -> bool:
+    """
+    Compares an integer operand with a comparator value(s) based on a specified operator.
+
+    Args:
+        operand (int): The integer data value to compare.
+        operator (str): The comparison operator to use. Supported operators are:
+        - "equals": Checks if the operand is equal to the comparator (int).
+        - "isAnyOf": Checks if the operand is present in the comparator list (list[int]).
+        comparator (int | list[int]): The value or list of values to compare the operand against.
+
+    Returns:
+        bool: True if the comparison succeeds based on the operator, False otherwise.
+
+    Raises:
+        ValueError: If an unsupported operator is provided.
+    """
+
+    match operator:
+        case "equals":
+            if operand == comparator:
+                return True
+        case "isAnyOf":
+            if str(operand) in str(comparator).split(","):
+                return True
+        case _:
+            raise ValueError(f"Unsupported filter operator for integers: {operator}")
+    return False
+
+
+# pylint: disable=too-many-return-statements
+def filter_strings(operand: str, operator: str, comparator: str) -> bool:
+    """
+    This function filters strings based on a provided operator and comparator.
+
+    Args:
+        operand: The string to be filtered.
+        operator: The operation to perform on the string. Supported operators are:
+            - "contains": Checks if the comparator substring is present within the operand string.
+            - "equals": Checks for exact string equality between operand and comparator.
+            - "startsWith": Checks if the operand string starts with the comparator substring.
+            - "endsWith": Checks if the operand string ends with the comparator substring.
+            - "isAnyOf": Checks if the operand string is present within a comma-separated list of
+            values in the comparator string.
+        comparator: The value to compare the operand string against.
+
+    Returns:
+        True if the filtering condition based on the operator and comparator is met, False
+        otherwise.
+
+    Raises:
+        ValueError: If an unsupported operator is provided.
+    """
+    if operand is None:
+        operand = ""  # Handle None values as empty strings
+    match operator:
+        case "contains":
+            if comparator in str(operand):
+                return True
+        case "equals":
+            if operand == comparator:
+                return True
+        case "startsWith":
+            if str(operand).startswith(comparator):
+                return True
+        case "endsWith":
+            if str(operand).endswith(comparator):
+                return True
+        case "isAnyOf":
+            if operand in comparator.split(","):
+                return True
+        case _:
+            raise ValueError(f"Unsupported filter operator for strings: {operator}")
+    return False
+
+
+def filter_datetimes(
+    operand: datetime.datetime, operator: str, comparator: datetime.datetime
+) -> List[Dict[str, Any]]:
+    """
+    This function filters datetime objects based on a provided operator and comparator datetime
+    object.
+
+    Args:
+        operand: The datetime object to be filtered.
+        operator: The operation to perform on the datetime object. Supported operators are:
+            - "equals": Checks for exact equality between the operand datetime and the comparator
+            datetime.
+            - "greaterThan": Checks if the operand datetime is strictly greater than the
+            comparator datetime.
+            - "lessThan": Checks if the operand datetime is strictly less than the comparator
+            datetime.
+
+    Returns:
+        A list containing a single dictionary if the filtering condition is met (empty list
+        otherwise). The dictionary contains a single key "item" with the matching datetime object
+        as its value.
+
+    Raises:
+        ValueError: If an unsupported operator is provided or if the datetime string representation
+        in the comparator cannot be parsed.
+    """
+    if operand is None:
+        return False  # Skip None values
+    match operator:
+        case "equals":
+            if operand == comparator:
+                return True
+        case "greaterThan":
+            if operand >= comparator:
+                return True
+        case "lessThan":
+            if operand <= comparator:
+                return True
+        case _:
+            raise ValueError(f"Unsupported filter operator for datetimes: {operator}")
+    return False
+
+
+def filter_by_item(
+    data: List[Dict[str, Any]], field: str, operator: str, comparator: Any
+) -> List[Dict[str, Any]]:
+    """
+    Filters a list of dictionaries based on a single field, operator, and value.
+
+    Args:
+        data: The list of dictionaries to filter.
+        field: The field name to filter on.
+        operator: The filtering operation to perform (e.g., "contains", "equals", "startsWith",
+        "endsWith", "isAnyOf").
+        comparator: The value to compare with the field.
+
+    Raises:
+        ValueError: If an unsupported filter operator is provided.
+
+    Returns:
+        A new list containing only the dictionaries that match the filter criteria.
+    """
+
+    filtered_data: List[Dict[str, Any]] = []
+
+    for item in data:
+        try:
+            operand = item.get(field)  # “operand” (the data value)
+
+            if isinstance(comparator, int):
+                if compare_integer(operand, operator, comparator):
+                    filtered_data.append(item)
+            elif isinstance(comparator, datetime.datetime):
+                date_value = parse_valid_date(operand, "%Y-%m-%d")
+                if filter_datetimes(date_value, operator, comparator):
+                    filtered_data.append(item)
+            else:
+                if filter_strings(operand, operator, comparator):
+                    filtered_data.append(item)
+        except ValueError:
+            logging.error("Failed to filter on item %s", str(item))
+
+    return filtered_data
+
+
+def has_nested_status(operand: dict | list, searched_key: str, comparator: str) -> bool:
+    """
+    Searches for a nested key-value pair within a dictionary or list structure.
+
+    Args:
+        operand (dict | list): The dictionary or list to search within.
+        searched_key (str): The key to search for within nested dictionaries.
+        comparator (str): The value to search for within the nested dictionary
+                              associated with the searched_key.
+
+    Returns:
+        bool: True if the key-value pair is found nested within the item, False otherwise.
+
+    Raises:
+        TypeError: If the `item` is not a dictionary or list.
+    """
+
+    if not isinstance(operand, (dict, list)):
+        raise TypeError(f"Expected item to be a dictionary or list, got {type(operand)}")
+
+    for key, value in operand.items() if isinstance(operand, dict) else enumerate(operand):
+        if key and value:
+            if searched_key in str(key) and comparator in str(value):
+                return True
+
+            if isinstance(value, (dict, list)):
+                if has_nested_status(value, searched_key, comparator):
+                    return True
+
+    return False
+
+
+def filter_by_key_value_pair(
+    data: List[Dict[str, Any]], key_value_pairs: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """
+    Filters a list of dictionaries based on key-value pairs.
+
+    Args:
+        data: A list of dictionaries where each dictionary represents a data point.
+        key_value_pairs: A list of dictionaries where each dictionary contains a "keyPair" key and
+        a "valuePair" key.
+            The function filters the "data" list based on these key-value pairs.
+
+    Returns:
+        A new list of dictionaries containing elements from "data" that match all key-value pairs
+        in "key_value_pairs".
+    """
+    filtered_data = data.copy()  # Avoid modifying the original data
+
+    for key_value_pair in key_value_pairs:
+        searched_key = key_value_pair.get("keyPair", "")
+        searched_value = key_value_pair.get("valuePair", "")
+
+        filtered_data = [
+            item
+            for item in filtered_data
+            if has_nested_status(
+                operand=item, searched_key=searched_key, comparator=searched_value
+            )
+        ]
+
+    return filtered_data
+
+
+def parse_valid_date(date_string: str, expected_format: str) -> datetime.datetime:
+    """Parses a date string into a datetime object if the format is valid.
+
+    Args:
+        date_string: The date string to parse (e.g., "2023-07-01").
+        expected_format: The expected format of the date string (e.g., "%Y-%m-%d").
+
+    Returns:
+        A datetime object if the date is valid in the specified format, otherwise raises a
+        ValueError.
+
+    Raises:
+        ValueError: If the date format is invalid.
+    """
     try:
-        return datetime.datetime.strptime(date, date_format)
-    except ValueError:
-        return logger.error(json.dumps({"Error": "Invalid date format, expected YYYY-MM-DD"}))
+        return datetime.datetime.strptime(date_string, expected_format)
+    except ValueError as exception:
+        logging.error("Invalid date format: %s. Expected format: %s", date_string, expected_format)
+        raise exception  # Re-raise the ValueError for the caller to handle
