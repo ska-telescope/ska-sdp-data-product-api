@@ -98,30 +98,6 @@ class PostgresConnector:  # pylint: disable=too-many-instance-attributes
             self.conn.close()
             self.conn = None
 
-    def is_running(self):
-        """
-        Tests if the PostgreSQL instance is running by attempting a connection.
-
-        Returns:
-          True if connection is successful, False otherwise.
-        """
-        if self.conn is None:
-            # If no existing connection, try creating a new one
-            return self.connect()
-        # Existing connection, check if it's still valid (using a simple query)
-        try:
-            cursor = self.conn.cursor()
-            cursor.execute("SELECT 1")
-            cursor.close()
-            return True
-        except (Exception, psycopg.Error):  # pylint: disable=broad-exception-caught
-            self.conn.close()
-            self.conn = None
-            logger.warning(
-                "PostgreSQL connection to %s:%s is down", str(self.host), str(self.port)
-            )
-            return False
-
     def close(self):
         """
         Closes the connection to the PostgreSQL instance if open.

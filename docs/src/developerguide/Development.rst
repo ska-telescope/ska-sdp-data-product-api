@@ -63,3 +63,21 @@ Steps to run the system locally in Minikube or want to run an instance of Elasti
 ========================================================================================
 
 If you want to run the API with a local instance of Elasticsearch, please see the `Steps to run the system locally in Minikube <https://developer.skao.int/projects/ska-sdp-dataproduct-dashboard/en/latest/Deployment.html#steps-to-run-the-system-locally-in-minikube>`_ 
+
+Steps to run the an instance of PostgreSQL locally:
+========================================================================================
+
+To run an ephemeral instance of PostgreSQL you can create a PostgreSQL container with Docker. The makefile command create-dev-postgres can be use. It will ask for a password, which should match the password that you need to have in your .env file in the root of the project folder:
+
+*Example .env file*
+
+.. code-block:: bash
+
+    SDP_DATAPRODUCT_API_POSTGRESQL_USER=postgres
+    SDP_DATAPRODUCT_API_POSTGRESQL_PASSWORD=password
+
+*Makefile command to create the PostgreSQL image*
+
+.. code-block:: bash
+
+    make create-dev-postgres
