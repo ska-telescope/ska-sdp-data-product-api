@@ -42,10 +42,33 @@ METADATA_ES_SCHEMA_FILE: str = config(
     ),
 )
 
-ES_HOST: str = config(
-    "ES_HOST",
-    default="http://localhost:9200",
+# ElasticSearch Variables
+SDP_DATAPRODUCT_API_ELASTIC_URL: str = config(
+    "SDP_DATAPRODUCT_API_ELASTIC_URL",
+    default="https://localhost",
 )
+
+SDP_DATAPRODUCT_API_ELASTIC_PORT: str = config(
+    "SDP_DATAPRODUCT_API_ELASTIC_PORT",
+    default="9200",
+)
+
+SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA: str = config(
+    "SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA",
+    default=None,
+)
+
+SDP_DATAPRODUCT_API_ELASTIC_USER: str = config(
+    "SDP_DATAPRODUCT_API_ELASTIC_USER",
+    default="elastic",
+)
+
+SDP_DATAPRODUCT_API_ELASTIC_PASSWORD: str = config(
+    "SDP_DATAPRODUCT_API_ELASTIC_PASSWORD",
+    default="",
+)
+# ----
+
 
 VERSION: str = config(
     "SKA_SDP_DATAPRODUCT_API_VERSION",
@@ -59,7 +82,7 @@ STREAM_CHUNK_SIZE: int = int(
     )
 )
 
-# --PostgreSQL Configuration--
+# PostgreSQL Variables
 POSTGRESQL_HOST: str = config(
     "SDP_DATAPRODUCT_API_POSTGRESQL_HOST",
     default="localhost",

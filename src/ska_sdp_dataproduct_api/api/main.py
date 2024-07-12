@@ -23,10 +23,11 @@ from ska_sdp_dataproduct_api.utilities.helperfunctions import (
 
 logger = logging.getLogger(__name__)
 
+persistent_metadata_store = PostgresConnector()
 search_store = select_correct_store_class()
-postgresql_connector = PostgresConnector()
 DPD_API_Status = DPDAPIStatus(
-    search_store=search_store.status, postgresql_status=postgresql_connector.status
+    search_store_status=search_store.status,
+    persistent_metadata_store_status=persistent_metadata_store.status,
 )
 
 

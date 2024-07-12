@@ -35,8 +35,14 @@ Configure the environmental variables in the .env file under the root folder acc
     PERSISTENT_STORAGE_PATH=./tests/test_files/product
     METADATA_FILE_NAME=ska-data-product.yaml
     METADATA_ES_SCHEMA_FILE=./src/ska_sdp_dataproduct_api/elasticsearch/data_product_metadata_schema.json
-    ES_HOST=http://localhost:9200
     STREAM_CHUNK_SIZE=65536
+    SDP_DATAPRODUCT_API_POSTGRESQL_USER=postgres
+    SDP_DATAPRODUCT_API_POSTGRESQL_PASSWORD=password
+    SDP_DATAPRODUCT_API_ELASTIC_URL=http://localhost
+    SDP_DATAPRODUCT_API_ELASTIC_PORT=9200
+    SDP_DATAPRODUCT_API_ELASTIC_USER=elastic
+    SDP_DATAPRODUCT_API_ELASTIC_PASSWORD=password
+    SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA=http_ca.crt
 
 *To run the application directly on your host machine:*
 
@@ -49,7 +55,7 @@ Configure the environmental variables in the .env file under the root folder acc
 
 *To run the application inside a docker container on your host machine:*
 
-NOTE: When running the application in a docker container, the <PERSISTENT_STORAGE_PATH> needs to be accessible from within the container. You can mount the test folder into this location as done below:
+.. note:: When running the application in a docker container, the <PERSISTENT_STORAGE_PATH> needs to be accessible from within the container. You can mount the test folder into this location as done below:
 
 .. code-block:: bash
 

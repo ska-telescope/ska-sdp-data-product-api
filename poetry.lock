@@ -1445,6 +1445,7 @@ files = [
 ]
 
 [package.dependencies]
+psycopg-binary = {version = "3.2.1", optional = true, markers = "implementation_name != \"pypy\" and extra == \"binary\""}
 typing-extensions = ">=4.4"
 tzdata = {version = "*", markers = "sys_platform == \"win32\""}
 
@@ -2698,4 +2699,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "2e5ec912026cf9e16d453bd1381e19b19461eb84cbb2eb59ff5b49ad1fde177c"
+content-hash = "cdbd54f19c644dbdd0732cc217967e121c1033b911cd70ecebc985ea5f157f8e"

@@ -30,8 +30,7 @@ requests = "^2.28.1"
 ska-ser-logging = "^0.4.1"
 ska-sdp-dataproduct-metadata = "^0.3.0"
 httpx = "^0.25.0"
-psycopg = "^3.2.1"
-psycopg-binary = "^3.2.1"
+psycopg = {extras = ["binary"], version = "^3.2.1"}
 
 [tool.poetry.dev-dependencies]
 isort = "^5.10.1"

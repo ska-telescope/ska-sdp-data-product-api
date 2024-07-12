@@ -5,6 +5,13 @@ Changelog
 Current Development
 -------------------
 
+* [Changed] `NAL-1115 <https://jira.skatelescope.org/browse/NAL-1115>`_ 
+
+  - Updated make file to include options to create a development Docker image with PostgreSQL and Elasticsearch.
+  - Addition of basic authentication and CA cert for Elasticsearch.
+  
+
+
 * [Added] `NAL-1121 <https://jira.skatelescope.org/browse/NAL-1121>`_ 
 
   - Improved the git repository structure.

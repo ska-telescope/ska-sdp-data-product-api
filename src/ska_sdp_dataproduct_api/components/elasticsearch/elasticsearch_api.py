@@ -1,6 +1,8 @@
 """Module to insert data into Elasticsearch instance."""
+import datetime
 import json
 import logging
+from pathlib import Path
 
 import elasticsearch
 from elasticsearch import Elasticsearch
@@ -8,8 +10,12 @@ from elasticsearch import Elasticsearch
 from ska_sdp_dataproduct_api.components.metadatastore.datastore import Store
 from ska_sdp_dataproduct_api.configuration.settings import (
     DATE_FORMAT,
-    ES_HOST,
     METADATA_ES_SCHEMA_FILE,
+    SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA,
+    SDP_DATAPRODUCT_API_ELASTIC_PASSWORD,
+    SDP_DATAPRODUCT_API_ELASTIC_PORT,
+    SDP_DATAPRODUCT_API_ELASTIC_URL,
+    SDP_DATAPRODUCT_API_ELASTIC_USER,
 )
 from ska_sdp_dataproduct_api.utilities.helperfunctions import parse_valid_date
 
@@ -22,19 +28,25 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
     def __init__(self):
         super().__init__()
         self.metadata_index = "sdp_meta_data"
-        self.host: str = ES_HOST
-        self.port: int = None
-        self.user: str = "user"
-        self.password: str = "password"
+        self.url: str = SDP_DATAPRODUCT_API_ELASTIC_URL
+        self.port: int = SDP_DATAPRODUCT_API_ELASTIC_PORT
+        self.host: str = self.url + ":" + self.port
+        self.user: str = SDP_DATAPRODUCT_API_ELASTIC_USER
+        self.password: str = SDP_DATAPRODUCT_API_ELASTIC_PASSWORD
+        self.ca_cert: str = None
         self.es_client = None
         self.elasticsearch_running: bool = False
         self.elasticsearch_version: str = ""
         self.connection_established_at = ""
         self.connection_error = ""
+        self.cluster_info: dict = {}
 
-        if self.host:
-            # This if is only here to not have to rewrite the test suit.
-            self.connect()
+        self.load_ca_cert()
+
+        # if self.host:
+        #     self.connect()
+        # self.get_elasticsearch_version()
+        # logger.info(self.status())
 
     def status(self) -> dict:
         """
@@ -51,8 +63,6 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
         * `elasticsearch_version` : The version of Elasticsearch being used.
         * `connection_established_at` : A timestamp representing when a connection was
         last established with Elasticsearch.
-        * `connection_error` : An error object containing details about any connection
-        errors that occurred (if applicable).
 
         Returns:
             A dictionary containing the current status information.
@@ -61,25 +71,80 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
         return {
             "metadata_store_in_use": "ElasticsearchMetadataStore",
             "host": self.host,
-            "port": self.port,
             "user": self.user,
             "running": self.elasticsearch_running,
-            "postgresql_version": self.elasticsearch_version,
             "connection_established_at": self.connection_established_at,
-            "connection_error": self.connection_error,
+            "cluster_info": self.cluster_info,
         }
+
+    def get_elasticsearch_version(self) -> None:
+        """
+        Retrieves the version of the Elasticsearch instance the provided Elasticsearch client
+        is connected to.
+
+        Args:
+            None
+
+        Returns:
+            None.
+        """
+        self.cluster_info = self.es_client.info()
 
     @property
     def es_search_enabled(self):
         """Generic interface to verify there is a Elasticsearch backend"""
         return True
 
+    def load_ca_cert(self) -> None:
+        """Attempts to load the CA certificate from a file.
+
+        If the file exists and can be read, sets the `self.ca_cert` attribute to the
+        certificate content as a string. Otherwise, sets `self.ca_cert` to None.
+
+        Logs informational messages about the attempt to load the certificate.
+
+        Args:
+            self (object): The instance of the class containing the `ca_cert` attribute.
+
+        Returns:
+            None
+        """
+
+        try:
+            # Construct the path to the CA certificate file
+            ca_cert_path: Path = (
+                Path(__file__).parent.parent.parent.parent.parent
+                / SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA
+            )
+
+            # Check if the file exists and is a regular file
+            if ca_cert_path.is_file():
+                self.ca_cert: Path = ca_cert_path
+
+            else:
+                logging.info("CA certificate file not found: %s", ca_cert_path)
+                self.ca_cert = None
+
+        except (FileNotFoundError, PermissionError) as error:
+            # Handle potential file access errors gracefully
+            logging.error("Error loading CA certificate: %s", error)
+            self.ca_cert = None
+
     def connect(self):
-        """Connect to Elasticsearch host and create default schema"""
-        self.es_client = Elasticsearch(self.host)
+        """Connecting to Elasticsearch host and create default schema"""
+        logger.info("Connect to Elasticsearch...")
+
+        self.es_client = Elasticsearch(
+            hosts=self.host,
+            http_auth=(self.user, self.password),
+            verify_certs=False,
+            ca_certs=self.ca_cert,
+        )
         if self.es_client.ping():
-            # Address the case where the elasticsearch host
-            # is no longer reachable
+            self.connection_established_at = datetime.datetime.now()
+            self.elasticsearch_running = True
+            self.get_elasticsearch_version()
+            logger.info("Connected to Elasticsearch creating default schema...")
             self.create_schema_if_not_existing(index=self.metadata_index)
             return True
         return False

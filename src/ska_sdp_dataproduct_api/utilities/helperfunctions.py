@@ -28,14 +28,16 @@ class DPDAPIStatus:  # pylint: disable=too-many-instance-attributes
     """This class contains the status and methods related to the Data Product
     dashboard's API"""
 
-    def __init__(self, search_store: object = None, postgresql_status: object = None):
+    def __init__(
+        self, search_store_status: object = None, persistent_metadata_store_status: object = None
+    ):
         self.api_running = True
         self.search_enabled = False
 
         self.date_modified: datetime = datetime.datetime.now()
         self.version: str = VERSION
-        self.postgresql_status = postgresql_status
-        self.search_store = search_store
+        self.persistent_metadata_store_status: object = persistent_metadata_store_status
+        self.search_store_status: object = search_store_status
         self.startup_time: datetime = datetime.datetime.now()  # Added: Time API started
         self.request_count: int = 0  # Added: Request count
         self.error_count: int = 0  # Added: Error count
@@ -50,8 +52,8 @@ class DPDAPIStatus:  # pylint: disable=too-many-instance-attributes
             "request_count": self.request_count,  # Added: Request count
             "error_rate": self.get_error_rate(),  # Added: Error rate
             "last_metadata_update_time": self.date_modified,
-            "search_metadata_store_status": self.search_store(),
-            "persistent_metadata_store_status": self.postgresql_status(),
+            "search_metadata_store_status": self.search_store_status(),
+            "persistent_metadata_store_status": self.persistent_metadata_store_status(),
         }
 
     def increment_request_count(self):
