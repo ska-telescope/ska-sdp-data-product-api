@@ -9,7 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from ska_ser_logging import configure_logging
 from starlette.config import Config
 
-import ska_sdp_dataproduct_api
+# pylint: disable=consider-using-from-import
+import ska_sdp_dataproduct_api.api as api
 
 configure_logging(level=uvicorn.config.LOGGING_CONFIG["loggers"]["uvicorn.error"]["level"])
 logger = logging.getLogger(__name__)
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 config = Config(".env")
 REINDEXING_DELAY = 300  # Only allow reindexing after 5 minutes
 PERSISTENT_STORAGE_PATH: pathlib.Path = pathlib.Path(
-    config("PERSISTENT_STORAGE_PATH", default="./tests/test_files"),
+    config("PERSISTENT_STORAGE_PATH", default="./tests/test_files/product"),
 )
 REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL: str = config(
     "REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL",
@@ -35,7 +36,10 @@ METADATA_FILE_NAME: str = config(
 
 METADATA_ES_SCHEMA_FILE: str = config(
     "METADATA_ES_SCHEMA_FILE",
-    default="./elasticsearch/data_product_metadata_schema.json",
+    default=(
+        "./src/ska_sdp_dataproduct_api/components/elasticsearch/"
+        "data_product_metadata_schema.json"
+    ),
 )
 
 ES_HOST: str = config(
@@ -45,7 +49,7 @@ ES_HOST: str = config(
 
 VERSION: str = config(
     "SKA_SDP_DATAPRODUCT_API_VERSION",
-    default=ska_sdp_dataproduct_api.__version__,
+    default=api.__version__,
 )
 
 STREAM_CHUNK_SIZE: int = int(
@@ -54,6 +58,30 @@ STREAM_CHUNK_SIZE: int = int(
         default=65536,
     )
 )
+
+# --PostgreSQL Configuration--
+POSTGRESQL_HOST: str = config(
+    "SDP_DATAPRODUCT_API_POSTGRESQL_HOST",
+    default="localhost",
+)
+
+POSTGRESQL_PORT: int = int(
+    config(
+        "SDP_DATAPRODUCT_API_POSTGRESQL_PORT",
+        default=5432,
+    )
+)
+
+POSTGRESQL_USER: str = config(
+    "SDP_DATAPRODUCT_API_POSTGRESQL_USER",
+    default="",
+)
+
+POSTGRESQL_PASSWORD: str = config(
+    "SDP_DATAPRODUCT_API_POSTGRESQL_PASSWORD",
+    default="",
+)
+# ----
 
 DATE_FORMAT: str = config("DATE_FORMAT", default="%Y-%m-%d")
 

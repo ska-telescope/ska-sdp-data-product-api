@@ -6,11 +6,14 @@ def test_ping_main(test_app):
     """Can we hit the ping endpoint"""
     response = test_app.get("/status")
     assert response.status_code == 200
-    assert response.json()["API_running"] is True
-    assert "Search_enabled" in response.json()
-    assert "Date_modified" in response.json()
-    assert "Version" in response.json()
-    assert "Indexing" in response.json()
+    assert response.json()["api_running"] is True
+    assert "api_version" in response.json()
+    assert "startup_time" in response.json()
+    assert "request_count" in response.json()
+    assert "error_rate" in response.json()
+    assert "last_metadata_update_time" in response.json()
+    assert "search_metadata_store_status" in response.json()
+    assert "persistent_metadata_store_status" in response.json()
 
 
 def test_reindex_data_products(test_app):
@@ -97,7 +100,9 @@ def test_ingest_new_metadata(test_app):
 
     response = test_app.post("/ingestnewmetadata", json=data)
     assert response.status_code == 200
-    assert "New data product metadata received and store index updated" in str(response.json())
+    assert "New data product metadata received and search store index updated" in str(
+        response.json()
+    )
 
 
 def test_in_memory_search_empty_key_value_list(test_app):

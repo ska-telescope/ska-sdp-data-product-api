@@ -5,24 +5,69 @@ import logging
 import elasticsearch
 from elasticsearch import Elasticsearch
 
-from ska_sdp_dataproduct_api.core.helperfunctions import DPDAPIStatus, parse_valid_date
-from ska_sdp_dataproduct_api.core.settings import DATE_FORMAT, METADATA_ES_SCHEMA_FILE
-from ska_sdp_dataproduct_api.metadatastore.datastore import Store
+from ska_sdp_dataproduct_api.components.metadatastore.datastore import Store
+from ska_sdp_dataproduct_api.configuration.settings import (
+    DATE_FORMAT,
+    ES_HOST,
+    METADATA_ES_SCHEMA_FILE,
+)
+from ska_sdp_dataproduct_api.utilities.helperfunctions import parse_valid_date
 
 logger = logging.getLogger(__name__)
 
 
-class ElasticsearchMetadataStore(Store):
+class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-attributes
     """Class to insert data into Elasticsearch instance."""
 
-    def __init__(self, dpd_api_status: DPDAPIStatus, hosts=None):
-        super().__init__(dpd_api_status)
+    def __init__(self):
+        super().__init__()
         self.metadata_index = "sdp_meta_data"
-        self.hosts = hosts
+        self.host: str = ES_HOST
+        self.port: int = None
+        self.user: str = "user"
+        self.password: str = "password"
         self.es_client = None
-        if self.hosts:
+        self.elasticsearch_running: bool = False
+        self.elasticsearch_version: str = ""
+        self.connection_established_at = ""
+        self.connection_error = ""
+
+        if self.host:
             # This if is only here to not have to rewrite the test suit.
             self.connect()
+
+    def status(self) -> dict:
+        """
+        Retrieves the current status of the Elasticsearch connection and metadata store.
+
+        This method returns a dictionary containing the following information:
+
+        * `metadata_store_in_use`: The type of metadata store being used (e.g.,
+        "ElasticsearchMetadataStore").
+        * `host`: The hostname or IP address of the Elasticsearch instance.
+        * `port`: The port number on which Elasticsearch is listening.
+        * `user`: The username used for authentication with Elasticsearch (if applicable).
+        * `running`: A boolean indicating whether Elasticsearch is currently running.
+        * `elasticsearch_version` : The version of Elasticsearch being used.
+        * `connection_established_at` : A timestamp representing when a connection was
+        last established with Elasticsearch.
+        * `connection_error` : An error object containing details about any connection
+        errors that occurred (if applicable).
+
+        Returns:
+            A dictionary containing the current status information.
+        """
+
+        return {
+            "metadata_store_in_use": "ElasticsearchMetadataStore",
+            "host": self.host,
+            "port": self.port,
+            "user": self.user,
+            "running": self.elasticsearch_running,
+            "postgresql_version": self.elasticsearch_version,
+            "connection_established_at": self.connection_established_at,
+            "connection_error": self.connection_error,
+        }
 
     @property
     def es_search_enabled(self):
@@ -31,7 +76,7 @@ class ElasticsearchMetadataStore(Store):
 
     def connect(self):
         """Connect to Elasticsearch host and create default schema"""
-        self.es_client = Elasticsearch(self.hosts)
+        self.es_client = Elasticsearch(self.host)
         if self.es_client.ping():
             # Address the case where the elasticsearch host
             # is no longer reachable

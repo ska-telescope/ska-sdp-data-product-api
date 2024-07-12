@@ -22,11 +22,26 @@ To retrieve the status of the API, you can send a get request to the status endp
     GET /status
 
     {
-    "API_running": true,
-    "Indexing": false,
-    "Search_enabled": false,
-    "Date_modified": "2024-01-29T09:41:10.268830",
-    "Version": "0.6.2"
+        "api_running": true,
+        "api_version": "0.8.0",
+        "startup_time": "2024-07-09T09:33:22.858611",
+        "request_count": 0,
+        "error_rate": 0,
+        "last_metadata_update_time": "2024-07-09T09:33:22.858558",
+        "search_metadata_store_status": {
+            "metadata_store_in_use": "InMemoryDataproductIndex",
+            "indexing": false,
+            "indexing_timestamp": 1720510402.8141217,
+            "number_of_data_products": 11
+        },
+        "persistent_metadata_store_status": {
+            "host": "localhost",
+            "port": 5432,
+            "user": "postgres",
+            "running": true,
+            "postgresql_version": "PostgreSQL 16.3 on x86_64-pc-linux-musl, compiled by gcc (Alpine 13.2.1_git20240309) 13.2.1 20240309, 64-bit",
+            "connection_error": ""
+        }
     }
 
 

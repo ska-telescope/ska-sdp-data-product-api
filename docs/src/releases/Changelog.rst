@@ -5,6 +5,12 @@ Changelog
 Current Development
 -------------------
 
+* [Added] `NAL-1121 <https://jira.skatelescope.org/browse/NAL-1121>`_ 
+
+  - Improved the git repository structure.
+  - Added a class to connect to an instance of PostgreSQL for development.
+  - Expanded the API status endpoint to include more information.
+
 * **BREAKING** [Changed] `NAL-1093 <https://jira.skatelescope.org/browse/NAL-1093>`_ 
 
   - This update refactors the data structure used to serve data to the MUI DataGrid component. It now aligns with the structure expected by the MUI DataGrid itself. This brings several improvements:

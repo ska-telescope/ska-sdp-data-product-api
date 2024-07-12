@@ -23,5 +23,9 @@ PYTHON_LINE_LENGTH = 99
 
 # Run the application in a virtual environment on the host for development use.
 run-dev:
+	docker restart dpd-postgres-container
 	poetry install; \
-	poetry run uvicorn ska_sdp_dataproduct_api.main:app --reload --port 8000 --host 0.0.0.0 --app-dir ./src --log-level debug
+	poetry run uvicorn ska_sdp_dataproduct_api.api.main:app --reload --port 8000 --host 0.0.0.0 --app-dir ./src --log-level debug
+
+create-dev-postgres:
+	docker run --name dpd-postgres-container -e POSTGRES_PASSWORD=$(shell bash -c 'read -s -p "Password: " pwd; echo $$pwd') -p 5432:5432 postgres:16.3-alpine \
