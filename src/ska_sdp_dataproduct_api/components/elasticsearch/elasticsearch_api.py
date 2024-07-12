@@ -112,6 +112,11 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
 
         try:
             # Construct the path to the CA certificate file
+            if not SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA:
+                logging.info("No CA certificate file")
+                self.ca_cert = None
+                return
+
             ca_cert_path: Path = (
                 Path(__file__).parent.parent.parent.parent.parent
                 / SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA
