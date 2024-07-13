@@ -129,6 +129,38 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
             return True
         return False
 
+    def check_and_reconnect(self) -> bool:
+        """
+        Checks if the connection to Elasticsearch is still alive and attempts to reconnect
+        if necessary.
+
+        Returns True if the connection is successfully established or re-established,
+        False otherwise.
+        """
+
+        if not self.es_client:
+            # No client created, likely not connected before
+            return False
+
+        try:
+            # Try a simple ping to check connection health
+            if self.es_client.ping():
+                return True  # Connection already healthy
+
+        except (ConnectionError, TimeoutError) as error:
+            logger.error("Connection to Elasticsearch lost: %s", error)
+
+        # Reconnect attempt
+        logger.info("Attempting to reconnect to Elasticsearch...")
+        self.es_client = None  # Reset client to trigger re-initialization
+
+        if self.connect():
+            logger.info("Successfully reconnected to Elasticsearch.")
+            return True
+
+        logger.error("Failed to reconnect to Elasticsearch.")
+        return False
+
     def create_schema_if_not_existing(self, index: str):
         """Method to create a Schema from schema and index if it does not yet
         exist."""
@@ -203,7 +235,7 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
             }
         }
         if not self.es_client.ping():
-            return json.dumps({"Error": "Elasticsearch unavailable"})
+            self.check_and_reconnect()
 
         resp = self.es_client.search(  # pylint: disable=E1123
             index=self.metadata_index, body=query_body
