@@ -35,11 +35,6 @@ class Store:
         self.date_modified = datetime.datetime.now()
         self.number_of_dataproducts: int = 0
 
-    @property
-    def es_search_enabled(self):
-        """This property is implemented in the subclasses."""
-        raise NotImplementedError
-
     def clear_metadata_indecise(self):
         """This method is implemented in the subclasses."""
         raise NotImplementedError

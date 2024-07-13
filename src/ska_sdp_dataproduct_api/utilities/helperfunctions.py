@@ -32,7 +32,6 @@ class DPDAPIStatus:  # pylint: disable=too-many-instance-attributes
         self, search_store_status: object = None, persistent_metadata_store_status: object = None
     ):
         self.api_running = True
-        self.search_enabled = False
 
         self.date_modified: datetime = datetime.datetime.now()
         self.version: str = VERSION
@@ -42,9 +41,8 @@ class DPDAPIStatus:  # pylint: disable=too-many-instance-attributes
         self.request_count: int = 0  # Added: Request count
         self.error_count: int = 0  # Added: Error count
 
-    def status(self, es_search_enabled: bool) -> dict:
+    def status(self) -> dict:
         """Returns the status of the Data Product API"""
-        self.search_enabled = es_search_enabled
         return {
             "api_running": True,
             "api_version": self.version,

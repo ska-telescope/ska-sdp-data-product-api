@@ -35,7 +35,7 @@ DPD_API_Status = DPDAPIStatus(
 async def root():
     """An enpoint that just returns confirmation that the
     application is running"""
-    return DPD_API_Status.status(search_store.es_search_enabled)
+    return DPD_API_Status.status()
 
 
 @app.get("/reindexdataproducts", status_code=202)

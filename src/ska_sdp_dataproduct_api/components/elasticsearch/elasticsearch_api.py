@@ -75,36 +75,11 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
 
         return response
 
-    def get_elasticsearch_version(self) -> None:
-        """
-        Retrieves the version of the Elasticsearch instance the provided Elasticsearch client
-        is connected to.
-
-        Args:
-            None
-
-        Returns:
-            None.
-        """
-
-    @property
-    def es_search_enabled(self):
-        """Generic interface to verify there is a Elasticsearch backend"""
-        return True
-
     def load_ca_cert(self) -> None:
-        """Attempts to load the CA certificate from a file.
+        """Loads the CA certificate from the configured path.
 
-        If the file exists and can be read, sets the `self.ca_cert` attribute to the
-        certificate content as a string. Otherwise, sets `self.ca_cert` to None.
-
-        Logs informational messages about the attempt to load the certificate.
-
-        Args:
-            self (object): The instance of the class containing the `ca_cert` attribute.
-
-        Returns:
-            None
+        If no path is configured or the file cannot be accessed, sets the
+        `ca_cert` attribute to None and logs an informative message.
         """
 
         try:
@@ -144,10 +119,10 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
             verify_certs=False,
             ca_certs=self.ca_cert,
         )
+
         if self.es_client.ping():
             self.connection_established_at = datetime.datetime.now()
             self.elasticsearch_running = True
-            self.get_elasticsearch_version()
             self.cluster_info = self.es_client.info()
             logger.info("Connected to Elasticsearch creating default schema...")
             self.create_schema_if_not_existing(index=self.metadata_index)

@@ -55,11 +55,6 @@ class InMemoryDataproductIndex(Store):
             "number_of_data_products": self.number_of_dataproducts,
         }
 
-    @property
-    def es_search_enabled(self):
-        """Generic interface to verify there is no Elasticsearch backend"""
-        return False
-
     def clear_metadata_indecise(self):
         """Clear out all indices from in memory instance"""
         self.metadata_list.clear()
