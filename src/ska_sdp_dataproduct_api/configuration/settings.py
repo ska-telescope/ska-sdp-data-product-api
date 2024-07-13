@@ -50,32 +50,32 @@ STREAM_CHUNK_SIZE: int = int(
 )
 
 # ElasticSearch Variables
-SDP_DATAPRODUCT_API_ELASTIC_URL: str = config(
+ELASTICSEARCH_URL: str = config(
     "SDP_DATAPRODUCT_API_ELASTIC_URL",
     default="https://localhost",
 )
 
-SDP_DATAPRODUCT_API_ELASTIC_PORT: str = config(
+ELASTICSEARCH_PORT: str = config(
     "SDP_DATAPRODUCT_API_ELASTIC_PORT",
     default="9200",
 )
 
-SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA: str = config(
+ELASTICSEARCH_HTTP_CA: str = config(
     "SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA",
     default=None,
 )
 
-SDP_DATAPRODUCT_API_ELASTIC_USER: str = config(
+ELASTICSEARCH_USER: str = config(
     "SDP_DATAPRODUCT_API_ELASTIC_USER",
     default="elastic",
 )
 
-SDP_DATAPRODUCT_API_ELASTIC_PASSWORD: str = config(
+ELASTICSEARCH_PASSWORD: str = config(
     "SDP_DATAPRODUCT_API_ELASTIC_PASSWORD",
     default="",
 )
 
-SDP_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE: str = config(
+ELASTICSEARCH_METADATA_SCHEMA_FILE: str = config(
     "SDP_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE",
     default=(
         "./src/ska_sdp_dataproduct_api/components/elasticsearch/"

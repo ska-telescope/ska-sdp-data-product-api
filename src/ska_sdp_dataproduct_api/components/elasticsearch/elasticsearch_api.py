@@ -10,12 +10,12 @@ from elasticsearch import Elasticsearch
 from ska_sdp_dataproduct_api.components.metadatastore.datastore import Store
 from ska_sdp_dataproduct_api.configuration.settings import (
     DATE_FORMAT,
-    SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA,
-    SDP_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE,
-    SDP_DATAPRODUCT_API_ELASTIC_PASSWORD,
-    SDP_DATAPRODUCT_API_ELASTIC_PORT,
-    SDP_DATAPRODUCT_API_ELASTIC_URL,
-    SDP_DATAPRODUCT_API_ELASTIC_USER,
+    ELASTICSEARCH_HTTP_CA,
+    ELASTICSEARCH_METADATA_SCHEMA_FILE,
+    ELASTICSEARCH_PASSWORD,
+    ELASTICSEARCH_PORT,
+    ELASTICSEARCH_URL,
+    ELASTICSEARCH_USER,
 )
 from ska_sdp_dataproduct_api.utilities.helperfunctions import parse_valid_date
 
@@ -29,11 +29,11 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
         super().__init__()
         self.metadata_index = "sdp_meta_data"
 
-        self.url: str = SDP_DATAPRODUCT_API_ELASTIC_URL
-        self.port: int = SDP_DATAPRODUCT_API_ELASTIC_PORT
+        self.url: str = ELASTICSEARCH_URL
+        self.port: int = ELASTICSEARCH_PORT
         self.host: str = self.url + ":" + self.port
-        self.user: str = SDP_DATAPRODUCT_API_ELASTIC_USER
-        self.password: str = SDP_DATAPRODUCT_API_ELASTIC_PASSWORD
+        self.user: str = ELASTICSEARCH_USER
+        self.password: str = ELASTICSEARCH_PASSWORD
         self.ca_cert: str = None
 
         self.es_client: Elasticsearch = None
@@ -84,14 +84,13 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
 
         try:
             # Construct the path to the CA certificate file
-            if not SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA:
+            if not ELASTICSEARCH_HTTP_CA:
                 logging.info("No CA certificate file")
                 self.ca_cert = None
                 return
 
             ca_cert_path: Path = (
-                Path(__file__).parent.parent.parent.parent.parent
-                / SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA
+                Path(__file__).parent.parent.parent.parent.parent / ELASTICSEARCH_HTTP_CA
             )
 
             # Check if the file exists and is a regular file
@@ -168,7 +167,7 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
             _ = self.es_client.indices.get(index=index)
         except elasticsearch.NotFoundError:
             with open(
-                SDP_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE, "r", encoding="utf-8"
+                ELASTICSEARCH_METADATA_SCHEMA_FILE, "r", encoding="utf-8"
             ) as metadata_schema:
                 metadata_schema_json = json.load(metadata_schema)
             self.es_client.indices.create(  # pylint: disable=E1123
