@@ -174,6 +174,7 @@ def test_status(mocker):
 
     # Mock attributes
     host = "localhost"
+    port = 9200
     user = "elastic"
     running = True
     connection_established_at = datetime.now()
@@ -181,6 +182,7 @@ def test_status(mocker):
 
     # Mock attributes
     mocker.patch.object(mocked_self, "host", host)
+    mocker.patch.object(mocked_self, "port", port)
     mocker.patch.object(mocked_self, "user", user)
     mocker.patch.object(mocked_self, "elasticsearch_running", running)
     mocker.patch.object(mocked_self, "connection_established_at", connection_established_at)
@@ -192,7 +194,7 @@ def test_status(mocker):
     # Assert expected response
     assert response == {
         "metadata_store_in_use": "ElasticsearchMetadataStore",
-        "host": host,
+        "url": "https://localhost:9200",
         "user": user,
         "running": running,
         "connection_established_at": mocked_self.connection_established_at,

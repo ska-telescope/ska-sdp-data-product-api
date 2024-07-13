@@ -50,14 +50,16 @@ STREAM_CHUNK_SIZE: int = int(
 )
 
 # ElasticSearch Variables
-ELASTICSEARCH_URL: str = config(
-    "SDP_DATAPRODUCT_API_ELASTIC_URL",
+ELASTICSEARCH_HOST: str = config(
+    "SDP_DATAPRODUCT_API_ELASTIC_HOST",
     default="https://localhost",
 )
 
-ELASTICSEARCH_PORT: str = config(
-    "SDP_DATAPRODUCT_API_ELASTIC_PORT",
-    default="9200",
+ELASTICSEARCH_PORT: int = int(
+    config(
+        "SDP_DATAPRODUCT_API_ELASTIC_PORT",
+        default=9200,
+    )
 )
 
 ELASTICSEARCH_HTTP_CA: str = config(
@@ -98,7 +100,7 @@ POSTGRESQL_PORT: int = int(
 
 POSTGRESQL_USER: str = config(
     "SDP_DATAPRODUCT_API_POSTGRESQL_USER",
-    default="",
+    default="postgres",
 )
 
 POSTGRESQL_PASSWORD: str = config(

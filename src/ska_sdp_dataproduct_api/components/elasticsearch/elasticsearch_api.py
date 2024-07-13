@@ -10,11 +10,11 @@ from elasticsearch import Elasticsearch
 from ska_sdp_dataproduct_api.components.metadatastore.datastore import Store
 from ska_sdp_dataproduct_api.configuration.settings import (
     DATE_FORMAT,
+    ELASTICSEARCH_HOST,
     ELASTICSEARCH_HTTP_CA,
     ELASTICSEARCH_METADATA_SCHEMA_FILE,
     ELASTICSEARCH_PASSWORD,
     ELASTICSEARCH_PORT,
-    ELASTICSEARCH_URL,
     ELASTICSEARCH_USER,
 )
 from ska_sdp_dataproduct_api.utilities.helperfunctions import parse_valid_date
@@ -29,9 +29,9 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
         super().__init__()
         self.metadata_index = "sdp_meta_data"
 
-        self.url: str = ELASTICSEARCH_URL
+        self.host: str = ELASTICSEARCH_HOST
         self.port: int = ELASTICSEARCH_PORT
-        self.host: str = self.url + ":" + self.port
+        self.url: str = self.host + ":" + str(self.port)
         self.user: str = ELASTICSEARCH_USER
         self.password: str = ELASTICSEARCH_PASSWORD
         self.ca_cert: str = None
@@ -49,7 +49,7 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
         Includes information about:
             - metadata_store_in_use (str): The type of metadata store being used (e.g.,
             "ElasticsearchMetadataStore").
-            - host (str): The hostname or IP address of the Elasticsearch server.
+            - url (str): The hostname or IP address and port of the Elasticsearch server.
             - user (str, optional): The username used to connect to Elasticsearch (if applicable).
             - running (bool): Whether the Elasticsearch server is currently running.
             - connection_established_at (datetime, optional): The timestamp when the connection to
@@ -60,7 +60,7 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
 
         response = {
             "metadata_store_in_use": "ElasticsearchMetadataStore",
-            "host": self.host,
+            "url": self.url,
             "user": self.user,
             "running": self.elasticsearch_running,
         }
@@ -113,7 +113,7 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
         self.load_ca_cert()
 
         self.es_client = Elasticsearch(
-            hosts=self.host,
+            hosts=self.url,
             http_auth=(self.user, self.password),
             verify_certs=False,
             ca_certs=self.ca_cert,

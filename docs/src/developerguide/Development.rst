@@ -48,7 +48,7 @@ Configure the environmental variables in the .env file under the root folder acc
     STREAM_CHUNK_SIZE=65536
     SDP_DATAPRODUCT_API_POSTGRESQL_USER=postgres
     SDP_DATAPRODUCT_API_POSTGRESQL_PASSWORD=password
-    SDP_DATAPRODUCT_API_ELASTIC_URL=http://localhost
+    SDP_DATAPRODUCT_API_ELASTIC_HOST=http://localhost
     SDP_DATAPRODUCT_API_ELASTIC_PORT=9200
     SDP_DATAPRODUCT_API_ELASTIC_USER=elastic
     SDP_DATAPRODUCT_API_ELASTIC_PASSWORD=password
