@@ -10,8 +10,8 @@ from elasticsearch import Elasticsearch
 from ska_sdp_dataproduct_api.components.metadatastore.datastore import Store
 from ska_sdp_dataproduct_api.configuration.settings import (
     DATE_FORMAT,
-    METADATA_ES_SCHEMA_FILE,
     SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA,
+    SDP_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE,
     SDP_DATAPRODUCT_API_ELASTIC_PASSWORD,
     SDP_DATAPRODUCT_API_ELASTIC_PORT,
     SDP_DATAPRODUCT_API_ELASTIC_URL,
@@ -167,7 +167,9 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
         try:
             _ = self.es_client.indices.get(index=index)
         except elasticsearch.NotFoundError:
-            with open(METADATA_ES_SCHEMA_FILE, "r", encoding="utf-8") as metadata_schema:
+            with open(
+                SDP_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE, "r", encoding="utf-8"
+            ) as metadata_schema:
                 metadata_schema_json = json.load(metadata_schema)
             self.es_client.indices.create(  # pylint: disable=E1123
                 index=index, ignore=400, body=metadata_schema_json

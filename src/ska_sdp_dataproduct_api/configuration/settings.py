@@ -17,13 +17,16 @@ logger = logging.getLogger(__name__)
 
 config = Config(".env")
 REINDEXING_DELAY = 300  # Only allow reindexing after 5 minutes
+
 PERSISTENT_STORAGE_PATH: pathlib.Path = pathlib.Path(
     config("PERSISTENT_STORAGE_PATH", default="./tests/test_files/product"),
 )
+
 REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL: str = config(
     "REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL",
     default="http://localhost",
 )
+
 REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_PORT: str = config(
     "REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_PORT",
     default="8100",
@@ -34,12 +37,16 @@ METADATA_FILE_NAME: str = config(
     default="ska-data-product.yaml",
 )
 
-METADATA_ES_SCHEMA_FILE: str = config(
-    "METADATA_ES_SCHEMA_FILE",
-    default=(
-        "./src/ska_sdp_dataproduct_api/components/elasticsearch/"
-        "data_product_metadata_schema.json"
-    ),
+VERSION: str = config(
+    "SKA_SDP_DATAPRODUCT_API_VERSION",
+    default=api.__version__,
+)
+
+STREAM_CHUNK_SIZE: int = int(
+    config(
+        "STREAM_CHUNK_SIZE",
+        default=65536,
+    )
 )
 
 # ElasticSearch Variables
@@ -67,21 +74,15 @@ SDP_DATAPRODUCT_API_ELASTIC_PASSWORD: str = config(
     "SDP_DATAPRODUCT_API_ELASTIC_PASSWORD",
     default="",
 )
+
+SDP_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE: str = config(
+    "SDP_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE",
+    default=(
+        "./src/ska_sdp_dataproduct_api/components/elasticsearch/"
+        "data_product_metadata_schema.json"
+    ),
+)
 # ----
-
-
-VERSION: str = config(
-    "SKA_SDP_DATAPRODUCT_API_VERSION",
-    default=api.__version__,
-)
-
-STREAM_CHUNK_SIZE: int = int(
-    config(
-        "STREAM_CHUNK_SIZE",
-        default=65536,
-    )
-)
-
 # PostgreSQL Variables
 POSTGRESQL_HOST: str = config(
     "SDP_DATAPRODUCT_API_POSTGRESQL_HOST",

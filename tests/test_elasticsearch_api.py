@@ -6,7 +6,9 @@ from datetime import datetime  # Assuming connection_established_at uses datetim
 from ska_sdp_dataproduct_api.components.elasticsearch.elasticsearch_api import (
     ElasticsearchMetadataStore,
 )
-from ska_sdp_dataproduct_api.configuration.settings import METADATA_ES_SCHEMA_FILE
+from ska_sdp_dataproduct_api.configuration.settings import (
+    SDP_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE,
+)
 from ska_sdp_dataproduct_api.utilities.helperfunctions import DPDAPIStatus
 from tests.mock_elasticsearch_api import MockElasticsearch
 
@@ -19,7 +21,7 @@ def test_create_schema():
     metadata_store.es_client = MockElasticsearch()
 
     with open(
-        METADATA_ES_SCHEMA_FILE,
+        SDP_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE,
         "r",
         encoding="UTF-8",
     ) as schema_file:
