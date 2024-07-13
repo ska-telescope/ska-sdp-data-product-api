@@ -34,19 +34,14 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
         self.user: str = SDP_DATAPRODUCT_API_ELASTIC_USER
         self.password: str = SDP_DATAPRODUCT_API_ELASTIC_PASSWORD
         self.ca_cert: str = None
-        self.es_client = None
+        self.es_client: Elasticsearch = None
         self.elasticsearch_running: bool = False
         self.elasticsearch_version: str = ""
-        self.connection_established_at = ""
-        self.connection_error = ""
+        self.connection_established_at: datetime = ""
         self.cluster_info: dict = {}
 
         self.load_ca_cert()
 
-        # if self.host:
-        #     self.connect()
-        # self.get_elasticsearch_version()
-        # logger.info(self.status())
 
     def status(self) -> dict:
         """
