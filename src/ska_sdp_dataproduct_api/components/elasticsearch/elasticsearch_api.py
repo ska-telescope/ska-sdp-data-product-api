@@ -28,49 +28,52 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
     def __init__(self):
         super().__init__()
         self.metadata_index = "sdp_meta_data"
+
         self.url: str = SDP_DATAPRODUCT_API_ELASTIC_URL
         self.port: int = SDP_DATAPRODUCT_API_ELASTIC_PORT
         self.host: str = self.url + ":" + self.port
         self.user: str = SDP_DATAPRODUCT_API_ELASTIC_USER
         self.password: str = SDP_DATAPRODUCT_API_ELASTIC_PASSWORD
         self.ca_cert: str = None
+
         self.es_client: Elasticsearch = None
         self.elasticsearch_running: bool = False
         self.elasticsearch_version: str = ""
         self.connection_established_at: datetime = ""
         self.cluster_info: dict = {}
 
-        self.load_ca_cert()
-
-
     def status(self) -> dict:
         """
-        Retrieves the current status of the Elasticsearch connection and metadata store.
+        Returns a dictionary containing the current status of the Elasticsearch connection.
 
-        This method returns a dictionary containing the following information:
-
-        * `metadata_store_in_use`: The type of metadata store being used (e.g.,
-        "ElasticsearchMetadataStore").
-        * `host`: The hostname or IP address of the Elasticsearch instance.
-        * `port`: The port number on which Elasticsearch is listening.
-        * `user`: The username used for authentication with Elasticsearch (if applicable).
-        * `running`: A boolean indicating whether Elasticsearch is currently running.
-        * `elasticsearch_version` : The version of Elasticsearch being used.
-        * `connection_established_at` : A timestamp representing when a connection was
-        last established with Elasticsearch.
-
-        Returns:
-            A dictionary containing the current status information.
+        Includes information about:
+            - metadata_store_in_use (str): The type of metadata store being used (e.g.,
+            "ElasticsearchMetadataStore").
+            - host (str): The hostname or IP address of the Elasticsearch server.
+            - user (str, optional): The username used to connect to Elasticsearch (if applicable).
+            - running (bool): Whether the Elasticsearch server is currently running.
+            - connection_established_at (datetime, optional): The timestamp when the connection to
+             Elasticsearch was established (if applicable).
+            - cluster_info (dict, optional): A dictionary containing additional cluster
+            information retrieved from Elasticsearch (if desired).
         """
 
-        return {
+        response = {
             "metadata_store_in_use": "ElasticsearchMetadataStore",
             "host": self.host,
             "user": self.user,
             "running": self.elasticsearch_running,
-            "connection_established_at": self.connection_established_at,
-            "cluster_info": self.cluster_info,
         }
+
+        # Optionally include connection_established_at if available
+        if self.connection_established_at:
+            response["connection_established_at"] = self.connection_established_at
+
+        # Optionally include cluster_info if desired and available
+        if self.cluster_info:
+            response["cluster_info"] = self.cluster_info
+
+        return response
 
     def get_elasticsearch_version(self) -> None:
         """
@@ -83,7 +86,6 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
         Returns:
             None.
         """
-        self.cluster_info = self.es_client.info()
 
     @property
     def es_search_enabled(self):
@@ -134,6 +136,8 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
         """Connecting to Elasticsearch host and create default schema"""
         logger.info("Connect to Elasticsearch...")
 
+        self.load_ca_cert()
+
         self.es_client = Elasticsearch(
             hosts=self.host,
             http_auth=(self.user, self.password),
@@ -144,6 +148,7 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
             self.connection_established_at = datetime.datetime.now()
             self.elasticsearch_running = True
             self.get_elasticsearch_version()
+            self.cluster_info = self.es_client.info()
             logger.info("Connected to Elasticsearch creating default schema...")
             self.create_schema_if_not_existing(index=self.metadata_index)
             return True
