@@ -32,12 +32,12 @@ def select_correct_store_class() -> Union[ElasticsearchMetadataStore, InMemoryDa
             elastic_store_instance.connect()
 
         if elastic_store_instance.es_client.ping():
-            logger.info("Elasticsearch reachable, attempting to connect...")
+            logger.info("Elasticsearch reachable, setting search store to ElasticSearch")
             return elastic_store_instance
     except Exception as exception:  # pylint: disable=broad-exception-caught
         logger.error("Failed to connect to Elasticsearch with exception: %s", exception)
         logger.warning("Using in-memory store.")
         return InMemoryDataproductIndex()
 
-    logger.warning("Elasticsearch not available, using in-memory store.")
+    logger.warning("Elasticsearch not available, setting search store to in-memory store.")
     return InMemoryDataproductIndex()
