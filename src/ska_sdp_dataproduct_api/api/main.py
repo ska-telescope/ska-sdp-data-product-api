@@ -23,10 +23,11 @@ from ska_sdp_dataproduct_api.utilities.helperfunctions import (
 
 logger = logging.getLogger(__name__)
 
+persistent_metadata_store = PostgresConnector()
 search_store = select_correct_store_class()
-postgresql_connector = PostgresConnector()
 DPD_API_Status = DPDAPIStatus(
-    search_store=search_store.status, postgresql_status=postgresql_connector.status
+    search_store_status=search_store.status,
+    persistent_metadata_store_status=persistent_metadata_store.status,
 )
 
 
@@ -34,7 +35,7 @@ DPD_API_Status = DPDAPIStatus(
 async def root():
     """An enpoint that just returns confirmation that the
     application is running"""
-    return DPD_API_Status.status(search_store.es_search_enabled)
+    return DPD_API_Status.status()
 
 
 @app.get("/reindexdataproducts", status_code=202)

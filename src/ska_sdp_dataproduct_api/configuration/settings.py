@@ -17,13 +17,18 @@ logger = logging.getLogger(__name__)
 
 config = Config(".env")
 REINDEXING_DELAY = 300  # Only allow reindexing after 5 minutes
+
 PERSISTENT_STORAGE_PATH: pathlib.Path = pathlib.Path(
     config("PERSISTENT_STORAGE_PATH", default="./tests/test_files/product"),
 )
+
+CONFIGURATION_FILES_PATH: pathlib.Path = pathlib.Path(__file__)
+
 REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL: str = config(
     "REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL",
     default="http://localhost",
 )
+
 REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_PORT: str = config(
     "REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_PORT",
     default="8100",
@@ -32,19 +37,6 @@ REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_PORT: str = config(
 METADATA_FILE_NAME: str = config(
     "METADATA_FILE_NAME",
     default="ska-data-product.yaml",
-)
-
-METADATA_ES_SCHEMA_FILE: str = config(
-    "METADATA_ES_SCHEMA_FILE",
-    default=(
-        "./src/ska_sdp_dataproduct_api/components/elasticsearch/"
-        "data_product_metadata_schema.json"
-    ),
-)
-
-ES_HOST: str = config(
-    "ES_HOST",
-    default="http://localhost:9200",
 )
 
 VERSION: str = config(
@@ -59,7 +51,43 @@ STREAM_CHUNK_SIZE: int = int(
     )
 )
 
-# --PostgreSQL Configuration--
+# ElasticSearch Variables
+ELASTICSEARCH_HOST: str = config(
+    "SDP_DATAPRODUCT_API_ELASTIC_HOST",
+    default="https://localhost",
+)
+
+ELASTICSEARCH_PORT: int = int(
+    config(
+        "SDP_DATAPRODUCT_API_ELASTIC_PORT",
+        default=9200,
+    )
+)
+
+ELASTICSEARCH_HTTP_CA: str = config(
+    "SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA",
+    default=None,
+)
+
+ELASTICSEARCH_USER: str = config(
+    "SDP_DATAPRODUCT_API_ELASTIC_USER",
+    default="elastic",
+)
+
+ELASTICSEARCH_PASSWORD: str = config(
+    "SDP_DATAPRODUCT_API_ELASTIC_PASSWORD",
+    default="",
+)
+
+ELASTICSEARCH_METADATA_SCHEMA_FILE: str = config(
+    "SDP_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE",
+    default=(
+        "./src/ska_sdp_dataproduct_api/components/elasticsearch/"
+        "data_product_metadata_schema.json"
+    ),
+)
+# ----
+# PostgreSQL Variables
 POSTGRESQL_HOST: str = config(
     "SDP_DATAPRODUCT_API_POSTGRESQL_HOST",
     default="localhost",
@@ -74,7 +102,7 @@ POSTGRESQL_PORT: int = int(
 
 POSTGRESQL_USER: str = config(
     "SDP_DATAPRODUCT_API_POSTGRESQL_USER",
-    default="",
+    default="postgres",
 )
 
 POSTGRESQL_PASSWORD: str = config(

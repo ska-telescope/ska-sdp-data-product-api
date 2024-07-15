@@ -1,11 +1,12 @@
 """Module to test insertMetadata.py"""
 
 import json
+from datetime import datetime  # Assuming connection_established_at uses datetime
 
 from ska_sdp_dataproduct_api.components.elasticsearch.elasticsearch_api import (
     ElasticsearchMetadataStore,
 )
-from ska_sdp_dataproduct_api.configuration.settings import METADATA_ES_SCHEMA_FILE
+from ska_sdp_dataproduct_api.configuration.settings import ELASTICSEARCH_METADATA_SCHEMA_FILE
 from ska_sdp_dataproduct_api.utilities.helperfunctions import DPDAPIStatus
 from tests.mock_elasticsearch_api import MockElasticsearch
 
@@ -18,7 +19,7 @@ def test_create_schema():
     metadata_store.es_client = MockElasticsearch()
 
     with open(
-        METADATA_ES_SCHEMA_FILE,
+        ELASTICSEARCH_METADATA_SCHEMA_FILE,
         "r",
         encoding="UTF-8",
     ) as schema_file:
@@ -164,3 +165,38 @@ def test_search_metadata_no_value():
     ]
 
     assert json.loads(metadata_list) == expected_value
+
+
+def test_status(mocker):
+    """Tests the status method with different scenarios."""
+
+    mocked_self = ElasticsearchMetadataStore()
+
+    # Mock attributes
+    host = "localhost"
+    port = 9200
+    user = "elastic"
+    running = True
+    connection_established_at = datetime.now()
+    cluster_info = {"name": "my_cluster"}
+
+    # Mock attributes
+    mocker.patch.object(mocked_self, "host", host)
+    mocker.patch.object(mocked_self, "port", port)
+    mocker.patch.object(mocked_self, "user", user)
+    mocker.patch.object(mocked_self, "elasticsearch_running", running)
+    mocker.patch.object(mocked_self, "connection_established_at", connection_established_at)
+    mocker.patch.object(mocked_self, "cluster_info", cluster_info)
+
+    # Call the method
+    response = mocked_self.status()
+
+    # Assert expected response
+    assert response == {
+        "metadata_store_in_use": "ElasticsearchMetadataStore",
+        "url": "https://localhost:9200",
+        "user": user,
+        "running": running,
+        "connection_established_at": mocked_self.connection_established_at,
+        "cluster_info": cluster_info,
+    }

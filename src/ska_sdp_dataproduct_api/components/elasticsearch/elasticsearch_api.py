@@ -1,15 +1,22 @@
 """Module to insert data into Elasticsearch instance."""
+import datetime
 import json
 import logging
+from pathlib import Path
 
 import elasticsearch
 from elasticsearch import Elasticsearch
 
 from ska_sdp_dataproduct_api.components.metadatastore.datastore import Store
 from ska_sdp_dataproduct_api.configuration.settings import (
+    CONFIGURATION_FILES_PATH,
     DATE_FORMAT,
-    ES_HOST,
-    METADATA_ES_SCHEMA_FILE,
+    ELASTICSEARCH_HOST,
+    ELASTICSEARCH_HTTP_CA,
+    ELASTICSEARCH_METADATA_SCHEMA_FILE,
+    ELASTICSEARCH_PASSWORD,
+    ELASTICSEARCH_PORT,
+    ELASTICSEARCH_USER,
 )
 from ska_sdp_dataproduct_api.utilities.helperfunctions import parse_valid_date
 
@@ -22,66 +29,121 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
     def __init__(self):
         super().__init__()
         self.metadata_index = "sdp_meta_data"
-        self.host: str = ES_HOST
-        self.port: int = None
-        self.user: str = "user"
-        self.password: str = "password"
-        self.es_client = None
+
+        self.host: str = ELASTICSEARCH_HOST
+        self.port: int = ELASTICSEARCH_PORT
+        self.url: str = self.host + ":" + str(self.port)
+        self.user: str = ELASTICSEARCH_USER
+        self.password: str = ELASTICSEARCH_PASSWORD
+        self.ca_cert: str = None
+
+        self.es_client: Elasticsearch = None
         self.elasticsearch_running: bool = False
         self.elasticsearch_version: str = ""
-        self.connection_established_at = ""
-        self.connection_error = ""
-
-        if self.host:
-            # This if is only here to not have to rewrite the test suit.
-            self.connect()
+        self.connection_established_at: datetime = ""
+        self.cluster_info: dict = {}
 
     def status(self) -> dict:
         """
-        Retrieves the current status of the Elasticsearch connection and metadata store.
+        Returns a dictionary containing the current status of the Elasticsearch connection.
 
-        This method returns a dictionary containing the following information:
-
-        * `metadata_store_in_use`: The type of metadata store being used (e.g.,
-        "ElasticsearchMetadataStore").
-        * `host`: The hostname or IP address of the Elasticsearch instance.
-        * `port`: The port number on which Elasticsearch is listening.
-        * `user`: The username used for authentication with Elasticsearch (if applicable).
-        * `running`: A boolean indicating whether Elasticsearch is currently running.
-        * `elasticsearch_version` : The version of Elasticsearch being used.
-        * `connection_established_at` : A timestamp representing when a connection was
-        last established with Elasticsearch.
-        * `connection_error` : An error object containing details about any connection
-        errors that occurred (if applicable).
-
-        Returns:
-            A dictionary containing the current status information.
+        Includes information about:
+            - metadata_store_in_use (str): The type of metadata store being used (e.g.,
+            "ElasticsearchMetadataStore").
+            - url (str): The hostname or IP address and port of the Elasticsearch server.
+            - user (str, optional): The username used to connect to Elasticsearch (if applicable).
+            - running (bool): Whether the Elasticsearch server is currently running.
+            - connection_established_at (datetime, optional): The timestamp when the connection to
+             Elasticsearch was established (if applicable).
+            - cluster_info (dict, optional): A dictionary containing additional cluster
+            information retrieved from Elasticsearch (if desired).
         """
 
-        return {
+        response = {
             "metadata_store_in_use": "ElasticsearchMetadataStore",
-            "host": self.host,
-            "port": self.port,
+            "url": self.url,
             "user": self.user,
             "running": self.elasticsearch_running,
-            "postgresql_version": self.elasticsearch_version,
             "connection_established_at": self.connection_established_at,
-            "connection_error": self.connection_error,
+            "cluster_info": self.cluster_info,
         }
 
-    @property
-    def es_search_enabled(self):
-        """Generic interface to verify there is a Elasticsearch backend"""
-        return True
+        return response
+
+    def load_ca_cert(self) -> None:
+        """Loads the CA certificate from the configured path.
+
+        If no path is configured or the file cannot be accessed, sets the
+        `ca_cert` attribute to None and logs an informative message.
+        """
+
+        try:
+            # Construct the path to the CA certificate file
+            if not ELASTICSEARCH_HTTP_CA:
+                logging.info("No CA certificate file")
+                self.ca_cert = None
+                return
+
+            ca_cert_path: Path = CONFIGURATION_FILES_PATH / ELASTICSEARCH_HTTP_CA
+
+            # Check if the file exists and is a regular file
+            if ca_cert_path.is_file():
+                self.ca_cert: Path = ca_cert_path
+
+            else:
+                logging.info("CA certificate file not found: %s", ca_cert_path)
+                self.ca_cert = None
+
+        except (FileNotFoundError, PermissionError) as error:
+            # Handle potential file access errors gracefully
+            logging.error("Error loading CA certificate: %s", error)
+            self.ca_cert = None
 
     def connect(self):
-        """Connect to Elasticsearch host and create default schema"""
-        self.es_client = Elasticsearch(self.host)
+        """Connecting to Elasticsearch host and create default schema"""
+        logger.info("Connecting to Elasticsearch...")
+
+        self.load_ca_cert()
+
+        self.es_client = Elasticsearch(
+            hosts=self.url,
+            http_auth=(self.user, self.password),
+            verify_certs=False,
+            ca_certs=self.ca_cert,
+        )
+
         if self.es_client.ping():
-            # Address the case where the elasticsearch host
-            # is no longer reachable
+            self.connection_established_at = datetime.datetime.now()
+            self.elasticsearch_running = True
+            self.cluster_info = self.es_client.info()
+            logger.info("Connected to Elasticsearch; creating default schema...")
             self.create_schema_if_not_existing(index=self.metadata_index)
             return True
+        return False
+
+    def check_and_reconnect(self) -> bool:
+        """
+        Checks if the connection to Elasticsearch is still alive and attempts to reconnect
+        if necessary.
+
+        Returns True if the connection is successfully established or re-established,
+        False otherwise.
+        """
+
+        if not self.es_client:
+            self.connect()
+
+        try:
+            if self.es_client.ping():
+                return True
+        except (ConnectionError, TimeoutError) as error:
+            logger.error("Connection to Elasticsearch lost: %s", error)
+
+        if self.connect():
+            logger.info("Successfully reconnected to Elasticsearch.")
+            return True
+
+        logger.error("Failed to reconnect to Elasticsearch.")
         return False
 
     def create_schema_if_not_existing(self, index: str):
@@ -90,7 +152,9 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
         try:
             _ = self.es_client.indices.get(index=index)
         except elasticsearch.NotFoundError:
-            with open(METADATA_ES_SCHEMA_FILE, "r", encoding="utf-8") as metadata_schema:
+            with open(
+                ELASTICSEARCH_METADATA_SCHEMA_FILE, "r", encoding="utf-8"
+            ) as metadata_schema:
                 metadata_schema_json = json.load(metadata_schema)
             self.es_client.indices.create(  # pylint: disable=E1123
                 index=index, ignore=400, body=metadata_schema_json
@@ -157,8 +221,7 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
                 }
             }
         }
-        if not self.es_client.ping():
-            return json.dumps({"Error": "Elasticsearch unavailable"})
+        self.check_and_reconnect()
 
         resp = self.es_client.search(  # pylint: disable=E1123
             index=self.metadata_index, body=query_body
