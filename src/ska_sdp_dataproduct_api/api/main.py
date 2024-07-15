@@ -92,16 +92,12 @@ async def filter_data(body: Optional[Dict] = Body(...)) -> List:
     Returns:
         List: A list of filtered product data objects.
     """
-    muiDataGridInstance.load_inmemory_store_data(search_store)
     mui_data_grid_filter_model = body.get("filterModel", {})
     search_panel_options = body.get("searchPanelOptions", {})
 
-    mui_filtered_data = search_store.apply_filters(
-        muiDataGridInstance.rows.copy(), mui_data_grid_filter_model
-    )
-    searchbox_filtered_data = search_store.apply_filters(mui_filtered_data, search_panel_options)
+    filtered_data = search_store.filter_data(mui_data_grid_filter_model, search_panel_options)
 
-    return searchbox_filtered_data
+    return filtered_data
 
 
 @app.get("/muidatagridconfig")

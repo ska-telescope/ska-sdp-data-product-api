@@ -7,7 +7,7 @@ from pathlib import Path
 import elasticsearch
 from elasticsearch import Elasticsearch
 
-from ska_sdp_dataproduct_api.components.metadatastore.datastore import Store
+from ska_sdp_dataproduct_api.components.metadatastore.datastore import SearchStoreSuperClass
 from ska_sdp_dataproduct_api.configuration.settings import (
     CONFIGURATION_FILES_PATH,
     DATE_FORMAT,
@@ -23,7 +23,9 @@ from ska_sdp_dataproduct_api.utilities.helperfunctions import parse_valid_date
 logger = logging.getLogger(__name__)
 
 
-class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-attributes
+class ElasticsearchMetadataStore(
+    SearchStoreSuperClass
+):  # pylint: disable=too-many-instance-attributes
     """Class to insert data into Elasticsearch instance."""
 
     def __init__(self):
@@ -118,6 +120,8 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
             self.cluster_info = self.es_client.info()
             logger.info("Connected to Elasticsearch; creating default schema...")
             self.create_schema_if_not_existing(index=self.metadata_index)
+            self.reindex()
+
             return True
         return False
 
@@ -160,14 +164,20 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
                 index=index, ignore=400, body=metadata_schema_json
             )
 
-    def clear_metadata_indecise(self):
-        """Clear out all indices from elasticsearch instance"""
+    def clear_metadata_indecise(self) -> None:
+        """Deletes specific indices from the Elasticsearch instance and clear the metadata_list.
+
+        Args:
+            None
+        """
+
         self.es_client.options(ignore_status=[400, 404]).indices.delete(index=self.metadata_index)
         self.metadata_list = []
 
     def insert_metadata(self, metadata_file_json):
         """Method to insert metadata into Elasticsearch."""
         # Add new metadata to es
+        logger.debug("insert_metadata...")
         result = self.es_client.index(index=self.metadata_index, document=metadata_file_json)
         return result
 

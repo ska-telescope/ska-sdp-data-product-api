@@ -3,13 +3,13 @@ import datetime
 import json
 import logging
 import pathlib
-from pathlib import Path
 from time import time
-from typing import Any
+from typing import Any, List
 
 import yaml
 from ska_sdp_dataproduct_metadata import MetaData
 
+from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
 from ska_sdp_dataproduct_api.configuration.settings import (
     METADATA_FILE_NAME,
     PERSISTENT_STORAGE_PATH,
@@ -25,7 +25,7 @@ from ska_sdp_dataproduct_api.utilities.helperfunctions import (
 logger = logging.getLogger(__name__)
 
 
-class Store:
+class SearchStoreSuperClass:
     """Common store class (superclass to elastic search and in memory store)"""
 
     def __init__(self):
@@ -43,6 +43,17 @@ class Store:
         """This is implemented in subclasses."""
         raise NotImplementedError
 
+    def filter_data(self, mui_data_grid_filter_model, search_panel_options):
+        """This is implemented in subclasses."""
+        muiDataGridInstance.load_inmemory_store_data(self)
+
+        mui_filtered_data = self.apply_filters(
+            muiDataGridInstance.rows.copy(), mui_data_grid_filter_model
+        )
+        searchbox_filtered_data = self.apply_filters(mui_filtered_data, search_panel_options)
+
+        return searchbox_filtered_data
+
     def apply_filters(self, data, filters):
         """This is implemented in subclasses."""
         raise NotImplementedError
@@ -52,8 +63,9 @@ class Store:
         to enable the user to reindex if the data products were changed or
         appended since the initial load of the data"""
         try:
-            self.clear_metadata_indecise()
+            logger.info("Metadata store is re-indexing...")
             self.indexing = True
+            self.clear_metadata_indecise()
             self.ingest_metadata_files(PERSISTENT_STORAGE_PATH)
             self.indexing_timestamp = time()
             self.update_data_store_date_modified()
@@ -92,20 +104,32 @@ class Store:
             return
         self.insert_metadata(metadata_file_json)
 
-    def ingest_metadata_files(self, full_path_name: pathlib.Path):
-        """This function runs through a volume and add all the data products to
-        the metadata_list of the store"""
-        # Test if the path points to a directory
+    def ingest_metadata_files(self, full_path_name: pathlib.Path) -> None:
+        """
+        This method ingests metadata files from a specified storage location into the metadata
+        store.
+
+        Args:
+            full_path_name: The Path object representing the storage location containing the
+            metadata files.
+
+        Returns:
+            None
+        """
+
         logger.info(
             "Loading metadata files from storage location %s, \
             then ingesting them into the metadata store",
             str(full_path_name),
         )
+
         if not full_path_name.is_dir() or full_path_name.is_symlink():
             return
-        dataproduct_paths = self.find_folders_with_metadata_files()
+
+        dataproduct_paths: List[pathlib.Path] = self.find_folders_with_metadata_files()
         for product_path in dataproduct_paths:
             self.ingest_file(product_path)
+
         self.sort_metadata_list(key="date_created", reverse=True)
 
     def ingest_metadata_object(self, metadata: DataProductMetaData):
@@ -181,12 +205,12 @@ class Store:
                 folders.append(file_path)
         return folders
 
-    def check_file_exists(self, file_object: Path) -> bool:
+    def check_file_exists(self, file_object: pathlib.Path) -> bool:
         """
         Checks if the given file path points to an existing file.
 
         Args:
-            file_object (Path): The full path to the file.
+            file_object (pathlib.Path): The full path to the file.
 
         Returns:
             Bool: True if the file exists, otherwise False.

@@ -5,7 +5,7 @@ import logging
 from collections.abc import MutableMapping
 from typing import Any, Dict, List
 
-from ska_sdp_dataproduct_api.components.metadatastore.datastore import Store
+from ska_sdp_dataproduct_api.components.metadatastore.datastore import SearchStoreSuperClass
 from ska_sdp_dataproduct_api.configuration.settings import DATE_FORMAT
 from ska_sdp_dataproduct_api.utilities.helperfunctions import (
     filter_by_item,
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 # pylint: disable=no-name-in-module
 
 
-class InMemoryDataproductIndex(Store):
+class InMemoryDataproductIndex(SearchStoreSuperClass):
     """
     This class defines an object that is used to create a list of data products
     based on information contained in the metadata files of these data
@@ -56,7 +56,11 @@ class InMemoryDataproductIndex(Store):
         }
 
     def clear_metadata_indecise(self):
-        """Clear out all indices from in memory instance"""
+        """Clears metadata information stored within the class instance.
+
+        This method clears the `metadata_list` attribute
+        and sets the `number_of_dataproducts` attribute to 0.
+        """
         self.metadata_list.clear()
         self.number_of_dataproducts = 0
 

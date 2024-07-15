@@ -6,7 +6,7 @@ import pytest
 import yaml
 
 from ska_sdp_dataproduct_api.components.metadatastore.datastore import (
-    Store,  # Replace with the actual import path
+    SearchStoreSuperClass,  # Replace with the actual import path
 )
 from ska_sdp_dataproduct_api.utilities.helperfunctions import FileUrl
 
@@ -24,7 +24,7 @@ class TestDatastore:
         temp_file.touch()
 
         # Instantiate your class (replace with actual instantiation)
-        my_instance = Store()
+        my_instance = SearchStoreSuperClass()
 
         # Call the method with an existing file
         result = my_instance.check_file_exists(temp_file)
@@ -38,7 +38,7 @@ class TestDatastore:
         """Test the non exsiting file / unhappy path"""
         # Instantiate your class (replace with actual instantiation)
 
-        my_instance = Store()
+        my_instance = SearchStoreSuperClass()
 
         # Call the method with a non-existing file
         result = my_instance.check_file_exists(Path("non_existent_file.txt"))
@@ -49,7 +49,7 @@ class TestDatastore:
         """
         Test loading metadata from a valid YAML file.
         """
-        my_instance = Store()
+        my_instance = SearchStoreSuperClass()
         test_metadata_file = FileUrl
         test_metadata_file.fileName = "ska-data-product.yaml"
         test_metadata_file.fullPathName = (
@@ -63,7 +63,7 @@ class TestDatastore:
         """
         Test loading metadata from a valid YAML file.
         """
-        my_instance = Store()
+        my_instance = SearchStoreSuperClass()
         test_metadata_file = FileUrl
         test_metadata_file.fileName = "nonexistent_file_name"
         test_metadata_file.fullPathName = "/path/to/nonexistent/file.yaml"
@@ -76,7 +76,7 @@ class TestDatastore:
         """
         Test handling YAML parsing errors.
         """
-        my_instance = Store()
+        my_instance = SearchStoreSuperClass()
         test_metadata_file = FileUrl
         test_metadata_file.fileName = "ska-data-product.yaml"
         test_metadata_file.fullPathName = tmp_path / "ska-data-product.yaml"
