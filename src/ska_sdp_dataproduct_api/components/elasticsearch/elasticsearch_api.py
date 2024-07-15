@@ -63,15 +63,9 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
             "url": self.url,
             "user": self.user,
             "running": self.elasticsearch_running,
+            "connection_established_at": self.connection_established_at,
+            "cluster_info": self.cluster_info,
         }
-
-        # Optionally include connection_established_at if available
-        if self.connection_established_at:
-            response["connection_established_at"] = self.connection_established_at
-
-        # Optionally include cluster_info if desired and available
-        if self.cluster_info:
-            response["cluster_info"] = self.cluster_info
 
         return response
 
