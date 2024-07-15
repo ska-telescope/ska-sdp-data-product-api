@@ -130,10 +130,12 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
         False otherwise.
         """
 
+        if not self.es_client:
+            self.connect()
+
         try:
             if self.es_client.ping():
                 return True
-
         except (ConnectionError, TimeoutError) as error:
             logger.error("Connection to Elasticsearch lost: %s", error)
 

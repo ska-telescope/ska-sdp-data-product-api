@@ -27,11 +27,7 @@ def select_correct_store_class() -> Union[ElasticsearchMetadataStore, InMemoryDa
 
     try:
         elastic_store_instance = ElasticsearchMetadataStore()
-
-        if elastic_store_instance.host:
-            elastic_store_instance.connect()
-
-        if elastic_store_instance.es_client.ping():
+        if elastic_store_instance.host and elastic_store_instance.check_and_reconnect():
             logger.info("Elasticsearch reachable, setting search store to ElasticSearch")
             return elastic_store_instance
     except Exception as exception:  # pylint: disable=broad-exception-caught
