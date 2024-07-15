@@ -103,7 +103,7 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
 
     def connect(self):
         """Connecting to Elasticsearch host and create default schema"""
-        logger.info("Connect to Elasticsearch...")
+        logger.info("Connecting to Elasticsearch...")
 
         self.load_ca_cert()
 
@@ -118,7 +118,7 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
             self.connection_established_at = datetime.datetime.now()
             self.elasticsearch_running = True
             self.cluster_info = self.es_client.info()
-            logger.info("Connected to Elasticsearch creating default schema...")
+            logger.info("Connected to Elasticsearch; creating default schema...")
             self.create_schema_if_not_existing(index=self.metadata_index)
             return True
         return False
@@ -132,21 +132,12 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
         False otherwise.
         """
 
-        if not self.es_client:
-            # No client created, likely not connected before
-            return False
-
         try:
-            # Try a simple ping to check connection health
             if self.es_client.ping():
-                return True  # Connection already healthy
+                return True
 
         except (ConnectionError, TimeoutError) as error:
             logger.error("Connection to Elasticsearch lost: %s", error)
-
-        # Reconnect attempt
-        logger.info("Attempting to reconnect to Elasticsearch...")
-        self.es_client = None  # Reset client to trigger re-initialization
 
         if self.connect():
             logger.info("Successfully reconnected to Elasticsearch.")
@@ -230,8 +221,7 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
                 }
             }
         }
-        if not self.es_client.ping():
-            self.check_and_reconnect()
+        self.check_and_reconnect()            
 
         resp = self.es_client.search(  # pylint: disable=E1123
             index=self.metadata_index, body=query_body
