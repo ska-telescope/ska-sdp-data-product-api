@@ -22,6 +22,8 @@ PERSISTENT_STORAGE_PATH: pathlib.Path = pathlib.Path(
     config("PERSISTENT_STORAGE_PATH", default="./tests/test_files/product"),
 )
 
+CONFIGURATION_FILES_PATH: pathlib.Path = pathlib.Path(__file__)
+
 REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL: str = config(
     "REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL",
     default="http://localhost",

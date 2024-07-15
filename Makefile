@@ -50,4 +50,4 @@ create-dev-elasticsearch:
 
 cp-dev-elasticsearch-http-ca-cert:
 # CP a self signed cert for the Elasticsearch Docker container.
-	docker cp dpd-elasticsearch-container:/usr/share/elasticsearch/config/certs/http_ca.crt .
+	docker cp dpd-elasticsearch-container:/usr/share/elasticsearch/config/certs/http_ca.crt ./src/ska_sdp_dataproduct_api/configuration/

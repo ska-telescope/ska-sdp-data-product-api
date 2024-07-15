@@ -16,6 +16,7 @@ from ska_sdp_dataproduct_api.configuration.settings import (
     ELASTICSEARCH_PASSWORD,
     ELASTICSEARCH_PORT,
     ELASTICSEARCH_USER,
+    CONFIGURATION_FILES_PATH,
 )
 from ska_sdp_dataproduct_api.utilities.helperfunctions import parse_valid_date
 
@@ -84,7 +85,7 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
                 return
 
             ca_cert_path: Path = (
-                Path(__file__).parent.parent.parent.parent.parent / ELASTICSEARCH_HTTP_CA
+                CONFIGURATION_FILES_PATH / ELASTICSEARCH_HTTP_CA
             )
 
             # Check if the file exists and is a regular file
