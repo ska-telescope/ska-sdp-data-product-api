@@ -9,7 +9,6 @@ from typing import Any, List
 import yaml
 from ska_sdp_dataproduct_metadata import MetaData
 
-from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
 from ska_sdp_dataproduct_api.configuration.settings import (
     METADATA_FILE_NAME,
     PERSISTENT_STORAGE_PATH,
@@ -44,17 +43,6 @@ class SearchStoreSuperClass:
         raise NotImplementedError
 
     def filter_data(self, mui_data_grid_filter_model, search_panel_options):
-        """This is implemented in subclasses."""
-        muiDataGridInstance.load_inmemory_store_data(self)
-
-        mui_filtered_data = self.apply_filters(
-            muiDataGridInstance.rows.copy(), mui_data_grid_filter_model
-        )
-        searchbox_filtered_data = self.apply_filters(mui_filtered_data, search_panel_options)
-
-        return searchbox_filtered_data
-
-    def apply_filters(self, data, filters):
         """This is implemented in subclasses."""
         raise NotImplementedError
 

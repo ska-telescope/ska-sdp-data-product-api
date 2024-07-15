@@ -8,6 +8,7 @@ import elasticsearch
 from elasticsearch import Elasticsearch
 
 from ska_sdp_dataproduct_api.components.metadatastore.datastore import SearchStoreSuperClass
+from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
 from ska_sdp_dataproduct_api.configuration.settings import (
     CONFIGURATION_FILES_PATH,
     DATE_FORMAT,
@@ -44,6 +45,8 @@ class ElasticsearchMetadataStore(
         self.elasticsearch_version: str = ""
         self.connection_established_at: datetime = ""
         self.cluster_info: dict = {}
+
+        self.query_body = {"query": {"bool": {"must": []}}}
 
     def status(self) -> dict:
         """
@@ -234,7 +237,7 @@ class ElasticsearchMetadataStore(
         self.check_and_reconnect()
 
         resp = self.es_client.search(  # pylint: disable=E1123
-            index=self.metadata_index, body=query_body
+            index=self.metadata_index, body=self.query_body
         )
         all_hits = resp["hits"]["hits"]
         self.metadata_list = []
@@ -245,8 +248,85 @@ class ElasticsearchMetadataStore(
                         metadata_file=value,
                         query_key_list=meta_data_keys,
                     )
-        return json.dumps(self.metadata_list)
 
     def apply_filters(self, data, filters):
         """This is implemented in Elasticsearch."""
         raise NotImplementedError
+
+    def filter_data(self, mui_data_grid_filter_model, search_panel_options):
+        """This is implemented in subclasses."""
+        # self.query_body = {"query": {"bool": {"must": []}}}
+        # self.map_mui_filters_to_es_query(mui_data_grid_filter_model)
+        self.build_elasticsearch_query(search_panel_options)
+        self.search_metadata()
+        return self.metadata_list
+
+    def map_mui_filters_to_es_query(self, filters):
+        """
+        Maps MUI Datagrid filters to an Elasticsearch query body.
+
+        Args:
+            filters: A dictionary containing MUI filter data (field: value pairs).
+
+        Returns:
+            A dictionary representing the Elasticsearch query body.
+        """
+
+        for field_name, value in filters.items():
+            # Handle different filter types (example: match, range)
+            if isinstance(value, str):
+                self.query_body["query"]["bool"]["must"].append({"match": {field_name: value}})
+            elif isinstance(value, list):
+                # Apply multi_match for multiple filter values (adjust as needed)
+                self.query_body["query"]["bool"]["must"].append(
+                    {"multi_match": {"query": value, "fields": [field_name]}}
+                )
+            # Add logic for other filter types (date ranges, etc.)
+
+        return self.query_body
+
+    def build_elasticsearch_query(self, filters):
+        """
+        Builds an Elasticsearch query body based on the provided data structure.
+
+        Args:
+            data: A dictionary representing the data for the query body.
+
+        Returns:
+            A dictionary representing the Elasticsearch query body.
+        """
+
+        print("map_mui_filters_to_es_query filters:")
+        print(filters)
+        if not "items" in filters:
+            return
+
+        gte_date = ""
+        lte_date = ""
+        must_list = []
+
+        # Add date_created filters
+        for item in filters["items"]:
+            if item["field"] == "date_created":
+                if item["operator"] == "greaterThan":
+                    gte_date = item["value"]
+                elif item["operator"] == "lessThan":
+                    lte_date = item["value"]
+
+            elif item["field"] == "formFields":
+                for key_pair in item["keyPairs"]:
+                    # Check if both key and value exist before adding to query
+                    if key_pair["keyPair"] and key_pair["valuePair"]:
+                        must_list.append({"term": {key_pair["keyPair"]: key_pair["valuePair"]}})
+
+        date_ranges = {
+            "range": {
+                "date_created": {
+                    "gte": gte_date,
+                    "lte": lte_date,
+                    "format": "yyyy-MM-dd",
+                }
+            }
+        }
+        self.query_body["query"]["bool"]["must"] = must_list
+        self.query_body["query"]["bool"]["must"].append(date_ranges)

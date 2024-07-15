@@ -6,6 +6,7 @@ from collections.abc import MutableMapping
 from typing import Any, Dict, List
 
 from ska_sdp_dataproduct_api.components.metadatastore.datastore import SearchStoreSuperClass
+from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
 from ska_sdp_dataproduct_api.configuration.settings import DATE_FORMAT
 from ska_sdp_dataproduct_api.utilities.helperfunctions import (
     filter_by_item,
@@ -132,6 +133,17 @@ class InMemoryDataproductIndex(SearchStoreSuperClass):
                 except KeyError:
                     continue
         return json.dumps(search_results)
+
+    def filter_data(self, mui_data_grid_filter_model, search_panel_options):
+        """This is implemented in subclasses."""
+        muiDataGridInstance.load_inmemory_store_data(self)
+
+        mui_filtered_data = self.apply_filters(
+            muiDataGridInstance.rows.copy(), mui_data_grid_filter_model
+        )
+        searchbox_filtered_data = self.apply_filters(mui_filtered_data, search_panel_options)
+
+        return searchbox_filtered_data
 
     def apply_filters(
         self, data: List[Dict[str, Any]], filters: Dict[str, Any]
