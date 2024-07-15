@@ -9,6 +9,7 @@ from elasticsearch import Elasticsearch
 
 from ska_sdp_dataproduct_api.components.metadatastore.datastore import Store
 from ska_sdp_dataproduct_api.configuration.settings import (
+    CONFIGURATION_FILES_PATH,
     DATE_FORMAT,
     ELASTICSEARCH_HOST,
     ELASTICSEARCH_HTTP_CA,
@@ -16,7 +17,6 @@ from ska_sdp_dataproduct_api.configuration.settings import (
     ELASTICSEARCH_PASSWORD,
     ELASTICSEARCH_PORT,
     ELASTICSEARCH_USER,
-    CONFIGURATION_FILES_PATH,
 )
 from ska_sdp_dataproduct_api.utilities.helperfunctions import parse_valid_date
 
@@ -84,9 +84,7 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
                 self.ca_cert = None
                 return
 
-            ca_cert_path: Path = (
-                CONFIGURATION_FILES_PATH / ELASTICSEARCH_HTTP_CA
-            )
+            ca_cert_path: Path = CONFIGURATION_FILES_PATH / ELASTICSEARCH_HTTP_CA
 
             # Check if the file exists and is a regular file
             if ca_cert_path.is_file():
@@ -221,7 +219,7 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
                 }
             }
         }
-        self.check_and_reconnect()            
+        self.check_and_reconnect()
 
         resp = self.es_client.search(  # pylint: disable=E1123
             index=self.metadata_index, body=query_body
