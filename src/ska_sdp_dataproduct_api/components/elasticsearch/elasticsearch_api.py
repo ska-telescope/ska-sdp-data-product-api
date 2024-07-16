@@ -67,6 +67,7 @@ class ElasticsearchMetadataStore(
             "user": self.user,
             "running": self.elasticsearch_running,
             "connection_established_at": self.connection_established_at,
+            "number_of_dataproducts": self.number_of_dataproducts,
             "cluster_info": self.cluster_info,
         }
 
@@ -173,13 +174,33 @@ class ElasticsearchMetadataStore(
 
         self.es_client.options(ignore_status=[400, 404]).indices.delete(index=self.metadata_index)
         self.metadata_list = []
+        self.number_of_dataproducts = 0
 
-    def insert_metadata(self, metadata_file_json):
-        """Method to insert metadata into Elasticsearch."""
-        # Add new metadata to es
-        logger.debug("insert_metadata...")
-        result = self.es_client.index(index=self.metadata_index, document=metadata_file_json)
-        return result
+    def insert_metadata_in_search_store(self, metadata_file_json: dict) -> dict:
+        """Inserts metadata from a JSON file into the Elasticsearch index.
+
+        Args:
+            metadata_file_json (dict): A dictionary containing the metadata to be inserted.
+                The expected structure of the dictionary depends on your specific Elasticsearch
+                schema, but it should generally represent the document you want to store
+                in the index.
+
+        Returns:
+            dict: The response dictionary from the Elasticsearch client's `index` method,
+                containing information about the successful or failed indexing operation.
+                The structure of this dictionary will vary depending on your Elasticsearch
+                version and configuration. Consult the Elasticsearch documentation for
+                details.
+
+        """
+        try:
+            response = self.es_client.index(index=self.metadata_index, document=metadata_file_json)
+            if response["result"] == "created":
+                self.number_of_dataproducts = self.number_of_dataproducts + 1
+            return True
+        except Exception as exception:
+            logger.error("Error inserting metadata: %s", exception)
+            return False
 
     def search_metadata(self):
         """Metadata Search method"""

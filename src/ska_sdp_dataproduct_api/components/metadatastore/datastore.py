@@ -15,7 +15,7 @@ from ska_sdp_dataproduct_api.configuration.settings import (
 )
 from ska_sdp_dataproduct_api.utilities.helperfunctions import (
     DataProductMetaData,
-    FileUrl,
+    FilePaths,
     find_metadata,
     get_date_from_name,
     get_relative_path,
@@ -38,7 +38,7 @@ class SearchStoreSuperClass:
         """This method is implemented in the subclasses."""
         raise NotImplementedError
 
-    def insert_metadata(self, metadata_file_json):
+    def insert_metadata_in_search_store(self, metadata_file_json):
         """This is implemented in subclasses."""
         raise NotImplementedError
 
@@ -74,23 +74,30 @@ class SearchStoreSuperClass:
         if reverse:
             self.metadata_list.reverse()
 
-    def ingest_file(self, path: pathlib.Path):
-        """This function gets the file information of a data product and
-        structure the information to be inserted into the metadata store.
+    def ingest_file(self, data_product_path: pathlib.Path) -> None:
         """
-        metadata_file = path
-        metadata_file_name = FileUrl
-        metadata_file_name.fullPathName = PERSISTENT_STORAGE_PATH.joinpath(
-            get_relative_path(metadata_file)
+        Ingests a data product file by loading its metadata, structuring the information,
+        and inserting it into the metadata store.
+
+        Args:
+            data_product_path (pathlib.Path): The path to the data file.
+        """
+        if not data_product_path.is_file():
+            logger.error("Invalid path: %s. Expected a file.", data_product_path)
+
+        data_product_file_paths = FilePaths
+        data_product_file_paths.fullPathName = PERSISTENT_STORAGE_PATH.joinpath(
+            get_relative_path(data_product_path)
         )
-        metadata_file_name.relativePathName = get_relative_path(metadata_file)
-        metadata_file_json = self.load_metadata(
-            metadata_file_name,
-        )
-        # return if no metadata was read
-        if len(metadata_file_json) == 0:
+        data_product_file_paths.relativePathName = get_relative_path(data_product_path)
+
+        metadata_file_json = self.load_metadata(data_product_file_paths)
+
+        # Check if any metadata was actually loaded before inserting
+        if not metadata_file_json:
             return
-        self.insert_metadata(metadata_file_json)
+
+        self.insert_metadata_in_search_store(metadata_file_json)
 
     def ingest_metadata_files(self, full_path_name: pathlib.Path) -> None:
         """
@@ -118,13 +125,15 @@ class SearchStoreSuperClass:
         for product_path in dataproduct_paths:
             self.ingest_file(product_path)
 
-        self.sort_metadata_list(key="date_created", reverse=True)
+        self.sort_metadata_list(
+            key="date_created", reverse=True
+        )  # TODO Might want to move this to inmemory only?
 
     def ingest_metadata_object(self, metadata: DataProductMetaData):
         """
         Ingest a single metadata object
         """
-        self.insert_metadata(metadata.json())
+        self.insert_metadata_in_search_store(metadata.json())
 
         return metadata.dict()
 
@@ -157,7 +166,6 @@ class SearchStoreSuperClass:
             if query_metadata is not None:
                 data_product_details[query_metadata["key"]] = query_metadata["value"]
         self.update_dataproduct_list(data_product_details)
-        self.number_of_dataproducts = self.number_of_dataproducts + 1
 
     def update_dataproduct_list(self, data_product_details):
         """
@@ -211,7 +219,7 @@ class SearchStoreSuperClass:
             return False
         return True
 
-    def load_metadata_file(self, file_object: FileUrl) -> dict[str, Any]:
+    def load_metadata_file(self, file_object: FilePaths) -> dict[str, Any]:
         """
         Load metadata from a YAML file.
 
@@ -236,7 +244,7 @@ class SearchStoreSuperClass:
             logger.warning("Unexpected error occurred: %s", other_error)
             raise other_error
 
-    def load_metadata(self, file_object: FileUrl):
+    def load_metadata(self, file_object: FilePaths):
         """This function loads the content of a yaml file and return it as
         json."""
         # Test that the metadata file exists

@@ -65,7 +65,7 @@ class InMemoryDataproductIndex(SearchStoreSuperClass):
         self.metadata_list.clear()
         self.number_of_dataproducts = 0
 
-    def insert_metadata(self, metadata_file_json):
+    def insert_metadata_in_search_store(self, metadata_file_json):
         """This method loads the metadata file of a data product, creates a
         list of keys used in it, and then adds it to the metadata_list"""
         # load JSON into object
@@ -78,6 +78,7 @@ class InMemoryDataproductIndex(SearchStoreSuperClass):
             metadata_file=metadata_file,
             query_key_list=query_key_list,
         )
+        self.number_of_dataproducts = self.number_of_dataproducts + 1
 
     def generate_metadata_keys_list(self, metadata, ignore_keys, parent_key="", sep="_"):
         """Given a nested dict, return the flattened list of keys"""

@@ -15,7 +15,7 @@ from ska_sdp_dataproduct_api.configuration.settings import DEFAULT_DISPLAY_LAYOU
 from ska_sdp_dataproduct_api.utilities.helperfunctions import (  # SearchParametersClass,
     DataProductMetaData,
     DPDAPIStatus,
-    FileUrl,
+    FilePaths,
     download_file,
 )
 
@@ -121,21 +121,21 @@ async def data_products_list():
 
 
 @app.post("/download")
-async def download(file_object: FileUrl):
+async def download(file_object: FilePaths):
     """This API endpoint returns a FileResponse that is used by a
     frontend to download a file"""
     return download_file(file_object)
 
 
 @app.post("/dataproductmetadata", response_class=Response)
-async def data_product_metadata(file_object: FileUrl):
+async def data_product_metadata(file_object: FilePaths):
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
     return search_store.load_metadata(file_object)
 
 
 @app.post("/ingestnewdataproduct")
-async def ingest_new_data_product(file_object: FileUrl):
+async def ingest_new_data_product(file_object: FilePaths):
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
     search_store.update_data_store_date_modified()

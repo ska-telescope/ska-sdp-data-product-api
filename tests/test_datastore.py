@@ -8,7 +8,7 @@ import yaml
 from ska_sdp_dataproduct_api.components.metadatastore.datastore import (
     SearchStoreSuperClass,  # Replace with the actual import path
 )
-from ska_sdp_dataproduct_api.utilities.helperfunctions import FileUrl
+from ska_sdp_dataproduct_api.utilities.helperfunctions import FilePaths
 
 from .test_files.example_files.expected_metadata import expected_metadata
 
@@ -50,7 +50,7 @@ class TestDatastore:
         Test loading metadata from a valid YAML file.
         """
         my_instance = SearchStoreSuperClass()
-        test_metadata_file = FileUrl
+        test_metadata_file = FilePaths
         test_metadata_file.fileName = "ska-data-product.yaml"
         test_metadata_file.fullPathName = (
             "tests/test_files/product/eb-m001-20230921-245/ska-data-product.yaml"
@@ -64,7 +64,7 @@ class TestDatastore:
         Test loading metadata from a valid YAML file.
         """
         my_instance = SearchStoreSuperClass()
-        test_metadata_file = FileUrl
+        test_metadata_file = FilePaths
         test_metadata_file.fileName = "nonexistent_file_name"
         test_metadata_file.fullPathName = "/path/to/nonexistent/file.yaml"
 
@@ -77,7 +77,7 @@ class TestDatastore:
         Test handling YAML parsing errors.
         """
         my_instance = SearchStoreSuperClass()
-        test_metadata_file = FileUrl
+        test_metadata_file = FilePaths
         test_metadata_file.fileName = "ska-data-product.yaml"
         test_metadata_file.fullPathName = tmp_path / "ska-data-product.yaml"
 

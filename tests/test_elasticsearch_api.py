@@ -41,7 +41,7 @@ def test_insert_metadata():
     ) as document_file:
         document = document_file.read()
 
-    metadata_store.insert_metadata(document)
+    metadata_store.insert_metadata_in_search_store(document)
     response = metadata_store.es_client.get(index="sdp_meta_data", id=1)
 
     assert response == json.loads(document)
