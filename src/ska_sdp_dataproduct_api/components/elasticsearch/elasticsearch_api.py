@@ -8,10 +8,8 @@ import elasticsearch
 from elasticsearch import Elasticsearch
 
 from ska_sdp_dataproduct_api.components.metadatastore.datastore import SearchStoreSuperClass
-from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
 from ska_sdp_dataproduct_api.configuration.settings import (
     CONFIGURATION_FILES_PATH,
-    DATE_FORMAT,
     ELASTICSEARCH_HOST,
     ELASTICSEARCH_HTTP_CA,
     ELASTICSEARCH_METADATA_SCHEMA_FILE,
@@ -19,7 +17,6 @@ from ska_sdp_dataproduct_api.configuration.settings import (
     ELASTICSEARCH_PORT,
     ELASTICSEARCH_USER,
 )
-from ska_sdp_dataproduct_api.utilities.helperfunctions import parse_valid_date
 
 logger = logging.getLogger(__name__)
 
@@ -184,56 +181,10 @@ class ElasticsearchMetadataStore(
         result = self.es_client.index(index=self.metadata_index, document=metadata_file_json)
         return result
 
-    def search_metadata(
-        self,
-        start_date: str = "1970-01-01",
-        end_date: str = "2100-01-01",
-        metadata_key_value_pairs=None,
-    ):
+    def search_metadata(self):
         """Metadata Search method"""
 
-        must = []
         meta_data_keys = []
-        if metadata_key_value_pairs is not None and len(metadata_key_value_pairs) > 0:
-            for key_value in metadata_key_value_pairs:
-                if key_value["metadata_key"] != "*" and key_value["metadata_value"] != "*":
-                    match_criteria = {
-                        "match": {key_value["metadata_key"]: key_value["metadata_value"]}
-                    }
-                else:
-                    match_criteria = {"match_all": {}}
-
-                if match_criteria not in must:
-                    must.append(match_criteria)
-                    meta_data_keys.append(key_value["metadata_key"])
-        else:
-            match_criteria = {"match_all": {}}
-            must.append(match_criteria)
-
-        parse_valid_date(start_date, DATE_FORMAT)
-        parse_valid_date(end_date, DATE_FORMAT)
-
-        parse_valid_date(start_date, DATE_FORMAT)
-        parse_valid_date(end_date, DATE_FORMAT)
-
-        query_body = {
-            "query": {
-                "bool": {
-                    "must": must,
-                    "filter": [
-                        {
-                            "range": {
-                                "date_created": {
-                                    "gte": start_date[0:10],
-                                    "lte": end_date[0:10],
-                                    "format": "yyyy-MM-dd",
-                                }
-                            }
-                        }
-                    ],
-                }
-            }
-        }
         self.check_and_reconnect()
 
         resp = self.es_client.search(  # pylint: disable=E1123
@@ -249,43 +200,15 @@ class ElasticsearchMetadataStore(
                         query_key_list=meta_data_keys,
                     )
 
-    def apply_filters(self, data, filters):
-        """This is implemented in Elasticsearch."""
-        raise NotImplementedError
-
     def filter_data(self, mui_data_grid_filter_model, search_panel_options):
         """This is implemented in subclasses."""
-        # self.query_body = {"query": {"bool": {"must": []}}}
-        # self.map_mui_filters_to_es_query(mui_data_grid_filter_model)
-        self.build_elasticsearch_query(search_panel_options)
+        self.query_body = {"query": {"bool": {"must": []}}}
+        self.add_search_panel_options_to_es_query(search_panel_options)
+        self.add_mui_data_grid_filter_model_to_es_query(mui_data_grid_filter_model)
         self.search_metadata()
         return self.metadata_list
 
-    def map_mui_filters_to_es_query(self, filters):
-        """
-        Maps MUI Datagrid filters to an Elasticsearch query body.
-
-        Args:
-            filters: A dictionary containing MUI filter data (field: value pairs).
-
-        Returns:
-            A dictionary representing the Elasticsearch query body.
-        """
-
-        for field_name, value in filters.items():
-            # Handle different filter types (example: match, range)
-            if isinstance(value, str):
-                self.query_body["query"]["bool"]["must"].append({"match": {field_name: value}})
-            elif isinstance(value, list):
-                # Apply multi_match for multiple filter values (adjust as needed)
-                self.query_body["query"]["bool"]["must"].append(
-                    {"multi_match": {"query": value, "fields": [field_name]}}
-                )
-            # Add logic for other filter types (date ranges, etc.)
-
-        return self.query_body
-
-    def build_elasticsearch_query(self, filters):
+    def add_search_panel_options_to_es_query(self, search_panel_options):
         """
         Builds an Elasticsearch query body based on the provided data structure.
 
@@ -296,29 +219,28 @@ class ElasticsearchMetadataStore(
             A dictionary representing the Elasticsearch query body.
         """
 
-        print("map_mui_filters_to_es_query filters:")
-        print(filters)
-        if not "items" in filters:
+        if "items" not in search_panel_options:
             return
 
-        gte_date = ""
-        lte_date = ""
-        must_list = []
+        gte_date = "1970-01-01"
+        lte_date = "2050-12-31"
 
-        # Add date_created filters
-        for item in filters["items"]:
+        # Add date_created search_panel_options
+        for item in search_panel_options["items"]:
             if item["field"] == "date_created":
-                if item["operator"] == "greaterThan":
-                    gte_date = item["value"]
-                elif item["operator"] == "lessThan":
-                    lte_date = item["value"]
+                if not item["value"] == "":
+                    if item["operator"] == "greaterThan":
+                        gte_date = item["value"]
+                    elif item["operator"] == "lessThan":
+                        lte_date = item["value"]
 
             elif item["field"] == "formFields":
                 for key_pair in item["keyPairs"]:
                     # Check if both key and value exist before adding to query
                     if key_pair["keyPair"] and key_pair["valuePair"]:
-                        must_list.append({"term": {key_pair["keyPair"]: key_pair["valuePair"]}})
-
+                        self.query_body["query"]["bool"]["must"].append(
+                            {"term": {key_pair["keyPair"]: key_pair["valuePair"]}}
+                        )
         date_ranges = {
             "range": {
                 "date_created": {
@@ -328,5 +250,28 @@ class ElasticsearchMetadataStore(
                 }
             }
         }
-        self.query_body["query"]["bool"]["must"] = must_list
+
         self.query_body["query"]["bool"]["must"].append(date_ranges)
+
+    def add_mui_data_grid_filter_model_to_es_query(self, mui_data_grid_filter_model):
+        """
+        Builds an Elasticsearch query body based on the provided data structure.
+
+        Args:
+            data: A dictionary representing the data for the query body.
+
+        Returns:
+            A dictionary representing the Elasticsearch query body.
+        """
+        if "items" not in mui_data_grid_filter_model:
+            return
+
+        # Add date_created search_panel_options
+        for item in mui_data_grid_filter_model["items"]:
+            if item["field"] == "date_created":
+                pass
+            elif item["field"] and item["value"]:
+                # Check if both key and value exist before adding to query
+                self.query_body["query"]["bool"]["must"].append(
+                    {"term": {item["field"]: item["value"]}}
+                )
