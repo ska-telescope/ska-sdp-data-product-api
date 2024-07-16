@@ -44,7 +44,7 @@ class ElasticsearchMetadataStore(
         self.connection_established_at: datetime = ""
         self.cluster_info: dict = {}
 
-        self.query_body = {"query": {"bool": {"must": []}}}
+        self.query_body = {"query": {"bool": {"should": [], "filter": []}}}
 
     def status(self) -> dict:
         """
@@ -224,7 +224,7 @@ class ElasticsearchMetadataStore(
 
     def filter_data(self, mui_data_grid_filter_model, search_panel_options):
         """This is implemented in subclasses."""
-        self.query_body = {"query": {"bool": {"must": []}}}
+        self.query_body = {"query": {"bool": {"should": [], "filter": []}}}
         self.add_search_panel_options_to_es_query(search_panel_options)
         self.add_mui_data_grid_filter_model_to_es_query(mui_data_grid_filter_model)
         self.search_metadata()
@@ -262,8 +262,8 @@ class ElasticsearchMetadataStore(
                 for key_pair in item["keyPairs"]:
                     # Check if both key and value exist before adding to query
                     if key_pair["keyPair"] and key_pair["valuePair"]:
-                        self.query_body["query"]["bool"]["must"].append(
-                            {"term": {key_pair["keyPair"]: key_pair["valuePair"]}}
+                        self.query_body["query"]["bool"]["should"].append(
+                            {"match": {key_pair["keyPair"]: key_pair["valuePair"]}}
                         )
         date_ranges = {
             "range": {
@@ -275,7 +275,7 @@ class ElasticsearchMetadataStore(
             }
         }
 
-        self.query_body["query"]["bool"]["must"].append(date_ranges)
+        self.query_body["query"]["bool"]["filter"].append(date_ranges)
 
     def add_mui_data_grid_filter_model_to_es_query(self, mui_data_grid_filter_model):
         """
@@ -294,8 +294,8 @@ class ElasticsearchMetadataStore(
         for item in mui_data_grid_filter_model["items"]:
             if item["field"] == "date_created":
                 pass
-            elif item["field"] and item["value"]:
+            elif "field" in item and "value" in item:
                 # Check if both key and value exist before adding to query
-                self.query_body["query"]["bool"]["must"].append(
-                    {"term": {item["field"]: item["value"]}}
+                self.query_body["query"]["bool"]["should"].append(
+                    {"match": {item["field"]: item["value"]}}
                 )
