@@ -5,6 +5,7 @@ import logging
 from typing import Dict, List, Optional
 
 from fastapi import BackgroundTasks, Body, Response
+from fastapi.exceptions import HTTPException
 
 from ska_sdp_dataproduct_api.components.metadatastore.store_factory import (
     select_correct_store_class,
@@ -12,15 +13,13 @@ from ska_sdp_dataproduct_api.components.metadatastore.store_factory import (
 from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
 from ska_sdp_dataproduct_api.components.postgresql.postgresql import PostgresConnector
 from ska_sdp_dataproduct_api.configuration.settings import DEFAULT_DISPLAY_LAYOUT, app
-from ska_sdp_dataproduct_api.utilities.helperfunctions import (  # SearchParametersClass,
+from ska_sdp_dataproduct_api.utilities.helperfunctions import (
     DataProductMetaData,
     DPDAPIStatus,
     FilePaths,
+    SearchParametersClass,
     download_file,
 )
-
-# from fastapi.exceptions import HTTPException
-
 
 logger = logging.getLogger(__name__)
 
@@ -48,30 +47,44 @@ async def reindex_data_products(background_tasks: BackgroundTasks):
     return "Metadata is set to be cleared and re-indexed"
 
 
-# @app.post("/dataproductsearch", response_class=Response)
-# async def data_products_search(search_parameters: SearchParametersClass):
-#     """This API endpoint returns a list of all the data products
-#     in the PERSISTENT_STORAGE_PATH
-#     """
-#     metadata_key_value_pairs = []
-#     if (
-#         search_parameters.key_value_pairs is not None
-#         and len(search_parameters.key_value_pairs) > 0
-#     ):
-#         for key_value_pair in search_parameters.key_value_pairs:
-#             if ":" not in key_value_pair:
-#                 raise HTTPException(status_code=400, detail="Invalid search key pair.")
-#             metadata_key_value_pairs.append(
-#                 {
-#                     "metadata_key": key_value_pair.split(":")[0],
-#                     "metadata_value": key_value_pair.split(":")[1],
-#                 }
-#             )
-#     else:
-#         metadata_key_value_pairs = None
+@app.post("/dataproductsearch")
+async def data_products_search(search_parameters: SearchParametersClass):
+    """This API endpoint returns a list of all the data products
+    in the PERSISTENT_STORAGE_PATH
+    """
+    metadata_key_value_pairs = []
+    print("search_parameters")
+    print(search_parameters)
+    if (
+        search_parameters.key_value_pairs is not None
+        and len(search_parameters.key_value_pairs) > 0
+    ):
+        for key_value_pair in search_parameters.key_value_pairs:
+            if ":" not in key_value_pair:
+                raise HTTPException(status_code=400, detail="Invalid search key pair.")
+            metadata_key_value_pairs.append(
+                {
+                    "keyPair": key_value_pair.split(":")[0],
+                    "valuePair": key_value_pair.split(":")[1],
+                }
+            )
 
-#     filtered_data_product_list = search_store.search_metadata()
-#     return filtered_data_product_list
+    search_options = {
+        "items": [
+            {
+                "field": "date_created",
+                "operator": "greaterThan",
+                "value": search_parameters.start_date,
+            },
+            {"field": "date_created", "operator": "lessThan", "value": search_parameters.end_date},
+            {"field": "formFields", "keyPairs": metadata_key_value_pairs},
+        ],
+        "logicOperator": "and",
+    }
+
+    filtered_data = search_store.filter_data({}, search_options)
+
+    return filtered_data
 
 
 @app.post("/filterdataproducts")
@@ -91,6 +104,11 @@ async def filter_data(body: Optional[Dict] = Body(...)) -> List:
     """
     mui_data_grid_filter_model = body.get("filterModel", {})
     search_panel_options = body.get("searchPanelOptions", {})
+
+    print("mui_data_grid_filter_model")
+    print(mui_data_grid_filter_model)
+    print("search_panel_options")
+    print(search_panel_options)
 
     filtered_data = search_store.filter_data(mui_data_grid_filter_model, search_panel_options)
 
