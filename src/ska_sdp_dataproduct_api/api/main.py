@@ -139,7 +139,10 @@ async def ingest_new_data_product(file_object: FilePaths):
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
     search_store.update_data_store_date_modified()
-    search_store.ingest_metadata_files(file_object.fullPathName)
+    search_store.list_all_data_product_files(file_object.fullPathName)
+    search_store.ingest_list_of_data_product_paths()
+    search_store.sort_metadata_list()
+
     logger.info("New data product metadata file loaded and search_store index updated")
     return "New data product metadata file loaded and search_store index updated"
 

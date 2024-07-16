@@ -8,6 +8,7 @@ import elasticsearch
 from elasticsearch import Elasticsearch
 
 from ska_sdp_dataproduct_api.components.metadatastore.datastore import SearchStoreSuperClass
+from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
 from ska_sdp_dataproduct_api.configuration.settings import (
     CONFIGURATION_FILES_PATH,
     ELASTICSEARCH_HOST,
@@ -198,14 +199,16 @@ class ElasticsearchMetadataStore(
             if response["result"] == "created":
                 self.number_of_dataproducts = self.number_of_dataproducts + 1
             return True
-        except Exception as exception:
+        except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error("Error inserting metadata: %s", exception)
             return False
+
+    def sort_metadata_list(self) -> None:
+        """This method sorts the metadata_list according to the set key"""
 
     def search_metadata(self):
         """Metadata Search method"""
 
-        meta_data_keys = []
         self.check_and_reconnect()
 
         resp = self.es_client.search(  # pylint: disable=E1123
@@ -216,10 +219,8 @@ class ElasticsearchMetadataStore(
         for _num, doc in enumerate(all_hits):
             for key, value in doc.items():
                 if key == "_source":
-                    self.add_dataproduct(
-                        metadata_file=value,
-                        query_key_list=meta_data_keys,
-                    )
+                    self.update_flattened_list_of_keys(value)
+                    self.add_dataproduct(metadata_file=value)
 
     def filter_data(self, mui_data_grid_filter_model, search_panel_options):
         """This is implemented in subclasses."""
@@ -227,7 +228,9 @@ class ElasticsearchMetadataStore(
         self.add_search_panel_options_to_es_query(search_panel_options)
         self.add_mui_data_grid_filter_model_to_es_query(mui_data_grid_filter_model)
         self.search_metadata()
-        return self.metadata_list
+        muiDataGridInstance.load_inmemory_store_data(self)
+        result = muiDataGridInstance.rows.copy()
+        return result
 
     def add_search_panel_options_to_es_query(self, search_panel_options):
         """

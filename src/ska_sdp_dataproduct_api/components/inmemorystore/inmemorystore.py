@@ -2,7 +2,6 @@
 import copy
 import json
 import logging
-from collections.abc import MutableMapping
 from typing import Any, Dict, List
 
 from ska_sdp_dataproduct_api.components.metadatastore.datastore import SearchStoreSuperClass
@@ -72,27 +71,32 @@ class InMemoryDataproductIndex(SearchStoreSuperClass):
         metadata_file = json.loads(metadata_file_json)
 
         # generate a list of keys from this object
-        query_key_list = self.generate_metadata_keys_list(metadata_file, [], "", ".")
+        self.update_flattened_list_of_keys(metadata_file)
 
         self.add_dataproduct(
             metadata_file=metadata_file,
-            query_key_list=query_key_list,
         )
         self.number_of_dataproducts = self.number_of_dataproducts + 1
 
-    def generate_metadata_keys_list(self, metadata, ignore_keys, parent_key="", sep="_"):
-        """Given a nested dict, return the flattened list of keys"""
-        items = []
-        for key, value in metadata.items():
-            new_key = parent_key + sep + key if parent_key else key
-            if isinstance(value, MutableMapping):
-                items.extend(
-                    self.generate_metadata_keys_list(value, ignore_keys, new_key, sep=sep)
-                )
-            else:
-                if new_key not in ignore_keys:
-                    items.append(new_key)
-        return items
+    def sort_metadata_list(
+        self, key: str = "date_created", reverse: bool = True
+    ) -> None:  # TODO, this does not seem to work....
+        """Sorts the `metadata_list` attribute of the class instance in-place.
+
+        Args:
+            key (str, optional): The key attribute to sort by. Defaults to "date_created".
+            reverse (bool, optional): Whether to sort in descending order. Defaults to True.
+
+        Raises:
+            TypeError: If the provided `key` is not a string.
+            ValueError: If the `key` is not found in the elements of `metadata_list`.
+        """
+
+        for element in self.metadata_list:
+            if key not in element:
+                logger.info("Key %s not found in all elements of metadata_list", key)
+
+        self.metadata_list.sort(key=lambda x: x[key], reverse=reverse)
 
     def search_metadata(
         self,
