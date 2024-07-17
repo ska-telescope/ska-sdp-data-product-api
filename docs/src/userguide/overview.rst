@@ -6,20 +6,31 @@ This API is used to provide a list of SDP data products (files) that are hosted 
 
 Automatic API Documentation
 ---------------------------
-For detailed documentation of the API, see the FastAPI Swagger UI documentation. This interactive API documentation can be accessed at http://127.0.0.1:8000/docs when running the application locally or https://<domain>/<namespace>/api/docs when deployed behind an ingress.
+
+Detailed interactive documentation for the API is available through Swagger UI. Access it at *http://<API URL>/docs* while running the application.
+
 
 Basic Usage
 -----------
 
-Test endpoint
-~~~~~~~~~~~~~
+.. note:: This API is typically deployed behind a secure layer that encrypts communication (TLS/SSL) and likely requires user authentication through a separate system. When accessing the API through a browser, both the encryption and the authentication will be handled by the browser, but direct access with scripts or notebooks to the API from outside the cluster is currently not supported. To make use of this API directly, the user need to access it from within the cluster where it is hosted.
+ 
 
+Status endpoint
+~~~~~~~~~~~~~~~
 
-To retrieve the status of the API, you can send a get request to the status endpoint and you will get a reply indicating the status of the API and the Search:
+Verify the API's status by sending a GET request to the /status endpoint. The response will indicate the API's operational state.
+
+*Request*
 
 .. code-block:: bash
 
     GET /status
+
+*Response*
+
+.. code-block:: bash
+
 
     {
         "api_running": true,
@@ -46,48 +57,60 @@ To retrieve the status of the API, you can send a get request to the status endp
 
 
 
-Metadata search endpoint
-~~~~~~~~~~~~~~~~~~~~~~~~
+Search endpoint
+~~~~~~~~~~~~~~~
 
-When an Elasticsearch backend endpoint is available, the dataproductsearch will query the Elasticsearch datastore with the search criteria passed to the API (start_date, end_date and key_pair). The search results will then be returned as a list of data products, with key metadata attributes.
+Use the search endpoint to query your data products. Specify a time range and key-value pairs to filter your results. The response prioritizes products within the timeframe that best match your criteria.
+
+*Request*
 
 .. code-block:: bash
 
     POST /dataproductsearch
 
-    {
-    "start_date": "2001-12-12",
-    "end_date": "2032-12-12",
-    "key_pair": "execution_block:eb-m001-20191031-12345"
-    }
-
-
-    [{"id": 1, "execution_block": "eb-test-20230401-12345", "interface": "http://schema.skao.int/ska-data-product-meta/0.1", "date_created": "2023-04-01", "dataproduct_file": "product/eb-test-20230401-12345", "metadata_file": "product/eb-test-20230401-12345/ska-data-product.yaml", "obscore.dataproduct_type": "MS"}, {"id": 2, "interface": "http://schema.skao.int/ska-data-product-meta/0.1", "execution_block": "eb-m004-20191031-12345", "date_created": "2019-10-31", "dataproduct_file": "product/eb-m004-20191031-12345", "metadata_file": "product/eb-m004-20191031-12345/ska-data-product.yaml", "obscore.dataproduct_type": "MS"}]
-
-Metadata list endpoint
-~~~~~~~~~~~~~~~~~~~~~~
-
-When an Elasticsearch backend endpoint is not available, the dataproductlist can be used to return all the data products as a list of data products, with key metadata attributes.
+*Body*
 
 .. code-block:: bash
 
-    GET /dataproductlist
+    {
+        "start_date": "2000-12-12",
+        "end_date": "2032-12-12",
+        "key_value_pairs": ["execution_block:eb-m005-20231031-12345"]
+    }
 
+*Response*
 
-    [{"id": 1, "interface": "http://schema.skao.int/ska-data-product-meta/0.1", "execution_block": "eb-m001-20191031-12345", "date_created": "2019-10-31", "dataproduct_file": "product/eb-m001-20221212-12345", "metadata_file": "product/eb-m001-20221212-12345/ska-data-product.yaml"}, {"id": 2, "interface": "http://schema.skao.int/ska-data-product-meta/0.1", "execution_block": "eb-m002-20221212-12345", "date_created": "2022-12-12", "dataproduct_file": "product/eb-m002-20221212-12345", "metadata_file": "product/eb-m002-20221212-12345/ska-data-product.yaml"}]
+.. code-block:: bash
 
+    [
+        {
+            "execution_block": "eb-m005-20231031-12345",
+            "date_created": "2023-10-31",
+            "dataproduct_file": "eb-m005-20231031-12345",
+            "metadata_file": "eb-m005-20231031-12345/ska-data-product.yaml",
+            "config.cmdline": "-dump /product/eb-m004-20191031-12345/ska-sdp/pb-m004-20191031-12345/vis.ms",
+            ...
+            "obscore.instrument_name": "SKA-LOW",
+            "id": 6
+        }
+    ]
 
 Re-index data products endpoint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The data product metadata store can be re-indexed but making a get request to the reindexdataproducts endpoint. This allows the user to update the metadata store if metadata have been added or changed since the previous indexing.
 
+*Request*
+
 .. code-block:: bash
 
     GET /reindexdataproducts
 
+*Response*
 
-    "Metadata store cleared and re-indexed"
+.. code-block:: bash
+
+    "Metadata is set to be cleared and re-indexed"
 
 Download data product endpoint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -96,7 +119,14 @@ Sending a post request to the download endpoint will return a stream response of
 
 The body of the post request must contain the name of the file and the relative path of the file you want to download as listed in the file list response above. 
 
-For example, the post request body:
+
+*Request*
+
+.. code-block:: bash
+
+    POST /download
+
+*Body*
 
 .. code-block:: bash
 
@@ -105,12 +135,9 @@ For example, the post request body:
         "relativePathName": "product/eb-test-20200325-00001"
     }
 
-The post request endpoint: 
+*Response*
 
-.. code-block:: bash
-
-    POST /download
-
+A stream response of the specified data product as a tar archive
 
 Retrieve metadata of a data product endpoint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -121,6 +148,14 @@ The body of the post request must contain the name of the file "ska-data-product
 
 For example, the post request body:
 
+*Request*
+
+.. code-block:: bash
+
+    POST /dataproductmetadata
+
+*Body*
+
 .. code-block:: bash
 
     {
@@ -128,11 +163,9 @@ For example, the post request body:
         "relativePathName": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml"
     }
 
-The post request endpoint: 
+*Response*
 
 .. code-block:: bash
-
-    POST /dataproductmetadata
 
     {
         "interface": "http://schema.skao.int/ska-data-product-meta/0.1", 
@@ -234,10 +267,6 @@ The Data Product Dashboard (DPD) will usually be used via the GUI, for certain s
 
 DPD API documentation can be found at https://developer.skao.int/projects/ska-sdp-dataproduct-api/en/latest/overview.html#automatic-api-documentation. The DPD API is self documenting and as such the available endpoints can be found at `/docs`
 
-Data Product Modes of Operation
-The Data Product Dashboard has two modes of operation. With an Elastic Search backend available the full functionality is available, without that backend, a degraded experience is given to the user. Due to current architectural decisions that need to be made. The degraded or “in memory” implementation is currently the expected behavior and as such this guide expects the “in memory” mode of operation. Since the API is consistent between the two modes of operation, the guide should still be relevant when the mode is switched across.
-The endpoint ‘/status’ will inform which mode of operation is currently activated, Search enabled is expected to be false.
-
 Searching for and Downloading Data Products
 When searching for data products it is important to ensure that the most recent data is available. The cached map for the in-memory solution periodically checks for new product that are available, but there is a way to manually ensure this, namely through the update command:
 
@@ -257,7 +286,7 @@ Searching for a specific product can be done by date or by other metadata fields
     data = {
         "start_date": "2001-12-12",
         "end_date": "2032-12-12",
-        "key_pair": "execution_block:eb-m001-20191031-12345",
+        "key_value_pairs": ["execution_block:eb-m001-20191031-12345"]
     }
     response = requests.post(f"{BASE_URL}/dataproductsearch", json=data)
     products = response.json()

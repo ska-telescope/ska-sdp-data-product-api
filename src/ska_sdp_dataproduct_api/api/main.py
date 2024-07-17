@@ -53,8 +53,7 @@ async def data_products_search(search_parameters: SearchParametersClass):
     in the PERSISTENT_STORAGE_PATH
     """
     metadata_key_value_pairs = []
-    print("search_parameters")
-    print(search_parameters)
+
     if (
         search_parameters.key_value_pairs is not None
         and len(search_parameters.key_value_pairs) > 0
@@ -105,11 +104,6 @@ async def filter_data(body: Optional[Dict] = Body(...)) -> List:
     mui_data_grid_filter_model = body.get("filterModel", {})
     search_panel_options = body.get("searchPanelOptions", {})
 
-    print("mui_data_grid_filter_model")
-    print(mui_data_grid_filter_model)
-    print("search_panel_options")
-    print(search_panel_options)
-
     filtered_data = search_store.filter_data(mui_data_grid_filter_model, search_panel_options)
 
     return filtered_data
@@ -128,14 +122,6 @@ async def get_muidatagridconfig() -> Dict:
     """
 
     return muiDataGridInstance.table_config
-
-
-@app.get("/dataproductlist", response_class=Response)
-async def data_products_list():
-    """This API endpoint returns a list of all the data products
-    in the PERSISTENT_STORAGE_PATH
-    """
-    return json.dumps(search_store.metadata_list)
 
 
 @app.post("/download")
