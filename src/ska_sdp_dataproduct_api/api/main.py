@@ -1,6 +1,5 @@
 """This API exposes SDP Data Products to the SDP Data Product Dashboard."""
 
-import json
 import logging
 from typing import Dict, List, Optional
 
