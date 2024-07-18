@@ -198,9 +198,11 @@ class ElasticsearchMetadataStore(
             response = self.es_client.index(index=self.metadata_index, document=metadata_file_json)
             if response["result"] == "created":
                 self.number_of_dataproducts = self.number_of_dataproducts + 1
-            return True
+                return True
+            logger.warning("Error inserting metadata into Elasticsearch: %s", str(response))
+            return False
         except Exception as exception:  # pylint: disable=broad-exception-caught
-            logger.error("Error inserting metadata: %s", exception)
+            logger.error("Error inserting metadata into Elasticsearch: %s", exception)
             return False
 
     def sort_metadata_list(self) -> None:
@@ -229,8 +231,7 @@ class ElasticsearchMetadataStore(
         self.add_mui_data_grid_filter_model_to_es_query(mui_data_grid_filter_model)
         self.search_metadata()
         muiDataGridInstance.load_inmemory_store_data(self)
-        result = muiDataGridInstance.rows.copy()
-        return result
+        return muiDataGridInstance.rows.copy()
 
     def add_search_panel_options_to_es_query(self, search_panel_options):
         """
@@ -261,7 +262,12 @@ class ElasticsearchMetadataStore(
             elif item["field"] == "formFields":
                 for key_pair in item["keyPairs"]:
                     # Check if both key and value exist before adding to query
-                    if key_pair["keyPair"] and key_pair["valuePair"]:
+                    if (
+                        "keyPair" in key_pair
+                        and "valuePair" in key_pair
+                        and key_pair["keyPair"]
+                        and key_pair["valuePair"]
+                    ):
                         self.query_body["query"]["bool"]["should"].append(
                             {"match": {key_pair["keyPair"]: key_pair["valuePair"]}}
                         )
@@ -290,12 +296,11 @@ class ElasticsearchMetadataStore(
         if "items" not in mui_data_grid_filter_model:
             return
 
-        # Add date_created search_panel_options
         for item in mui_data_grid_filter_model["items"]:
             if item["field"] == "date_created":
                 pass
+            # Check if both key and value exist before adding to query
             elif "field" in item and "value" in item:
-                # Check if both key and value exist before adding to query
                 self.query_body["query"]["bool"]["should"].append(
                     {"match": {item["field"]: item["value"]}}
                 )

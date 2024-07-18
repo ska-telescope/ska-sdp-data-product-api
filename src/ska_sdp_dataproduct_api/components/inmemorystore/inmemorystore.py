@@ -78,9 +78,7 @@ class InMemoryDataproductIndex(SearchStoreSuperClass):
         )
         self.number_of_dataproducts = self.number_of_dataproducts + 1
 
-    def sort_metadata_list(
-        self, key: str = "date_created", reverse: bool = True
-    ) -> None:  # TODO, this does not seem to work....
+    def sort_metadata_list(self, key: str = "date_created", reverse: bool = True) -> None:
         """Sorts the `metadata_list` attribute of the class instance in-place.
 
         Args:
