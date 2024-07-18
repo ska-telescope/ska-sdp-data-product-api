@@ -7,10 +7,10 @@ from pathlib import Path
 import elasticsearch
 from elasticsearch import Elasticsearch
 
-from ska_sdp_dataproduct_api.components.metadatastore.datastore import Store
+from ska_sdp_dataproduct_api.components.metadatastore.datastore import SearchStoreSuperClass
+from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
 from ska_sdp_dataproduct_api.configuration.settings import (
     CONFIGURATION_FILES_PATH,
-    DATE_FORMAT,
     ELASTICSEARCH_HOST,
     ELASTICSEARCH_HTTP_CA,
     ELASTICSEARCH_METADATA_SCHEMA_FILE,
@@ -18,12 +18,13 @@ from ska_sdp_dataproduct_api.configuration.settings import (
     ELASTICSEARCH_PORT,
     ELASTICSEARCH_USER,
 )
-from ska_sdp_dataproduct_api.utilities.helperfunctions import parse_valid_date
 
 logger = logging.getLogger(__name__)
 
 
-class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-attributes
+class ElasticsearchMetadataStore(
+    SearchStoreSuperClass
+):  # pylint: disable=too-many-instance-attributes
     """Class to insert data into Elasticsearch instance."""
 
     def __init__(self):
@@ -42,6 +43,8 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
         self.elasticsearch_version: str = ""
         self.connection_established_at: datetime = ""
         self.cluster_info: dict = {}
+
+        self.query_body = {"query": {"bool": {"should": [], "filter": []}}}
 
     def status(self) -> dict:
         """
@@ -65,6 +68,7 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
             "user": self.user,
             "running": self.elasticsearch_running,
             "connection_established_at": self.connection_established_at,
+            "number_of_dataproducts": self.number_of_dataproducts,
             "cluster_info": self.cluster_info,
         }
 
@@ -118,6 +122,8 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
             self.cluster_info = self.es_client.info()
             logger.info("Connected to Elasticsearch; creating default schema...")
             self.create_schema_if_not_existing(index=self.metadata_index)
+            self.reindex()
+
             return True
         return False
 
@@ -160,83 +166,141 @@ class ElasticsearchMetadataStore(Store):  # pylint: disable=too-many-instance-at
                 index=index, ignore=400, body=metadata_schema_json
             )
 
-    def clear_metadata_indecise(self):
-        """Clear out all indices from elasticsearch instance"""
+    def clear_metadata_indecise(self) -> None:
+        """Deletes specific indices from the Elasticsearch instance and clear the metadata_list.
+
+        Args:
+            None
+        """
+
         self.es_client.options(ignore_status=[400, 404]).indices.delete(index=self.metadata_index)
         self.metadata_list = []
+        self.number_of_dataproducts = 0
 
-    def insert_metadata(self, metadata_file_json):
-        """Method to insert metadata into Elasticsearch."""
-        # Add new metadata to es
-        result = self.es_client.index(index=self.metadata_index, document=metadata_file_json)
-        return result
+    def insert_metadata_in_search_store(self, metadata_file_json: dict) -> dict:
+        """Inserts metadata from a JSON file into the Elasticsearch index.
 
-    def search_metadata(
-        self,
-        start_date: str = "1970-01-01",
-        end_date: str = "2100-01-01",
-        metadata_key_value_pairs=None,
-    ):
+        Args:
+            metadata_file_json (dict): A dictionary containing the metadata to be inserted.
+                The expected structure of the dictionary depends on your specific Elasticsearch
+                schema, but it should generally represent the document you want to store
+                in the index.
+
+        Returns:
+            dict: The response dictionary from the Elasticsearch client's `index` method,
+                containing information about the successful or failed indexing operation.
+                The structure of this dictionary will vary depending on your Elasticsearch
+                version and configuration. Consult the Elasticsearch documentation for
+                details.
+
+        """
+        try:
+            response = self.es_client.index(index=self.metadata_index, document=metadata_file_json)
+            if response["result"] == "created":
+                self.number_of_dataproducts = self.number_of_dataproducts + 1
+                return True
+            logger.warning("Error inserting metadata into Elasticsearch: %s", str(response))
+            return False
+        except Exception as exception:  # pylint: disable=broad-exception-caught
+            logger.error("Error inserting metadata into Elasticsearch: %s", exception)
+            return False
+
+    def sort_metadata_list(self) -> None:
+        """This method sorts the metadata_list according to the set key"""
+
+    def search_metadata(self):
         """Metadata Search method"""
 
-        must = []
-        meta_data_keys = []
-        if metadata_key_value_pairs is not None and len(metadata_key_value_pairs) > 0:
-            for key_value in metadata_key_value_pairs:
-                if key_value["metadata_key"] != "*" and key_value["metadata_value"] != "*":
-                    match_criteria = {
-                        "match": {key_value["metadata_key"]: key_value["metadata_value"]}
-                    }
-                else:
-                    match_criteria = {"match_all": {}}
-
-                if match_criteria not in must:
-                    must.append(match_criteria)
-                    meta_data_keys.append(key_value["metadata_key"])
-        else:
-            match_criteria = {"match_all": {}}
-            must.append(match_criteria)
-
-        parse_valid_date(start_date, DATE_FORMAT)
-        parse_valid_date(end_date, DATE_FORMAT)
-
-        parse_valid_date(start_date, DATE_FORMAT)
-        parse_valid_date(end_date, DATE_FORMAT)
-
-        query_body = {
-            "query": {
-                "bool": {
-                    "must": must,
-                    "filter": [
-                        {
-                            "range": {
-                                "date_created": {
-                                    "gte": start_date[0:10],
-                                    "lte": end_date[0:10],
-                                    "format": "yyyy-MM-dd",
-                                }
-                            }
-                        }
-                    ],
-                }
-            }
-        }
         self.check_and_reconnect()
 
         resp = self.es_client.search(  # pylint: disable=E1123
-            index=self.metadata_index, body=query_body
+            index=self.metadata_index, body=self.query_body
         )
         all_hits = resp["hits"]["hits"]
         self.metadata_list = []
         for _num, doc in enumerate(all_hits):
             for key, value in doc.items():
                 if key == "_source":
-                    self.add_dataproduct(
-                        metadata_file=value,
-                        query_key_list=meta_data_keys,
-                    )
-        return json.dumps(self.metadata_list)
+                    self.update_flattened_list_of_keys(value)
+                    self.add_dataproduct(metadata_file=value)
 
-    def apply_filters(self, data, filters):
-        """This is implemented in Elasticsearch."""
-        raise NotImplementedError
+    def filter_data(self, mui_data_grid_filter_model, search_panel_options):
+        """This is implemented in subclasses."""
+        self.query_body = {"query": {"bool": {"should": [], "filter": []}}}
+        self.add_search_panel_options_to_es_query(search_panel_options)
+        self.add_mui_data_grid_filter_model_to_es_query(mui_data_grid_filter_model)
+        self.search_metadata()
+        muiDataGridInstance.load_inmemory_store_data(self)
+        return muiDataGridInstance.rows.copy()
+
+    def add_search_panel_options_to_es_query(self, search_panel_options):
+        """
+        Builds an Elasticsearch query body based on the provided data structure.
+
+        Args:
+            data: A dictionary representing the data for the query body.
+
+        Returns:
+            A dictionary representing the Elasticsearch query body.
+        """
+
+        if "items" not in search_panel_options:
+            return
+
+        gte_date = "1970-01-01"
+        lte_date = "2050-12-31"
+
+        # Add date_created search_panel_options
+        for item in search_panel_options["items"]:
+            if item["field"] == "date_created":
+                if not item["value"] == "":
+                    if item["operator"] == "greaterThan":
+                        gte_date = item["value"]
+                    elif item["operator"] == "lessThan":
+                        lte_date = item["value"]
+
+            elif item["field"] == "formFields":
+                for key_pair in item["keyPairs"]:
+                    # Check if both key and value exist before adding to query
+                    if (
+                        "keyPair" in key_pair
+                        and "valuePair" in key_pair
+                        and key_pair["keyPair"]
+                        and key_pair["valuePair"]
+                    ):
+                        self.query_body["query"]["bool"]["should"].append(
+                            {"match": {key_pair["keyPair"]: key_pair["valuePair"]}}
+                        )
+        date_ranges = {
+            "range": {
+                "date_created": {
+                    "gte": gte_date,
+                    "lte": lte_date,
+                    "format": "yyyy-MM-dd",
+                }
+            }
+        }
+
+        self.query_body["query"]["bool"]["filter"].append(date_ranges)
+
+    def add_mui_data_grid_filter_model_to_es_query(self, mui_data_grid_filter_model):
+        """
+        Builds an Elasticsearch query body based on the provided data structure.
+
+        Args:
+            data: A dictionary representing the data for the query body.
+
+        Returns:
+            A dictionary representing the Elasticsearch query body.
+        """
+        if "items" not in mui_data_grid_filter_model:
+            return
+
+        for item in mui_data_grid_filter_model["items"]:
+            if item["field"] == "date_created":
+                pass
+            # Check if both key and value exist before adding to query
+            elif "field" in item and "value" in item:
+                self.query_body["query"]["bool"]["should"].append(
+                    {"match": {item["field"]: item["value"]}}
+                )

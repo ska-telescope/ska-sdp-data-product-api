@@ -2,10 +2,10 @@
 import copy
 import json
 import logging
-from collections.abc import MutableMapping
 from typing import Any, Dict, List
 
-from ska_sdp_dataproduct_api.components.metadatastore.datastore import Store
+from ska_sdp_dataproduct_api.components.metadatastore.datastore import SearchStoreSuperClass
+from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
 from ska_sdp_dataproduct_api.configuration.settings import DATE_FORMAT
 from ska_sdp_dataproduct_api.utilities.helperfunctions import (
     filter_by_item,
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 # pylint: disable=no-name-in-module
 
 
-class InMemoryDataproductIndex(Store):
+class InMemoryDataproductIndex(SearchStoreSuperClass):
     """
     This class defines an object that is used to create a list of data products
     based on information contained in the metadata files of these data
@@ -56,37 +56,45 @@ class InMemoryDataproductIndex(Store):
         }
 
     def clear_metadata_indecise(self):
-        """Clear out all indices from in memory instance"""
+        """Clears metadata information stored within the class instance.
+
+        This method clears the `metadata_list` attribute
+        and sets the `number_of_dataproducts` attribute to 0.
+        """
         self.metadata_list.clear()
         self.number_of_dataproducts = 0
 
-    def insert_metadata(self, metadata_file_json):
+    def insert_metadata_in_search_store(self, metadata_file_json):
         """This method loads the metadata file of a data product, creates a
         list of keys used in it, and then adds it to the metadata_list"""
         # load JSON into object
         metadata_file = json.loads(metadata_file_json)
 
         # generate a list of keys from this object
-        query_key_list = self.generate_metadata_keys_list(metadata_file, [], "", ".")
+        self.update_flattened_list_of_keys(metadata_file)
 
         self.add_dataproduct(
             metadata_file=metadata_file,
-            query_key_list=query_key_list,
         )
+        self.number_of_dataproducts = self.number_of_dataproducts + 1
 
-    def generate_metadata_keys_list(self, metadata, ignore_keys, parent_key="", sep="_"):
-        """Given a nested dict, return the flattened list of keys"""
-        items = []
-        for key, value in metadata.items():
-            new_key = parent_key + sep + key if parent_key else key
-            if isinstance(value, MutableMapping):
-                items.extend(
-                    self.generate_metadata_keys_list(value, ignore_keys, new_key, sep=sep)
-                )
-            else:
-                if new_key not in ignore_keys:
-                    items.append(new_key)
-        return items
+    def sort_metadata_list(self, key: str = "date_created", reverse: bool = True) -> None:
+        """Sorts the `metadata_list` attribute of the class instance in-place.
+
+        Args:
+            key (str, optional): The key attribute to sort by. Defaults to "date_created".
+            reverse (bool, optional): Whether to sort in descending order. Defaults to True.
+
+        Raises:
+            TypeError: If the provided `key` is not a string.
+            ValueError: If the `key` is not found in the elements of `metadata_list`.
+        """
+
+        for element in self.metadata_list:
+            if key not in element:
+                logger.info("Key %s not found in all elements of metadata_list", key)
+
+        self.metadata_list.sort(key=lambda x: x[key], reverse=reverse)
 
     def search_metadata(
         self,
@@ -128,6 +136,17 @@ class InMemoryDataproductIndex(Store):
                 except KeyError:
                     continue
         return json.dumps(search_results)
+
+    def filter_data(self, mui_data_grid_filter_model, search_panel_options):
+        """This is implemented in subclasses."""
+        muiDataGridInstance.load_inmemory_store_data(self)
+
+        mui_filtered_data = self.apply_filters(
+            muiDataGridInstance.rows.copy(), mui_data_grid_filter_model
+        )
+        searchbox_filtered_data = self.apply_filters(mui_filtered_data, search_panel_options)
+
+        return searchbox_filtered_data
 
     def apply_filters(
         self, data: List[Dict[str, Any]], filters: Dict[str, Any]

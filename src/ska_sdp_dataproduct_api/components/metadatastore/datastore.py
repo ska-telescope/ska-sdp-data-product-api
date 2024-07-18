@@ -3,9 +3,9 @@ import datetime
 import json
 import logging
 import pathlib
-from pathlib import Path
+from collections.abc import MutableMapping
 from time import time
-from typing import Any
+from typing import Any, List
 
 import yaml
 from ska_sdp_dataproduct_metadata import MetaData
@@ -16,7 +16,7 @@ from ska_sdp_dataproduct_api.configuration.settings import (
 )
 from ska_sdp_dataproduct_api.utilities.helperfunctions import (
     DataProductMetaData,
-    FileUrl,
+    FilePaths,
     find_metadata,
     get_date_from_name,
     get_relative_path,
@@ -25,12 +25,14 @@ from ska_sdp_dataproduct_api.utilities.helperfunctions import (
 logger = logging.getLogger(__name__)
 
 
-class Store:
+class SearchStoreSuperClass:
     """Common store class (superclass to elastic search and in memory store)"""
 
     def __init__(self):
         self.indexing_timestamp = 0
+        self.list_of_data_product_paths: List[pathlib.Path] = []
         self.metadata_list = []
+        self.flattened_list_of_keys = []
         self.indexing = False
         self.date_modified = datetime.datetime.now()
         self.number_of_dataproducts: int = 0
@@ -39,11 +41,11 @@ class Store:
         """This method is implemented in the subclasses."""
         raise NotImplementedError
 
-    def insert_metadata(self, metadata_file_json):
+    def insert_metadata_in_search_store(self, metadata_file_json):
         """This is implemented in subclasses."""
         raise NotImplementedError
 
-    def apply_filters(self, data, filters):
+    def filter_data(self, mui_data_grid_filter_model, search_panel_options):
         """This is implemented in subclasses."""
         raise NotImplementedError
 
@@ -52,9 +54,11 @@ class Store:
         to enable the user to reindex if the data products were changed or
         appended since the initial load of the data"""
         try:
-            self.clear_metadata_indecise()
+            logger.info("Metadata store is re-indexing...")
             self.indexing = True
-            self.ingest_metadata_files(PERSISTENT_STORAGE_PATH)
+            self.clear_metadata_indecise()
+            self.list_all_data_product_files(PERSISTENT_STORAGE_PATH)
+            self.ingest_list_of_data_product_paths()
             self.indexing_timestamp = time()
             self.update_data_store_date_modified()
             self.indexing = False
@@ -68,61 +72,94 @@ class Store:
         added or modified in the data product store by this API"""
         self.date_modified = datetime.datetime.now()
 
-    def sort_metadata_list(self, key: str, reverse: bool) -> None:
-        """This method sorts the metadata_list according to the set key"""
-        self.metadata_list.sort(key=lambda x: x[key])
-        if reverse:
-            self.metadata_list.reverse()
-
-    def ingest_file(self, path: pathlib.Path):
-        """This function gets the file information of a data product and
-        structure the information to be inserted into the metadata store.
+    def ingest_file(self, data_product_path: pathlib.Path) -> None:
         """
-        metadata_file = path
-        metadata_file_name = FileUrl
-        metadata_file_name.fullPathName = PERSISTENT_STORAGE_PATH.joinpath(
-            get_relative_path(metadata_file)
-        )
-        metadata_file_name.relativePathName = get_relative_path(metadata_file)
-        metadata_file_json = self.load_metadata(
-            metadata_file_name,
-        )
-        # return if no metadata was read
-        if len(metadata_file_json) == 0:
-            return
-        self.insert_metadata(metadata_file_json)
+        Ingests a data product file by loading its metadata, structuring the information,
+        and inserting it into the metadata store.
 
-    def ingest_metadata_files(self, full_path_name: pathlib.Path):
-        """This function runs through a volume and add all the data products to
-        the metadata_list of the store"""
-        # Test if the path points to a directory
-        logger.info(
-            "Loading metadata files from storage location %s, \
-            then ingesting them into the metadata store",
-            str(full_path_name),
+        Args:
+            data_product_path (pathlib.Path): The path to the data file.
+        """
+        if not data_product_path.is_file():
+            logger.error("Invalid path: %s. Expected a file.", data_product_path)
+
+        data_product_file_paths = FilePaths
+        data_product_file_paths.fullPathName = PERSISTENT_STORAGE_PATH.joinpath(
+            get_relative_path(data_product_path)
         )
-        if not full_path_name.is_dir() or full_path_name.is_symlink():
+        data_product_file_paths.relativePathName = get_relative_path(data_product_path)
+
+        metadata_file_json = self.load_metadata(data_product_file_paths)
+
+        # Check if any metadata was actually loaded before inserting
+        if not metadata_file_json:
             return
-        dataproduct_paths = self.find_folders_with_metadata_files()
-        for product_path in dataproduct_paths:
+
+        self.insert_metadata_in_search_store(metadata_file_json)
+
+    def list_all_data_product_files(self, full_path_name: pathlib.Path) -> None:
+        """
+        Lists all data product files within the specified directory path.
+
+        This method recursively traverses the directory structure starting at `full_path_name`
+        and identifies files that are considered data products based on pre-defined criteria
+        of the folder containing a metadata file.
+
+        Args:
+            full_path_name (pathlib.Path): The path to the directory containing data products.
+
+        Returns:
+            List[pathlib.Path]: A list of `pathlib.Path` objects representing the identified
+                                data product files within the directory and its subdirectories.
+                                If no data product files are found, an empty list is returned.
+
+        Raises:
+            ValueError: If `full_path_name` does not represent a valid directory or is a symbolic
+            link.
+        """
+
+        if not full_path_name.is_dir():
+            logger.warning("Invalid directory path: %s", full_path_name)
+
+        if full_path_name.is_symlink():
+            logger.warning("Symbolic links are not supported:  %s", full_path_name)
+
+        logger.info("Identifying data product files within directory: %s", full_path_name)
+
+        self.list_of_data_product_paths.clear()
+        for file_path in PERSISTENT_STORAGE_PATH.rglob(METADATA_FILE_NAME):
+            if file_path not in self.list_of_data_product_paths:
+                self.list_of_data_product_paths.append(file_path)
+
+    def ingest_list_of_data_product_paths(self) -> None:
+        """
+        This method ingests metadata files from a specified storage location into the metadata
+        store.
+
+        Args:
+            full_path_name: The Path object representing the storage location containing the
+            metadata files.
+
+        Returns:
+            None
+        """
+        for product_path in self.list_of_data_product_paths:
             self.ingest_file(product_path)
-        self.sort_metadata_list(key="date_created", reverse=True)
 
     def ingest_metadata_object(self, metadata: DataProductMetaData):
         """
         Ingest a single metadata object
         """
-        self.insert_metadata(metadata.json())
+        self.insert_metadata_in_search_store(metadata.json())
 
         return metadata.dict()
 
-    def add_dataproduct(self, metadata_file, query_key_list):
+    def add_dataproduct(self, metadata_file):
         """
         Populates a list of data products with their associated metadata.
 
         Args:
             metadata_file: A dictionary containing the metadata for a data product.
-            query_key_list: A list of metadata keys to specifically extract and include.
 
         Raises:
             ValueError: If the provided metadata_file is not a dictionary.
@@ -140,12 +177,11 @@ class Store:
         # add additional keys based on the query
         # NOTE: at present users can only query using a single metadata_key,
         #       but add_dataproduct supports multiple query keys
-        for query_key in query_key_list:
+        for query_key in self.flattened_list_of_keys:
             query_metadata = find_metadata(metadata_file, query_key)
             if query_metadata is not None:
                 data_product_details[query_metadata["key"]] = query_metadata["value"]
         self.update_dataproduct_list(data_product_details)
-        self.number_of_dataproducts = self.number_of_dataproducts + 1
 
     def update_dataproduct_list(self, data_product_details):
         """
@@ -172,21 +208,12 @@ class Store:
         self.metadata_list.append(data_product_details)
         return
 
-    @staticmethod
-    def find_folders_with_metadata_files():
-        """This function lists all folders containing a metadata file"""
-        folders = []
-        for file_path in PERSISTENT_STORAGE_PATH.rglob(METADATA_FILE_NAME):
-            if file_path not in folders:
-                folders.append(file_path)
-        return folders
-
-    def check_file_exists(self, file_object: Path) -> bool:
+    def check_file_exists(self, file_object: pathlib.Path) -> bool:
         """
         Checks if the given file path points to an existing file.
 
         Args:
-            file_object (Path): The full path to the file.
+            file_object (pathlib.Path): The full path to the file.
 
         Returns:
             Bool: True if the file exists, otherwise False.
@@ -199,7 +226,7 @@ class Store:
             return False
         return True
 
-    def load_metadata_file(self, file_object: FileUrl) -> dict[str, Any]:
+    def load_metadata_file(self, file_object: FilePaths) -> dict[str, Any]:
         """
         Load metadata from a YAML file.
 
@@ -224,7 +251,7 @@ class Store:
             logger.warning("Unexpected error occurred: %s", other_error)
             raise other_error
 
-    def load_metadata(self, file_object: FileUrl):
+    def load_metadata(self, file_object: FilePaths):
         """This function loads the content of a yaml file and return it as
         json."""
         # Test that the metadata file exists
@@ -282,3 +309,32 @@ when ingesting: %s : %s",
         metadata_yaml_object.update({"metadata_file": str(file_object.relativePathName)})
         metadata_json = json.dumps(metadata_yaml_object)
         return metadata_json
+
+    def generate_metadata_keys_list(self, metadata: dict, ignore_keys, parent_key="", sep="_"):
+        """Given a nested dict, return the flattened list of keys"""
+        flattened_list_of_keys = []  # Create an empty list to store flattened keys
+        for key, value in metadata.items():
+            new_key = parent_key + sep + key if parent_key else key
+            if isinstance(value, MutableMapping):
+                flattened_list_of_keys.extend(
+                    self.generate_metadata_keys_list(value, ignore_keys, new_key, sep=sep)
+                )
+            else:
+                if new_key not in ignore_keys and new_key not in flattened_list_of_keys:
+                    flattened_list_of_keys.append(new_key)
+        return flattened_list_of_keys  # Return the flattened list at the end
+
+    def update_flattened_list_of_keys(self, metadata_file: dict) -> None:
+        """
+        Updates the `flattened_list_of_keys` attribute with new keys extracted from the specified
+        metadata file.
+
+        Args:
+            metadata_file (str): The path to the metadata file containing keys to be added.
+
+        Raises:
+            TypeError: If `metadata_file` is not a string.
+        """
+        for key in self.generate_metadata_keys_list(metadata_file, [], "", "."):
+            if key not in self.flattened_list_of_keys:
+                self.flattened_list_of_keys.append(key)

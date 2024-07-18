@@ -69,7 +69,7 @@ class DPDAPIStatus:  # pylint: disable=too-many-instance-attributes
         return (self.error_count / self.request_count) * 100
 
 
-class FileUrl(BaseModel):
+class FilePaths(BaseModel):
     """
     A class that represents a file URL.
 
@@ -177,7 +177,7 @@ def generate_data_stream(file_path: pathlib.Path):
             chunk = process.stdout.read(STREAM_CHUNK_SIZE)
 
 
-def download_file(file_object: FileUrl):
+def download_file(file_object: FilePaths):
     """This function returns a response that can be used to download a file
     pointed to by the file_object"""
     return StreamingResponse(

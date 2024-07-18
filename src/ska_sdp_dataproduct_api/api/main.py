@@ -1,6 +1,5 @@
 """This API exposes SDP Data Products to the SDP Data Product Dashboard."""
 
-import json
 import logging
 from typing import Dict, List, Optional
 
@@ -16,7 +15,7 @@ from ska_sdp_dataproduct_api.configuration.settings import DEFAULT_DISPLAY_LAYOU
 from ska_sdp_dataproduct_api.utilities.helperfunctions import (
     DataProductMetaData,
     DPDAPIStatus,
-    FileUrl,
+    FilePaths,
     SearchParametersClass,
     download_file,
 )
@@ -47,12 +46,13 @@ async def reindex_data_products(background_tasks: BackgroundTasks):
     return "Metadata is set to be cleared and re-indexed"
 
 
-@app.post("/dataproductsearch", response_class=Response)
+@app.post("/dataproductsearch")
 async def data_products_search(search_parameters: SearchParametersClass):
     """This API endpoint returns a list of all the data products
     in the PERSISTENT_STORAGE_PATH
     """
     metadata_key_value_pairs = []
+
     if (
         search_parameters.key_value_pairs is not None
         and len(search_parameters.key_value_pairs) > 0
@@ -62,19 +62,27 @@ async def data_products_search(search_parameters: SearchParametersClass):
                 raise HTTPException(status_code=400, detail="Invalid search key pair.")
             metadata_key_value_pairs.append(
                 {
-                    "metadata_key": key_value_pair.split(":")[0],
-                    "metadata_value": key_value_pair.split(":")[1],
+                    "keyPair": key_value_pair.split(":")[0],
+                    "valuePair": key_value_pair.split(":")[1],
                 }
             )
-    else:
-        metadata_key_value_pairs = None
 
-    filtered_data_product_list = search_store.search_metadata(
-        start_date=search_parameters.start_date,
-        end_date=search_parameters.end_date,
-        metadata_key_value_pairs=metadata_key_value_pairs,
-    )
-    return filtered_data_product_list
+    search_options = {
+        "items": [
+            {
+                "field": "date_created",
+                "operator": "greaterThan",
+                "value": search_parameters.start_date,
+            },
+            {"field": "date_created", "operator": "lessThan", "value": search_parameters.end_date},
+            {"field": "formFields", "keyPairs": metadata_key_value_pairs},
+        ],
+        "logicOperator": "and",
+    }
+
+    filtered_data = search_store.filter_data({}, search_options)
+
+    return filtered_data
 
 
 @app.post("/filterdataproducts")
@@ -92,16 +100,12 @@ async def filter_data(body: Optional[Dict] = Body(...)) -> List:
     Returns:
         List: A list of filtered product data objects.
     """
-    muiDataGridInstance.load_inmemory_store_data(search_store)
     mui_data_grid_filter_model = body.get("filterModel", {})
     search_panel_options = body.get("searchPanelOptions", {})
 
-    mui_filtered_data = search_store.apply_filters(
-        muiDataGridInstance.rows.copy(), mui_data_grid_filter_model
-    )
-    searchbox_filtered_data = search_store.apply_filters(mui_filtered_data, search_panel_options)
+    filtered_data = search_store.filter_data(mui_data_grid_filter_model, search_panel_options)
 
-    return searchbox_filtered_data
+    return filtered_data
 
 
 @app.get("/muidatagridconfig")
@@ -119,34 +123,29 @@ async def get_muidatagridconfig() -> Dict:
     return muiDataGridInstance.table_config
 
 
-@app.get("/dataproductlist", response_class=Response)
-async def data_products_list():
-    """This API endpoint returns a list of all the data products
-    in the PERSISTENT_STORAGE_PATH
-    """
-    return json.dumps(search_store.metadata_list)
-
-
 @app.post("/download")
-async def download(file_object: FileUrl):
+async def download(file_object: FilePaths):
     """This API endpoint returns a FileResponse that is used by a
     frontend to download a file"""
     return download_file(file_object)
 
 
 @app.post("/dataproductmetadata", response_class=Response)
-async def data_product_metadata(file_object: FileUrl):
+async def data_product_metadata(file_object: FilePaths):
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
     return search_store.load_metadata(file_object)
 
 
 @app.post("/ingestnewdataproduct")
-async def ingest_new_data_product(file_object: FileUrl):
+async def ingest_new_data_product(file_object: FilePaths):
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
     search_store.update_data_store_date_modified()
-    search_store.ingest_metadata_files(file_object.fullPathName)
+    search_store.list_all_data_product_files(file_object.fullPathName)
+    search_store.ingest_list_of_data_product_paths()
+    search_store.sort_metadata_list()
+
     logger.info("New data product metadata file loaded and search_store index updated")
     return "New data product metadata file loaded and search_store index updated"
 

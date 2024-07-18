@@ -23,19 +23,6 @@ def test_reindex_data_products(test_app):
     assert "Metadata is set to be cleared and re-indexed" in str(response.json())
 
 
-def test_data_product_list(test_app):
-    """Test to see if a file list can be retrieved"""
-    response = test_app.get("/dataproductlist")
-    assert response.status_code == 200
-    assert "eb-m001-20221212-12345/ska-data-product.yaml" in str(response.json())
-    assert "pb-notebookpo-20240201-54576/ska-data-product.yaml" in str(response.json())
-    assert "pb-notebookvr-20240201-54576/ska-data-product.yaml" in str(response.json())
-    # make sure that the response JSON contains 7 data products,
-    # and therefore that the 3 YAML files missing execution_block attributes
-    # have not been ingested
-    assert len(response.json()) == 11
-
-
 def test_download_file(test_app):
     """Test if a file can be downloaded from the test files"""
     data = (

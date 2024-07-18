@@ -41,7 +41,7 @@ def test_insert_metadata():
     ) as document_file:
         document = document_file.read()
 
-    metadata_store.insert_metadata(document)
+    metadata_store.insert_metadata_in_search_store(document)
     response = metadata_store.es_client.get(index="sdp_meta_data", id=1)
 
     assert response == json.loads(document)
@@ -61,7 +61,6 @@ def test_update_dataproduct_list():
 
     metadata_store.add_dataproduct(
         metadata_file=metadata_file,
-        query_key_list=[],
     )
 
     expected_value = [
@@ -79,23 +78,42 @@ def test_search_metadata():
     metadata_store = ElasticsearchMetadataStore()
     metadata_store.es_client = MockElasticsearch()
     metadata_store.es_client.ping = lambda: True
-    metadata_list = metadata_store.search_metadata(
-        start_date="2020-01-01",
-        end_date="2100-01-01",
-        metadata_key_value_pairs=[{"metadata_key": "*", "metadata_value": "*"}],
-    )
+    mui_data_grid_filter_model = {
+        "items": [
+            {
+                "field": "execution_block",
+                "operator": "contains",
+                "id": 51411,
+                "value": "m001",
+                "fromInput": ":r4l:",
+            }
+        ],
+        "logicOperator": "and",
+        "quickFilterValues": [],
+        "quickFilterLogicOperator": "and",
+    }
+    search_panel_options = {
+        "items": [
+            {"field": "date_created", "operator": "greaterThan", "value": ""},
+            {"field": "date_created", "operator": "lessThan", "value": ""},
+            {"field": "formFields", "keyPairs": [{"keyPair": "", "valuePair": ""}]},
+        ],
+        "logicOperator": "and",
+    }
+    metadata_list = metadata_store.filter_data(mui_data_grid_filter_model, search_panel_options)
 
     expected_value = [
         {
-            "id": 1,
             "execution_block": "eb-m001-20191031-12345",
             "date_created": "2019-10-31",
             "dataproduct_file": "product",
             "metadata_file": "product",
+            "interface": "http://schema.skao.int",
+            "id": 1,
         }
     ]
 
-    assert json.loads(metadata_list) == expected_value
+    assert metadata_list == expected_value
 
 
 def test_search_metadata_default_value():
@@ -103,68 +121,29 @@ def test_search_metadata_default_value():
     metadata_store = ElasticsearchMetadataStore()
     metadata_store.es_client = MockElasticsearch()
     metadata_store.es_client.ping = lambda: True
-    metadata_list = metadata_store.search_metadata(
-        start_date="2020-01-01",
-        end_date="2100-01-01",
-        metadata_key_value_pairs=None,
-    )
+    mui_data_grid_filter_model = {}
+    search_panel_options = {
+        "items": [
+            {"field": "date_created", "operator": "greaterThan", "value": ""},
+            {"field": "date_created", "operator": "lessThan", "value": ""},
+            {"field": "formFields", "keyPairs": [{"keyPair": "", "valuePair": ""}]},
+        ],
+        "logicOperator": "and",
+    }
+    metadata_list = metadata_store.filter_data(mui_data_grid_filter_model, search_panel_options)
 
     expected_value = [
         {
-            "id": 1,
             "execution_block": "eb-m001-20191031-12345",
             "date_created": "2019-10-31",
             "dataproduct_file": "product",
             "metadata_file": "product",
-        }
-    ]
-
-    assert json.loads(metadata_list) == expected_value
-
-
-def test_search_metadata_blank_list():
-    """Method to test search of metadata if blank list is given."""
-    metadata_store = ElasticsearchMetadataStore()
-    metadata_store.es_client = MockElasticsearch()
-    metadata_store.es_client.ping = lambda: True
-    metadata_list = metadata_store.search_metadata(
-        start_date="2020-01-01",
-        end_date="2100-01-01",
-        metadata_key_value_pairs=[],
-    )
-
-    expected_value = [
-        {
+            "interface": "http://schema.skao.int",
             "id": 1,
-            "execution_block": "eb-m001-20191031-12345",
-            "date_created": "2019-10-31",
-            "dataproduct_file": "product",
-            "metadata_file": "product",
         }
     ]
 
-    assert json.loads(metadata_list) == expected_value
-
-
-def test_search_metadata_no_value():
-    """Method to test search of metadata
-    if metadata_key_value_pair is not given"""
-    metadata_store = ElasticsearchMetadataStore()
-    metadata_store.es_client = MockElasticsearch()
-    metadata_store.es_client.ping = lambda: True
-    metadata_list = metadata_store.search_metadata(start_date="2020-01-01", end_date="2100-01-01")
-
-    expected_value = [
-        {
-            "id": 1,
-            "execution_block": "eb-m001-20191031-12345",
-            "date_created": "2019-10-31",
-            "dataproduct_file": "product",
-            "metadata_file": "product",
-        }
-    ]
-
-    assert json.loads(metadata_list) == expected_value
+    assert metadata_list == expected_value
 
 
 def test_status(mocker):
@@ -198,5 +177,6 @@ def test_status(mocker):
         "user": user,
         "running": running,
         "connection_established_at": mocked_self.connection_established_at,
+        "number_of_dataproducts": 0,
         "cluster_info": cluster_info,
     }
