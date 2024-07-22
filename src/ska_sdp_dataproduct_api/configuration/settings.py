@@ -89,7 +89,7 @@ ELASTICSEARCH_METADATA_SCHEMA_FILE: str = config(
 
 ELASTICSEARCH_INDICES: str = config(
     "SDP_DATAPRODUCT_API_ELASTIC_INDICES",
-    default=("localhost-sdp-dataproduct-dashboard-dev"),
+    default=("localhost-sdp-dataproduct-dashboard-dev-v1"),
 )
 # ----
 # PostgreSQL Variables
