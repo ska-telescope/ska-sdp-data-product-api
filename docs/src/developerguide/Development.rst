@@ -54,6 +54,7 @@ Configure the environmental variables in the .env file under the root folder acc
     SDP_DATAPRODUCT_API_ELASTIC_PASSWORD=password
     SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA=http_ca.crt
     SDP_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE=./src/ska_sdp_dataproduct_api/elasticsearch/data_product_metadata_schema.json
+    SDP_DATAPRODUCT_API_ELASTIC_INDICES=localhost-sdp-dataproduct-dashboard-dev
 
 To run the application directly on your host machine:
 

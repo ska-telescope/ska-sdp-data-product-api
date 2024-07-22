@@ -59,7 +59,7 @@ class MockElasticsearch:
                 "max_score": 1.7509373,
                 "hits": [
                     {
-                        "_index": "sdp_meta_data",
+                        "_index": "localhost-sdp-dataproduct-dashboard-dev",
                         "_id": "wRJENYYBOwlRnNXHy2_p",
                         "_score": 1.7509373,
                         "_source": {

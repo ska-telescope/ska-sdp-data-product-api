@@ -13,6 +13,7 @@ from ska_sdp_dataproduct_api.configuration.settings import (
     CONFIGURATION_FILES_PATH,
     ELASTICSEARCH_HOST,
     ELASTICSEARCH_HTTP_CA,
+    ELASTICSEARCH_INDICES,
     ELASTICSEARCH_METADATA_SCHEMA_FILE,
     ELASTICSEARCH_PASSWORD,
     ELASTICSEARCH_PORT,
@@ -29,7 +30,7 @@ class ElasticsearchMetadataStore(
 
     def __init__(self):
         super().__init__()
-        self.metadata_index = "sdp_meta_data"
+        self.elasticsearch_indices = ELASTICSEARCH_INDICES
 
         self.host: str = ELASTICSEARCH_HOST
         self.port: int = ELASTICSEARCH_PORT
@@ -69,6 +70,7 @@ class ElasticsearchMetadataStore(
             "running": self.elasticsearch_running,
             "connection_established_at": self.connection_established_at,
             "number_of_dataproducts": self.number_of_dataproducts,
+            "indices": self.elasticsearch_indices,
             "cluster_info": self.cluster_info,
         }
 
@@ -121,7 +123,7 @@ class ElasticsearchMetadataStore(
             self.elasticsearch_running = True
             self.cluster_info = self.es_client.info()
             logger.info("Connected to Elasticsearch; creating default schema...")
-            self.create_schema_if_not_existing(index=self.metadata_index)
+            self.create_schema_if_not_existing(index=self.elasticsearch_indices)
             self.reindex()
 
             return True
@@ -173,7 +175,9 @@ class ElasticsearchMetadataStore(
             None
         """
 
-        self.es_client.options(ignore_status=[400, 404]).indices.delete(index=self.metadata_index)
+        self.es_client.options(ignore_status=[400, 404]).indices.delete(
+            index=self.elasticsearch_indices
+        )
         self.metadata_list = []
         self.number_of_dataproducts = 0
 
@@ -195,7 +199,9 @@ class ElasticsearchMetadataStore(
 
         """
         try:
-            response = self.es_client.index(index=self.metadata_index, document=metadata_file_json)
+            response = self.es_client.index(
+                index=self.elasticsearch_indices, document=metadata_file_json
+            )
             if response["result"] == "created":
                 self.number_of_dataproducts = self.number_of_dataproducts + 1
                 return True
@@ -214,7 +220,7 @@ class ElasticsearchMetadataStore(
         self.check_and_reconnect()
 
         resp = self.es_client.search(  # pylint: disable=E1123
-            index=self.metadata_index, body=self.query_body
+            index=self.elasticsearch_indices, body=self.query_body
         )
         all_hits = resp["hits"]["hits"]
         self.metadata_list = []

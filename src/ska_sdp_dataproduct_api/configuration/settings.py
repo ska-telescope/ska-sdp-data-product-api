@@ -86,6 +86,11 @@ ELASTICSEARCH_METADATA_SCHEMA_FILE: str = config(
         "data_product_metadata_schema.json"
     ),
 )
+
+ELASTICSEARCH_INDICES: str = config(
+    "SDP_DATAPRODUCT_API_ELASTIC_INDICES",
+    default=("localhost-sdp-dataproduct-dashboard-dev"),
+)
 # ----
 # PostgreSQL Variables
 POSTGRESQL_HOST: str = config(

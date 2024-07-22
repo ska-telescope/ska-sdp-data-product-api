@@ -5,6 +5,10 @@ Changelog
 Current Development
 -------------------
 
+* `NAL-1110 <https://jira.skatelescope.org/browse/NAL-1110>`_ 
+
+  - [Added] Added SDP_DATAPRODUCT_API_ELASTIC_INDICES to environment variables to enable specification of Elasticsearch instances in deployments.
+
 * `NAL-1127 <https://jira.skatelescope.org/browse/NAL-1127>`_ 
 
   - **BREAKING** [Removed] Removed /dataproductlist endpoint. This functionality has been replaced with either the /filterdataproducts which is aligned with the Data Product Dashboard requirements, or the /dataproductsearch endpoint that is a simplified version allowing for search and list of data products.
