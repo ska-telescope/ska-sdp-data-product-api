@@ -10,7 +10,7 @@ from ska_sdp_dataproduct_api.components.metadatastore.store_factory import (
     select_correct_store_class,
 )
 from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
-from ska_sdp_dataproduct_api.components.postgresql.postgresql import PostgresConnector
+from ska_sdp_dataproduct_api.components.postgresql.postgresql import persistent_metadata_store
 from ska_sdp_dataproduct_api.configuration.settings import DEFAULT_DISPLAY_LAYOUT, app
 from ska_sdp_dataproduct_api.utilities.helperfunctions import (
     DataProductMetaData,
@@ -22,7 +22,6 @@ from ska_sdp_dataproduct_api.utilities.helperfunctions import (
 
 logger = logging.getLogger(__name__)
 
-persistent_metadata_store = PostgresConnector()
 search_store = select_correct_store_class()
 DPD_API_Status = DPDAPIStatus(
     search_store_status=search_store.status,

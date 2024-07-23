@@ -1,5 +1,7 @@
 """Module adds a PostgreSQL interface for persistent storage of metadata files"""
 
+import hashlib
+import json
 import logging
 
 import psycopg
@@ -8,6 +10,7 @@ from ska_sdp_dataproduct_api.configuration.settings import (
     POSTGRESQL_HOST,
     POSTGRESQL_PASSWORD,
     POSTGRESQL_PORT,
+    POSTGRESQL_TABLE_NAME,
     POSTGRESQL_USER,
 )
 
@@ -31,6 +34,7 @@ class PostgresConnector:  # pylint: disable=too-many-instance-attributes
         self.connection_error = ""
 
         self.connect()
+        self.create_metadata_table()
 
     def status(self) -> dict:
         """
@@ -105,3 +109,143 @@ class PostgresConnector:  # pylint: disable=too-many-instance-attributes
         if self.conn:
             self.conn.close()
             self.conn = None
+
+    def create_metadata_table(self) -> None:
+        """
+        Creates the metadata table if it doesn't exist.
+
+        Args:
+            None
+
+        Raises:
+            psycopg.Error: If there's an error executing the SQL query.
+        """
+
+        try:
+            logger.info("PostgreSQL create database table %s", POSTGRESQL_TABLE_NAME)
+
+            cursor = self.conn.cursor()
+            create_table_query = f"""
+            CREATE TABLE IF NOT EXISTS {POSTGRESQL_TABLE_NAME} (
+                id SERIAL PRIMARY KEY,
+                data JSONB NOT NULL,
+                execution_block VARCHAR(255) DEFAULT NULL,
+                json_hash CHAR(64) UNIQUE
+            );
+            """
+            cursor.execute(create_table_query)
+            cursor.close()
+            logger.info("PostgreSQL database table %s created.", POSTGRESQL_TABLE_NAME)
+
+        except psycopg.Error as error:
+            logger.info("Error creating metadata table:  %s created.", error)
+            raise
+
+    def save_metadata_to_postgresql(self, metadata_file_json: dict) -> None:
+        """
+        Saves a Python metadata object to a PostgreSQL database, prioritizing hash-based
+        uniqueness, then falling back to execution_block for updates.
+
+        Args:
+            conn: A psycopg2 connection object.
+            metadata_file_json (dict): The metadata object to be saved.
+
+        Raises:
+            psycopg2.Error: If there's an error executing the SQL query.
+        """
+
+        try:
+            cursor = self.conn.cursor()
+
+            # Calculate a hash of the JSON data for uniqueness
+            json_hash = hashlib.sha256(json.dumps(metadata_file_json).encode("utf-8")).hexdigest()
+            metadata_file_dict = json.loads(metadata_file_json)
+            execution_block = metadata_file_dict["execution_block"]
+
+            # Check if the metadata already exists based on the hash
+            check_query = (
+                f"SELECT EXISTS(SELECT 1 FROM {POSTGRESQL_TABLE_NAME} WHERE json_hash = %s)"
+            )
+            cursor.execute(check_query, (json_hash,))
+            hash_exists = cursor.fetchone()[0]
+
+            if hash_exists:
+                # Metadata already exists based on hash
+                print(f"Metadata with hash {json_hash} already exists.")
+                return
+
+            # Check if the metadata exists based on execution_block
+            check_query = f"SELECT id FROM {POSTGRESQL_TABLE_NAME} WHERE execution_block = %s"
+            cursor.execute(check_query, (execution_block,))
+            result = cursor.fetchone()
+
+            if result:
+                # Update the existing record
+                update_query = (
+                    f"UPDATE {POSTGRESQL_TABLE_NAME} SET data = %s, json_hash = %s WHERE id = %s"
+                )
+                cursor.execute(update_query, (metadata_file_json, json_hash, result[0]))
+                print(f"Updated metadata with execution_block {execution_block}")
+            else:
+                # Insert a new record
+                insert_query = f"INSERT INTO {POSTGRESQL_TABLE_NAME} \
+(data, json_hash, execution_block) VALUES (%s, %s, %s)"
+                cursor.execute(insert_query, (metadata_file_json, json_hash, execution_block))
+                print(f"Inserted new metadata with execution_block {execution_block}")
+
+            self.conn.commit()
+            cursor.close()
+
+        except psycopg.Error as e:
+            print(f"Error saving metadata to PostgreSQL: {e}")
+            raise
+        except Exception as e:
+            print(f"Error saving metadata to PostgreSQL: {e}")
+
+    def count_jsonb_objects(self):
+        """Counts the number of JSON objects within a JSONB column.
+
+        Returns:
+            The total count of JSON objects.
+        """
+
+        cursor = self.conn.cursor()
+        cursor.execute(f"SELECT COUNT(*) FROM {POSTGRESQL_TABLE_NAME}")
+        result = cursor.fetchone()[0]
+        cursor.close()
+        print(f"Number of items in the DB: '{result}'")
+        return result
+
+    def delete_postgres_table(self):
+        """Deletes a table from a PostgreSQL database.
+
+        Args:
+            host: The hostname of the PostgreSQL server.
+            port: The port number of the PostgreSQL server.
+            user: The username for the PostgreSQL database.
+            password: The password for the PostgreSQL database.
+            database: The name of the PostgreSQL database.
+            table_name: The name of the table to delete.
+
+        Returns:
+            True if the table was deleted successfully, False otherwise.
+        """
+
+        try:
+            logger.info("PostgreSQL deleting database table %s", POSTGRESQL_TABLE_NAME)
+            cur = self.conn.cursor()
+
+            # Use DROP TABLE IF EXISTS to avoid errors if table doesn't exist
+            cur.execute(f"DROP TABLE IF EXISTS {POSTGRESQL_TABLE_NAME}")
+
+            self.conn.commit()
+            cur.close()
+            logger.info("PostgreSQL database table %s deleted.", POSTGRESQL_TABLE_NAME)
+            return True
+
+        except (Exception, psycopg.DatabaseError) as error:
+            print(error)
+            return False
+
+
+persistent_metadata_store = PostgresConnector()
