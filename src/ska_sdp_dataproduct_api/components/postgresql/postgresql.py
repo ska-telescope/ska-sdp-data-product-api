@@ -95,22 +95,6 @@ class PostgresConnector:  # pylint: disable=too-many-instance-attributes
             self.postgresql_running = False
             logger.error("PostgreSQL connection to %s:%s failed", str(self.host), str(self.port))
 
-    def disconnect(self) -> None:
-        """
-        Closes the connection to the PostgreSQL instance if it's open.
-        """
-        if self.conn:
-            self.conn.close()
-            self.conn = None
-
-    def close(self):
-        """
-        Closes the connection to the PostgreSQL instance if open.
-        """
-        if self.conn:
-            self.conn.close()
-            self.conn = None
-
     def create_metadata_table(self) -> None:
         """Creates the metadata table named as defined in the env variable POSTGRESQL_TABLE_NAME
         if it doesn't exist.
@@ -139,66 +123,73 @@ class PostgresConnector:  # pylint: disable=too-many-instance-attributes
             logger.error("Error creating metadata table: %s", error)
             raise
 
+    def calculate_metadata_hash(self, metadata_file_json: dict) -> str:
+        """Calculates a SHA256 hash of the given metadata JSON."""
+        return hashlib.sha256(json.dumps(metadata_file_json).encode("utf-8")).hexdigest()
+
+    def check_metadata_exists_by_hash(self, json_hash: str) -> bool:
+        """Checks if metadata exists based on the given hash."""
+        cursor = self.conn.cursor()
+        check_query = f"SELECT EXISTS(SELECT 1 FROM {POSTGRESQL_TABLE_NAME} WHERE json_hash = %s)"
+        cursor.execute(check_query, (json_hash,))
+        exists = cursor.fetchone()[0]
+        cursor.close()
+        return exists
+
+    def check_metadata_exists_by_execution_block(self, execution_block: str) -> int:
+        """Checks if metadata exists based on the given execution block."""
+        cursor = self.conn.cursor()
+        check_query = f"SELECT id FROM {POSTGRESQL_TABLE_NAME} WHERE execution_block = %s"
+        cursor.execute(check_query, (execution_block,))
+        result = cursor.fetchone()
+        cursor.close()
+        return result[0] if result else None
+
+    def update_metadata(self, metadata_file_json: dict, id_field: int) -> None:
+        """Updates existing metadata with the given data and hash."""
+        json_hash = self.calculate_metadata_hash(metadata_file_json)
+        cursor = self.conn.cursor()
+        update_query = (
+            f"UPDATE {POSTGRESQL_TABLE_NAME} SET data = %s, json_hash = %s WHERE id = %s"
+        )
+        cursor.execute(update_query, (metadata_file_json, json_hash, id_field))
+        self.conn.commit()
+        cursor.close()
+
+    def insert_metadata(self, metadata_file_json: dict, execution_block: str) -> None:
+        """Inserts new metadata into the database."""
+        json_hash = self.calculate_metadata_hash(metadata_file_json)
+        cursor = self.conn.cursor()
+        insert_query = f"INSERT INTO {POSTGRESQL_TABLE_NAME} (data, json_hash, execution_block) \
+VALUES (%s, %s, %s)"
+        cursor.execute(insert_query, (metadata_file_json, json_hash, execution_block))
+        self.conn.commit()
+        cursor.close()
+
     def save_metadata_to_postgresql(self, metadata_file_json: dict) -> None:
-        """
-        Saves a Python metadata object to a PostgreSQL database, prioritizing hash-based
-        uniqueness, then falling back to execution_block for updates.
-
-        Args:
-            conn: A psycopg2 connection object.
-            metadata_file_json (dict): The metadata object to be saved.
-
-        Raises:
-            psycopg2.Error: If there's an error executing the SQL query.
-        """
-
+        """Saves metadata to PostgreSQL."""
         try:
-            cursor = self.conn.cursor()
-
-            # Calculate a hash of the JSON data for uniqueness
-            json_hash = hashlib.sha256(json.dumps(metadata_file_json).encode("utf-8")).hexdigest()
+            json_hash = self.calculate_metadata_hash(metadata_file_json)
             metadata_file_dict = json.loads(metadata_file_json)
             execution_block = metadata_file_dict["execution_block"]
 
-            # Check if the metadata already exists based on the hash
-            check_query = (
-                f"SELECT EXISTS(SELECT 1 FROM {POSTGRESQL_TABLE_NAME} WHERE json_hash = %s)"
-            )
-            cursor.execute(check_query, (json_hash,))
-            hash_exists = cursor.fetchone()[0]
-
-            if hash_exists:
-                # Metadata already exists based on hash
-                print(f"Metadata with hash {json_hash} already exists.")
+            if self.check_metadata_exists_by_hash(json_hash):
+                logger.info("Metadata with hash %s already exists.", json_hash)
                 return
 
-            # Check if the metadata exists based on execution_block
-            check_query = f"SELECT id FROM {POSTGRESQL_TABLE_NAME} WHERE execution_block = %s"
-            cursor.execute(check_query, (execution_block,))
-            result = cursor.fetchone()
-
-            if result:
-                # Update the existing record
-                update_query = (
-                    f"UPDATE {POSTGRESQL_TABLE_NAME} SET data = %s, json_hash = %s WHERE id = %s"
-                )
-                cursor.execute(update_query, (metadata_file_json, json_hash, result[0]))
-                print(f"Updated metadata with execution_block {execution_block}")
+            metadata_id = self.check_metadata_exists_by_execution_block(execution_block)
+            if metadata_id:
+                self.update_metadata(metadata_file_json, metadata_id)
+                logger.info("Updated metadata with execution_block %s", execution_block)
             else:
-                # Insert a new record
-                insert_query = f"INSERT INTO {POSTGRESQL_TABLE_NAME} \
-(data, json_hash, execution_block) VALUES (%s, %s, %s)"
-                cursor.execute(insert_query, (metadata_file_json, json_hash, execution_block))
-                print(f"Inserted new metadata with execution_block {execution_block}")
-
-            self.conn.commit()
-            cursor.close()
+                self.insert_metadata(metadata_file_json, execution_block)
+                logger.info("Inserted new metadata with execution_block %s", execution_block)
 
         except psycopg.Error as error:
-            print(f"Error saving metadata to PostgreSQL: {error}")
+            logger.error("Error saving metadata to PostgreSQL: %s", error)
             raise
         except Exception as exception:  # pylint: disable=broad-exception-caught
-            print(f"Error saving metadata to PostgreSQL: {exception}")
+            logger.error("Error saving metadata to PostgreSQL: %s", exception)
 
     def count_jsonb_objects(self):
         """Counts the number of JSON objects within a JSONB column.
@@ -211,7 +202,7 @@ class PostgresConnector:  # pylint: disable=too-many-instance-attributes
         cursor.execute(f"SELECT COUNT(*) FROM {POSTGRESQL_TABLE_NAME}")
         result = cursor.fetchone()[0]
         cursor.close()
-        print(f"Number of items in the DB: '{result}'")
+        logger.info("Number of items in the DB: %s", result)
         return result
 
     def delete_postgres_table(self) -> bool:
@@ -226,10 +217,10 @@ class PostgresConnector:  # pylint: disable=too-many-instance-attributes
 
         try:
             logger.info("PostgreSQL deleting database table %s", POSTGRESQL_TABLE_NAME)
-            cur = self.conn.cursor()
-            cur.execute(f"DROP TABLE IF EXISTS {POSTGRESQL_TABLE_NAME}")
+            cursor = self.conn.cursor()
+            cursor.execute(f"DROP TABLE IF EXISTS {POSTGRESQL_TABLE_NAME}")
             self.conn.commit()
-            cur.close()
+            cursor.close()
             logger.info("PostgreSQL database table %s deleted.", POSTGRESQL_TABLE_NAME)
             return True
 
