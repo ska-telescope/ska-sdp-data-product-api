@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 class PostgresConnector:  # pylint: disable=too-many-instance-attributes
     """
     A class to connect to a PostgreSQL instance and test its availability.
+    A class to connect to a PostgreSQL instance and t
     """
 
     def __init__(self):
@@ -111,34 +112,31 @@ class PostgresConnector:  # pylint: disable=too-many-instance-attributes
             self.conn = None
 
     def create_metadata_table(self) -> None:
-        """
-        Creates the metadata table if it doesn't exist.
-
-        Args:
-            None
+        """Creates the metadata table named as defined in the env variable POSTGRESQL_TABLE_NAME
+        if it doesn't exist.
 
         Raises:
             psycopg.Error: If there's an error executing the SQL query.
         """
 
         try:
-            logger.info("PostgreSQL create database table %s", POSTGRESQL_TABLE_NAME)
+            logger.info("Creating PostgreSQL metadata table: %s", POSTGRESQL_TABLE_NAME)
 
             cursor = self.conn.cursor()
             create_table_query = f"""
-            CREATE TABLE IF NOT EXISTS {POSTGRESQL_TABLE_NAME} (
-                id SERIAL PRIMARY KEY,
-                data JSONB NOT NULL,
-                execution_block VARCHAR(255) DEFAULT NULL,
-                json_hash CHAR(64) UNIQUE
-            );
+                CREATE TABLE IF NOT EXISTS {POSTGRESQL_TABLE_NAME} (
+                    id SERIAL PRIMARY KEY,
+                    data JSONB NOT NULL,
+                    execution_block VARCHAR(255) DEFAULT NULL,
+                    json_hash CHAR(64) UNIQUE
+                );
             """
             cursor.execute(create_table_query)
             cursor.close()
-            logger.info("PostgreSQL database table %s created.", POSTGRESQL_TABLE_NAME)
+            logger.info("PostgreSQL metadata table %s created.", POSTGRESQL_TABLE_NAME)
 
         except psycopg.Error as error:
-            logger.info("Error creating metadata table:  %s created.", error)
+            logger.error("Error creating metadata table: %s", error)
             raise
 
     def save_metadata_to_postgresql(self, metadata_file_json: dict) -> None:
@@ -196,11 +194,11 @@ class PostgresConnector:  # pylint: disable=too-many-instance-attributes
             self.conn.commit()
             cursor.close()
 
-        except psycopg.Error as e:
-            print(f"Error saving metadata to PostgreSQL: {e}")
+        except psycopg.Error as error:
+            print(f"Error saving metadata to PostgreSQL: {error}")
             raise
-        except Exception as e:
-            print(f"Error saving metadata to PostgreSQL: {e}")
+        except Exception as exception:  # pylint: disable=broad-exception-caught
+            print(f"Error saving metadata to PostgreSQL: {exception}")
 
     def count_jsonb_objects(self):
         """Counts the number of JSON objects within a JSONB column.
@@ -216,16 +214,11 @@ class PostgresConnector:  # pylint: disable=too-many-instance-attributes
         print(f"Number of items in the DB: '{result}'")
         return result
 
-    def delete_postgres_table(self):
+    def delete_postgres_table(self) -> bool:
         """Deletes a table from a PostgreSQL database.
 
         Args:
-            host: The hostname of the PostgreSQL server.
-            port: The port number of the PostgreSQL server.
-            user: The username for the PostgreSQL database.
-            password: The password for the PostgreSQL database.
-            database: The name of the PostgreSQL database.
-            table_name: The name of the table to delete.
+            None
 
         Returns:
             True if the table was deleted successfully, False otherwise.
@@ -234,17 +227,19 @@ class PostgresConnector:  # pylint: disable=too-many-instance-attributes
         try:
             logger.info("PostgreSQL deleting database table %s", POSTGRESQL_TABLE_NAME)
             cur = self.conn.cursor()
-
-            # Use DROP TABLE IF EXISTS to avoid errors if table doesn't exist
             cur.execute(f"DROP TABLE IF EXISTS {POSTGRESQL_TABLE_NAME}")
-
             self.conn.commit()
             cur.close()
             logger.info("PostgreSQL database table %s deleted.", POSTGRESQL_TABLE_NAME)
             return True
 
-        except (Exception, psycopg.DatabaseError) as error:
-            print(error)
+        except psycopg.OperationalError as error:
+            logger.error(
+                "An error occurred while connecting to the PostgreSQL database: %s", error
+            )
+            return False
+        except psycopg.ProgrammingError as error:
+            logger.error("An error occurred while executing the SQL statement: %s", error)
             return False
 
 
