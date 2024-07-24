@@ -10,6 +10,7 @@ from typing import Any, List
 import yaml
 from ska_sdp_dataproduct_metadata import MetaData
 
+from ska_sdp_dataproduct_api.components.postgresql.postgresql import persistent_metadata_store
 from ska_sdp_dataproduct_api.configuration.settings import (
     METADATA_FILE_NAME,
     PERSISTENT_STORAGE_PATH,
@@ -95,6 +96,7 @@ class SearchStoreSuperClass:
         if not metadata_file_json:
             return
 
+        persistent_metadata_store.save_metadata_to_postgresql(metadata_file_json)
         self.insert_metadata_in_search_store(metadata_file_json)
 
     def list_all_data_product_files(self, full_path_name: pathlib.Path) -> None:
@@ -150,6 +152,7 @@ class SearchStoreSuperClass:
         """
         Ingest a single metadata object
         """
+        persistent_metadata_store.save_metadata_to_postgresql(metadata.json())
         self.insert_metadata_in_search_store(metadata.json())
 
         return metadata.dict()

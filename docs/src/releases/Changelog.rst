@@ -5,6 +5,10 @@ Changelog
 Current Development
 -------------------
 
+* `NAL-1128 <https://jira.skatelescope.org/browse/NAL-1128>`_ 
+
+  - [Added] Updated the PostgreSQL persistent metadata store to ingest all the metadata into the database when the application loads or new data products are added with the /ingestnewmetadata endpoint.
+
 * `NAL-1110 <https://jira.skatelescope.org/browse/NAL-1110>`_ 
 
   - [Added] Added SDP_DATAPRODUCT_API_ELASTIC_INDICES to environment variables to enable specification of Elasticsearch instances in deployments.

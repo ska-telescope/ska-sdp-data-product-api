@@ -9,7 +9,6 @@ from elasticsearch import Elasticsearch
 
 from ska_sdp_dataproduct_api.components.metadatastore.datastore import SearchStoreSuperClass
 from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
-from ska_sdp_dataproduct_api.components.postgresql.postgresql import persistent_metadata_store
 from ska_sdp_dataproduct_api.configuration.settings import (
     CONFIGURATION_FILES_PATH,
     ELASTICSEARCH_HOST,
@@ -200,7 +199,6 @@ class ElasticsearchMetadataStore(
 
         """
         try:
-            persistent_metadata_store.save_metadata_to_postgresql(metadata_file_json)
             response = self.es_client.index(
                 index=self.elasticsearch_indices, document=metadata_file_json
             )
