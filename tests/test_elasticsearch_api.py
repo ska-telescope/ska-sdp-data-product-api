@@ -24,8 +24,12 @@ def test_create_schema():
         encoding="UTF-8",
     ) as schema_file:
         schema = json.loads(schema_file.read())
-    metadata_store.create_schema_if_not_existing(index="sdp_meta_data")
-    response = metadata_store.es_client.indices.get(index="sdp_meta_data")
+    metadata_store.create_schema_if_not_existing(
+        index="localhost-sdp-dataproduct-dashboard-dev-v1"
+    )
+    response = metadata_store.es_client.indices.get(
+        index="localhost-sdp-dataproduct-dashboard-dev-v1"
+    )
     assert response == schema
 
 
@@ -42,7 +46,9 @@ def test_insert_metadata():
         document = document_file.read()
 
     metadata_store.insert_metadata_in_search_store(document)
-    response = metadata_store.es_client.get(index="sdp_meta_data", id=1)
+    response = metadata_store.es_client.get(
+        index="localhost-sdp-dataproduct-dashboard-dev-v1", id=1
+    )
 
     assert response == json.loads(document)
 
@@ -178,5 +184,6 @@ def test_status(mocker):
         "running": running,
         "connection_established_at": mocked_self.connection_established_at,
         "number_of_dataproducts": 0,
+        "indices": "localhost-sdp-dataproduct-dashboard-dev-v1",
         "cluster_info": cluster_info,
     }

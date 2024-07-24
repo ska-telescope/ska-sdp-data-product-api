@@ -34,6 +34,25 @@ The application make use of two databases; a persistent metadata store implement
     make create-dev-elasticsearch
     make cp-dev-elasticsearch-http-ca-cert
 
+
+Elasticsearch indices
+=====================
+
+When deployed to environments with a shared Elasticsearch instance managed by the SKAO system team, the Data Product Dashboard can leverage this resource for its search store. To maintain consistency, we have adopted the following naming convention for indices:
+
+.. code-block::
+
+    <Data center>-<product/app>-<namespace>-<version>
+
+For example:
+
+.. code-block::
+
+    localhost-sdp-dataproduct-dashboard-dev-v1
+    sdhp-stfc-sdp-dataproduct-dashboard-integration-v1
+
+The version number allows for schema changes when needed.
+
 Running the application
 =======================
 
@@ -54,6 +73,7 @@ Configure the environmental variables in the .env file under the root folder acc
     SDP_DATAPRODUCT_API_ELASTIC_PASSWORD=password
     SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA=http_ca.crt
     SDP_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE=./src/ska_sdp_dataproduct_api/elasticsearch/data_product_metadata_schema.json
+    SDP_DATAPRODUCT_API_ELASTIC_INDICES=localhost-sdp-dataproduct-dashboard-dev-v1
 
 To run the application directly on your host machine:
 
