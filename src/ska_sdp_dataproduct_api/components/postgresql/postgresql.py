@@ -33,8 +33,11 @@ class PostgresConnector:
         self.conn = None
         self.logger = logging.getLogger(__name__)
         self.postgresql_running: bool = False
+        self.postgresql_version: str = ""
         self._connect()
-        self.create_metadata_table()
+        if self.postgresql_running:
+            self.postgresql_version = self._get_postgresql_version()
+            self.create_metadata_table()
 
     def status(self) -> dict:
         """
@@ -49,7 +52,7 @@ class PostgresConnector:
             "user": self.user,
             "running": self.postgresql_running,
             "table_name": self.table_name,
-            "postgresql_version": self._get_postgresql_version(),
+            "postgresql_version": self.postgresql_version,
         }
 
     def _connect(self) -> None:
@@ -70,7 +73,6 @@ class PostgresConnector:
             self.logger.error(
                 "An error occurred while connecting to the PostgreSQL database: %s", error
             )
-            raise
 
     def _get_postgresql_version(self):
         with self.conn.cursor() as cursor:
@@ -164,6 +166,7 @@ VALUES (%s, %s, %s)"
             else:
                 self.insert_metadata(metadata_file_json, execution_block)
                 self.logger.info("Inserted new metadata with execution_block %s", execution_block)
+                self.count_jsonb_objects()
 
         except psycopg.Error as error:
             self.logger.error("Error saving metadata to PostgreSQL: %s", error)

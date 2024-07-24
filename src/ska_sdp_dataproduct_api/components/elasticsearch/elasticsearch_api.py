@@ -201,7 +201,6 @@ class ElasticsearchMetadataStore(
         """
         try:
             persistent_metadata_store.save_metadata_to_postgresql(metadata_file_json)
-            persistent_metadata_store.count_jsonb_objects()
             response = self.es_client.index(
                 index=self.elasticsearch_indices, document=metadata_file_json
             )

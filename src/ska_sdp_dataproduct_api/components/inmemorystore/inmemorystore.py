@@ -6,6 +6,7 @@ from typing import Any, Dict, List
 
 from ska_sdp_dataproduct_api.components.metadatastore.datastore import SearchStoreSuperClass
 from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
+from ska_sdp_dataproduct_api.components.postgresql.postgresql import persistent_metadata_store
 from ska_sdp_dataproduct_api.configuration.settings import DATE_FORMAT
 from ska_sdp_dataproduct_api.utilities.helperfunctions import (
     filter_by_item,
@@ -67,6 +68,7 @@ class InMemoryDataproductIndex(SearchStoreSuperClass):
     def insert_metadata_in_search_store(self, metadata_file_json):
         """This method loads the metadata file of a data product, creates a
         list of keys used in it, and then adds it to the metadata_list"""
+        persistent_metadata_store.save_metadata_to_postgresql(metadata_file_json)
         # load JSON into object
         metadata_file = json.loads(metadata_file_json)
 
