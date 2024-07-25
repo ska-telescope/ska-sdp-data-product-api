@@ -3,6 +3,8 @@ import datetime
 import json
 import logging
 from pathlib import Path
+from typing import List, Tuple, Union
+
 
 import elasticsearch
 from elasticsearch import Elasticsearch
@@ -199,17 +201,45 @@ class ElasticsearchMetadataStore(
 
         """
         try:
-            response = self.es_client.index(
-                index=self.elasticsearch_indices, document=metadata_file_json
-            )
-            if response["result"] == "created":
+            # if not isinstance(metadata_file_json, dict):
+            #     raise ValueError("Invalid metadata format. Expected a dictionary.")
+
+            
+            if self.index_metadata_to_elasticsearch(self.elasticsearch_indices, json.loads(metadata_file_json)):
                 self.number_of_dataproducts = self.number_of_dataproducts + 1
-                return True
-            logger.warning("Error inserting metadata into Elasticsearch: %s", str(response))
-            return False
         except Exception as exception:  # pylint: disable=broad-exception-caught
-            logger.error("Error inserting metadata into Elasticsearch: %s", exception)
+            logger.error("Error inserting metadata into search store: %s", exception)
+
+
+    def index_metadata_to_elasticsearch(self, index: str, metadata_dict: dict) -> bool:
+        """Indexes metadata into Elasticsearch.
+
+        Args:
+            index: The Elasticsearch index name.
+            metadata_dict: The metadata to be indexed as a dictionary.
+
+        Raises:
+            ValueError: If the metadata is invalid or missing 'execution_block'.
+            elasticsearch.exceptions.ElasticsearchException: For Elasticsearch-specific errors.
+        """
+
+        try:
+            execution_block = metadata_dict.get('execution_block')
+            if not execution_block:
+                raise ValueError("Missing 'execution_block' in metadata")
+
+            response = self.es_client.index(index=index, id=execution_block, body=metadata_dict)
+            if response["result"] == "created":
+                return True
+            logger.warning("Error indexing metadata into Elasticsearch: %s", str(response))
             return False
+        except ValueError as error:
+            logger.error("Invalid metadata: %s", error)
+            raise ValueError(f"Invalid metadata: {str(error)}")
+        except Exception as exception:
+            logger.error("Error inserting metadata into Elasticsearch: %s", exception)
+            raise Exception(f"Error indexing metadata: {str(exception)}")
+
 
     def sort_metadata_list(self) -> None:
         """This method sorts the metadata_list according to the set key"""

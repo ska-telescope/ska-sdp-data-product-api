@@ -5,6 +5,10 @@ Changelog
 Current Development
 -------------------
 
+* `NAL-1132 <https://jira.skatelescope.org/browse/NAL-1132>`_ 
+
+  - [?] ...
+
 * `NAL-1128 <https://jira.skatelescope.org/browse/NAL-1128>`_ 
 
   - [Added] Updated the PostgreSQL persistent metadata store to ingest all the metadata into the database when the application loads or new data products are added with the /ingestnewmetadata endpoint.
