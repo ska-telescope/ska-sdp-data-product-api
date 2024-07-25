@@ -432,8 +432,8 @@ def filter_by_item(
             else:
                 if filter_strings(operand, operator, comparator):
                     filtered_data.append(item)
-        except ValueError:
-            logging.error("Failed to filter on item %s", str(item))
+        except ValueError as error:
+            logging.error("Failed to filter on item %s with error %s", str(item), error)
 
     return filtered_data
 
@@ -519,6 +519,6 @@ def parse_valid_date(date_string: str, expected_format: str) -> datetime.datetim
     """
     try:
         return datetime.datetime.strptime(date_string, expected_format)
-    except ValueError as exception:
+    except ValueError as error:
         logging.error("Invalid date format: %s. Expected format: %s", date_string, expected_format)
-        raise exception  # Re-raise the ValueError for the caller to handle
+        raise error

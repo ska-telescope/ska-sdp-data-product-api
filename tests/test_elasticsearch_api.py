@@ -1,4 +1,4 @@
-"""Module to test insertMetadata.py"""
+"""Module to test ElasticsearchMetadataStore"""
 
 import json
 from datetime import datetime  # Assuming connection_established_at uses datetime

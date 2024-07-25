@@ -114,6 +114,11 @@ POSTGRESQL_PASSWORD: str = config(
     "SDP_DATAPRODUCT_API_POSTGRESQL_PASSWORD",
     default="",
 )
+
+POSTGRESQL_TABLE_NAME: str = config(
+    "SDP_DATAPRODUCT_API_POSTGRESQL_TABLE_NAME",
+    default=("localhost_sdp_dataproduct_dashboard_dev_v1"),
+)
 # ----
 
 DATE_FORMAT: str = config("DATE_FORMAT", default="%Y-%m-%d")

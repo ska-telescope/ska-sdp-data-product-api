@@ -10,6 +10,7 @@ from typing import Any, List
 import yaml
 from ska_sdp_dataproduct_metadata import MetaData
 
+from ska_sdp_dataproduct_api.components.postgresql.postgresql import persistent_metadata_store
 from ska_sdp_dataproduct_api.configuration.settings import (
     METADATA_FILE_NAME,
     PERSISTENT_STORAGE_PATH,
@@ -95,6 +96,7 @@ class SearchStoreSuperClass:
         if not metadata_file_json:
             return
 
+        persistent_metadata_store.save_metadata_to_postgresql(metadata_file_json)
         self.insert_metadata_in_search_store(metadata_file_json)
 
     def list_all_data_product_files(self, full_path_name: pathlib.Path) -> None:
@@ -150,6 +152,7 @@ class SearchStoreSuperClass:
         """
         Ingest a single metadata object
         """
+        persistent_metadata_store.save_metadata_to_postgresql(metadata.json())
         self.insert_metadata_in_search_store(metadata.json())
 
         return metadata.dict()
@@ -247,9 +250,9 @@ class SearchStoreSuperClass:
         except yaml.YAMLError as yaml_error:
             logger.warning("Error while parsing YAML: %s", yaml_error)
             raise yaml_error
-        except Exception as other_error:
-            logger.warning("Unexpected error occurred: %s", other_error)
-            raise other_error
+        except Exception as exception:
+            logger.warning("Unexpected error occurred: %s", exception)
+            raise exception
 
     def load_metadata(self, file_object: FilePaths):
         """This function loads the content of a yaml file and return it as
@@ -261,11 +264,11 @@ class SearchStoreSuperClass:
         # Load the metadata file into memory
         try:
             metadata_yaml_object = self.load_metadata_file(file_object)
-        except Exception as error:  # pylint: disable=W0718
+        except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error(
                 "Not loading dataproduct due to a loading of metadata failure: %s, %s",
                 str(file_object.fullPathName),
-                error,
+                exception,
             )
             return {}
 
@@ -295,12 +298,12 @@ when ingesting: %s : %s",
 
         try:
             metadata_date = get_date_from_name(metadata_yaml_object["execution_block"])
-        except Exception as error:  # pylint: disable=W0718
+        except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error(
                 "Not loading dataproduct due to failure to extract the date from execution block\
 : %s : %s",
                 str(file_object.fullPathName),
-                error,
+                exception,
             )
             return {}
 
