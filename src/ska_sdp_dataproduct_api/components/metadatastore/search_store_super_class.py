@@ -10,7 +10,6 @@ from typing import Any, List
 import yaml
 from ska_sdp_dataproduct_metadata import MetaData
 
-from ska_sdp_dataproduct_api.components.postgresql.postgresql import persistent_metadata_store
 from ska_sdp_dataproduct_api.configuration.settings import (
     METADATA_FILE_NAME,
     PERSISTENT_STORAGE_PATH,
@@ -68,6 +67,10 @@ class SearchStoreSuperClass:
             self.indexing = False
             raise exception
 
+    def load_metadata_from_persistent_store_to_search_store():
+        """ """
+        pass
+
     def update_data_store_date_modified(self):
         """This method updates the timestamp of the last time that data was
         added or modified in the data product store by this API"""
@@ -90,13 +93,14 @@ class SearchStoreSuperClass:
         )
         data_product_file_paths.relativePathName = get_relative_path(data_product_path)
 
+        print(data_product_file_paths.fullPathName)
         metadata_file_json = self.load_metadata(data_product_file_paths)
 
         # Check if any metadata was actually loaded before inserting
         if not metadata_file_json:
             return
 
-        persistent_metadata_store.save_metadata_to_postgresql(metadata_file_json)
+        # persistent_metadata_store.save_metadata_to_postgresql(metadata_file_json)       # TODO Fix this
         self.insert_metadata_in_search_store(metadata_file_json)
 
     def list_all_data_product_files(self, full_path_name: pathlib.Path) -> None:
@@ -152,12 +156,12 @@ class SearchStoreSuperClass:
         """
         Ingest a single metadata object
         """
-        persistent_metadata_store.save_metadata_to_postgresql(metadata.json())
+        # persistent_metadata_store.save_metadata_to_postgresql(metadata.json())    # TODO Fix this
         self.insert_metadata_in_search_store(metadata.json())
 
         return metadata.dict()
 
-    def add_dataproduct(self, metadata_file):
+    def add_dataproduct(self, metadata_file: dict):
         """
         Populates a list of data products with their associated metadata.
 
@@ -167,23 +171,22 @@ class SearchStoreSuperClass:
         Raises:
             ValueError: If the provided metadata_file is not a dictionary.
         """
+        required_keys = {"execution_block", "date_created", "dataproduct_file", "metadata_file"}
         data_product_details = {}
-        for key, value in metadata_file.items():
-            if key in (
-                "execution_block",
-                "date_created",
-                "dataproduct_file",
-                "metadata_file",
-            ):
-                data_product_details[key] = value
 
-        # add additional keys based on the query
-        # NOTE: at present users can only query using a single metadata_key,
-        #       but add_dataproduct supports multiple query keys
+        # Handle top-level required keys
+        for key in required_keys:
+            if key in metadata_file:
+                data_product_details[key] = metadata_file[key]
+
+        # Add additional keys based on query (assuming find_metadata is defined)
+        print("self.flattened_list_of_keys")
+        print(self.flattened_list_of_keys)
         for query_key in self.flattened_list_of_keys:
             query_metadata = find_metadata(metadata_file, query_key)
-            if query_metadata is not None:
+            if query_metadata:
                 data_product_details[query_metadata["key"]] = query_metadata["value"]
+
         self.update_dataproduct_list(data_product_details)
 
     def update_dataproduct_list(self, data_product_details):
@@ -254,16 +257,15 @@ class SearchStoreSuperClass:
             logger.warning("Unexpected error occurred: %s", exception)
             raise exception
 
-    def load_metadata(self, file_object: FilePaths):
-        """This function loads the content of a yaml file and return it as
-        json."""
+    def load_metadata(self, file_object: FilePaths) -> dict[str, Any]:
+        """This function loads the content of a yaml file and returns it as a dict."""
         # Test that the metadata file exists
         if not self.check_file_exists(file_object.fullPathName):
             return {}
 
         # Load the metadata file into memory
         try:
-            metadata_yaml_object = self.load_metadata_file(file_object)
+            metadata_dict = self.load_metadata_file(file_object)
         except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error(
                 "Not loading dataproduct due to a loading of metadata failure: %s, %s",
@@ -273,13 +275,12 @@ class SearchStoreSuperClass:
             return {}
 
         # Validate the metadata against the schema
-        validation_errors = MetaData.validator.iter_errors(metadata_yaml_object)
+        validation_errors = MetaData.validator.iter_errors(metadata_dict)
 
         # Loop over the errors
         for validation_error in validation_errors:
             logger.error(
-                "Not loading dataproduct due to schema validation error \
-when ingesting: %s : %s",
+                "Not loading dataproduct due to schema validation error when ingesting: %s : %s",
                 str(file_object.fullPathName),
                 str(validation_error.message),
             )
@@ -289,29 +290,31 @@ when ingesting: %s : %s",
                 or str(validation_error.message) == "None is not of type 'object'"
             ):
                 logger.error(
-                    "Not loading dataproduct due to schema validation error \
-when ingesting: %s : %s",
+                    "Not loading dataproduct due to schema validation error when ingesting: %s : %s",
                     str(file_object.fullPathName),
                     str(validation_error.message),
                 )
                 return {}
 
         try:
-            metadata_date = get_date_from_name(metadata_yaml_object["execution_block"])
+            metadata_date = get_date_from_name(metadata_dict["execution_block"])
         except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error(
-                "Not loading dataproduct due to failure to extract the date from execution block\
-: %s : %s",
+                "Not loading dataproduct due to failure to extract the date from execution block: %s : %s",
                 str(file_object.fullPathName),
                 exception,
             )
             return {}
 
-        metadata_yaml_object.update({"date_created": metadata_date})
-        metadata_yaml_object.update({"dataproduct_file": str(file_object.relativePathName.parent)})
-        metadata_yaml_object.update({"metadata_file": str(file_object.relativePathName)})
-        metadata_json = json.dumps(metadata_yaml_object)
-        return metadata_json
+        metadata_dict.update(
+            {
+                "date_created": metadata_date,
+                "dataproduct_file": str(file_object.relativePathName.parent),
+                "metadata_file": str(file_object.relativePathName),
+            }
+        )
+
+        return metadata_dict
 
     def generate_metadata_keys_list(self, metadata: dict, ignore_keys, parent_key="", sep="_"):
         """Given a nested dict, return the flattened list of keys"""
@@ -338,6 +341,8 @@ when ingesting: %s : %s",
         Raises:
             TypeError: If `metadata_file` is not a string.
         """
+        print("Updating keys")
         for key in self.generate_metadata_keys_list(metadata_file, [], "", "."):
             if key not in self.flattened_list_of_keys:
                 self.flattened_list_of_keys.append(key)
+                print("Appended: %s", key)

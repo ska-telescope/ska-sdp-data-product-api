@@ -107,7 +107,7 @@ class MuiDataGrid:
         """
         self.rows.append(row)
 
-    def load_inmemory_store_data(self, inmemorystore) -> None:
+    def load_inmemory_store_data(self, in_memory_search_store) -> None:
         """
         Loads data from the metadata list into the in-memory store of the MUI DataGrid instance.
 
@@ -116,7 +116,7 @@ class MuiDataGrid:
 
         """
         self.rows.clear()
-        for item in inmemorystore.metadata_list:
+        for item in in_memory_search_store.metadata_list:
             self.add_datagrid_row(item)
 
 

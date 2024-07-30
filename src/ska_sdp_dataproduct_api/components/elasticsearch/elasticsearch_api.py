@@ -7,7 +7,9 @@ from pathlib import Path
 import elasticsearch
 from elasticsearch import Elasticsearch
 
-from ska_sdp_dataproduct_api.components.metadatastore.datastore import SearchStoreSuperClass
+from ska_sdp_dataproduct_api.components.metadatastore.search_store_super_class import (
+    SearchStoreSuperClass,
+)
 from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
 from ska_sdp_dataproduct_api.configuration.settings import (
     CONFIGURATION_FILES_PATH,
@@ -124,7 +126,7 @@ class ElasticsearchMetadataStore(
             self.cluster_info = self.es_client.info()
             logger.info("Connected to Elasticsearch; creating default schema...")
             self.create_schema_if_not_existing(index=self.elasticsearch_indices)
-            self.reindex()
+            self.reindex()  # TODO This need to change
 
             return True
         return False
@@ -181,7 +183,7 @@ class ElasticsearchMetadataStore(
         self.metadata_list = []
         self.number_of_dataproducts = 0
 
-    def insert_metadata_in_search_store(self, metadata_file_json: dict) -> dict:
+    def insert_metadata_in_search_store(self, metadata_dict: dict) -> dict:
         """Inserts metadata from a JSON file into the Elasticsearch index.
 
         Args:
@@ -199,9 +201,32 @@ class ElasticsearchMetadataStore(
 
         """
         try:
-            response = self.es_client.index(
-                index=self.elasticsearch_indices, document=metadata_file_json
-            )
+            # if not isinstance(metadata_file_json, dict):
+            #     raise ValueError("Invalid metadata format. Expected a dictionary.")
+
+            if self.index_metadata_to_elasticsearch(self.elasticsearch_indices, metadata_dict):
+                self.number_of_dataproducts = self.number_of_dataproducts + 1
+        except Exception as exception:  # pylint: disable=broad-exception-caught
+            logger.error("Error inserting metadata into search store: %s", exception)
+
+    def index_metadata_to_elasticsearch(self, index: str, metadata_dict: dict) -> bool:
+        """Indexes metadata into Elasticsearch.
+
+        Args:
+            index: The Elasticsearch index name.
+            metadata_dict: The metadata to be indexed as a dictionary.
+
+        Raises:
+            ValueError: If the metadata is invalid or missing 'execution_block'.
+            elasticsearch.exceptions.ElasticsearchException: For Elasticsearch-specific errors.
+        """
+
+        try:
+            execution_block = metadata_dict.get("execution_block")
+            if not execution_block:
+                raise ValueError("Missing 'execution_block' in metadata")
+
+            response = self.es_client.index(index=index, id=execution_block, body=metadata_dict)
             if response["result"] == "created":
                 self.number_of_dataproducts = self.number_of_dataproducts + 1
                 return True

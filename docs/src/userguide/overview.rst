@@ -40,12 +40,12 @@ Verify the API's status by sending a GET request to the /status endpoint. The re
         "error_rate": 0,
         "last_metadata_update_time": "2024-07-09T09:33:22.858558",
         "search_metadata_store_status": {
-            "metadata_store_in_use": "InMemoryDataproductIndex",
+            "metadata_store_in_use": "InMemoryDataproductSearch",
             "indexing": false,
             "indexing_timestamp": 1720510402.8141217,
             "number_of_data_products": 11
         },
-        "persistent_metadata_store_status": {
+        "metadata_store": {
             "host": "localhost",
             "port": 5432,
             "user": "postgres",

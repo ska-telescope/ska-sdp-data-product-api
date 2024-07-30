@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from ska_sdp_dataproduct_api.components.metadatastore.datastore import (
+from ska_sdp_dataproduct_api.components.metadatastore.search_store_super_class import (
     SearchStoreSuperClass,  # Replace with the actual import path
 )
 from ska_sdp_dataproduct_api.utilities.helperfunctions import FilePaths

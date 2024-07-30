@@ -2,7 +2,9 @@
 
 import pytest
 
-from ska_sdp_dataproduct_api.components.postgresql.postgresql import PostgresConnector
+from ska_sdp_dataproduct_api.components.persistent_metadata_store.postgresql import (
+    PostgresConnector,
+)
 from ska_sdp_dataproduct_api.configuration.settings import (
     POSTGRESQL_HOST,
     POSTGRESQL_PASSWORD,

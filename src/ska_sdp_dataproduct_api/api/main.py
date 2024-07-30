@@ -7,11 +7,12 @@ from fastapi import BackgroundTasks, Body, Response
 from fastapi.exceptions import HTTPException
 
 from ska_sdp_dataproduct_api.components.metadatastore.store_factory import (
-    select_correct_store_class,
+    select_correct_search_store_class,
+    select_persistent_metadata_store_class,
 )
+from ska_sdp_dataproduct_api.components.data_ingestor.data_ingestor import Meta_Data_Ingestor
 from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
-from ska_sdp_dataproduct_api.components.postgresql.postgresql import persistent_metadata_store
-from ska_sdp_dataproduct_api.configuration.settings import DEFAULT_DISPLAY_LAYOUT, app
+from ska_sdp_dataproduct_api.configuration.settings import DEFAULT_DISPLAY_LAYOUT, app, origins
 from ska_sdp_dataproduct_api.utilities.helperfunctions import (
     DataProductMetaData,
     DPDAPIStatus,
@@ -22,11 +23,16 @@ from ska_sdp_dataproduct_api.utilities.helperfunctions import (
 
 logger = logging.getLogger(__name__)
 
-search_store = select_correct_store_class()
+metadata_store = select_persistent_metadata_store_class()
+metadata_ingestor_instance = Meta_Data_Ingestor(metadata_store)
+
+search_store = select_correct_search_store_class(metadata_store, muiDataGridInstance)
+
 DPD_API_Status = DPDAPIStatus(
     search_store_status=search_store.status,
-    persistent_metadata_store_status=persistent_metadata_store.status,
+    metadata_store=metadata_store.status,
 )
+
 
 
 @app.get("/status")
@@ -40,7 +46,7 @@ async def root():
 async def reindex_data_products(background_tasks: BackgroundTasks):
     """This endpoint clears the list of data products from memory and
     re-ingest the metadata of all data products found"""
-    background_tasks.add_task(search_store.reindex)
+    background_tasks.add_task(metadata_store.reindex)
     logger.info("Metadata search_store cleared and re-indexed")
     return "Metadata is set to be cleared and re-indexed"
 
@@ -129,11 +135,11 @@ async def download(file_object: FilePaths):
     return download_file(file_object)
 
 
-@app.post("/dataproductmetadata", response_class=Response)
+@app.post("/dataproductmetadata")
 async def data_product_metadata(file_object: FilePaths):
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
-    return search_store.load_metadata(file_object)
+    return metadata_store.load_metadata(file_object)
 
 
 @app.post("/ingestnewdataproduct")

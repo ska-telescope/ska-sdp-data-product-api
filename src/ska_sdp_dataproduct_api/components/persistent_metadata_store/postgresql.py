@@ -7,14 +7,6 @@ import logging
 import psycopg
 from psycopg.errors import OperationalError
 
-from ska_sdp_dataproduct_api.configuration.settings import (
-    POSTGRESQL_HOST,
-    POSTGRESQL_PASSWORD,
-    POSTGRESQL_PORT,
-    POSTGRESQL_TABLE_NAME,
-    POSTGRESQL_USER,
-)
-
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=too-many-arguments
 
@@ -34,6 +26,7 @@ class PostgresConnector:
         self.logger = logging.getLogger(__name__)
         self.postgresql_running: bool = False
         self.postgresql_version: str = ""
+        self.number_of_dataproducts: int = 0
         self._connect()
         if self.postgresql_running:
             self.postgresql_version = self._get_postgresql_version()
@@ -52,6 +45,7 @@ class PostgresConnector:
             "user": self.user,
             "running": self.postgresql_running,
             "table_name": self.table_name,
+            "number_of_dataproducts": self.number_of_dataproducts,
             "postgresql_version": self.postgresql_version,
         }
 
@@ -129,7 +123,7 @@ class PostgresConnector:
         cursor.close()
         return result[0] if result else None
 
-    def update_metadata(self, metadata_file_json: dict, id_field: int) -> None:
+    def update_metadata(self, metadata_file_json: str, id_field: int) -> None:
         """Updates existing metadata with the given data and hash."""
         json_hash = self.calculate_metadata_hash(metadata_file_json)
         cursor = self.conn.cursor()
@@ -138,7 +132,7 @@ class PostgresConnector:
         self.conn.commit()
         cursor.close()
 
-    def insert_metadata(self, metadata_file_json: dict, execution_block: str) -> None:
+    def insert_metadata(self, metadata_file_json: str, execution_block: str) -> None:
         """Inserts new metadata into the database."""
         json_hash = self.calculate_metadata_hash(metadata_file_json)
         cursor = self.conn.cursor()
@@ -148,11 +142,14 @@ VALUES (%s, %s, %s)"
         self.conn.commit()
         cursor.close()
 
-    def save_metadata_to_postgresql(self, metadata_file_json: dict) -> None:
+    def save_metadata_to_postgresql(self, metadata_file_dict: dict) -> None:
         """Saves metadata to PostgreSQL."""
         try:
-            json_hash = self.calculate_metadata_hash(metadata_file_json)
-            metadata_file_dict = json.loads(metadata_file_json)
+            if not self.postgresql_running:
+                self.logger.error("Error saving metadata to PostgreSQL, instance not available")
+                return
+
+            json_hash = self.calculate_metadata_hash(metadata_file_dict)
             execution_block = metadata_file_dict["execution_block"]
 
             if self.check_metadata_exists_by_hash(json_hash):
@@ -161,10 +158,11 @@ VALUES (%s, %s, %s)"
 
             metadata_id = self.check_metadata_exists_by_execution_block(execution_block)
             if metadata_id:
-                self.update_metadata(metadata_file_json, metadata_id)
+                self.update_metadata(json.dumps(metadata_file_dict), metadata_id)
                 self.logger.info("Updated metadata with execution_block %s", execution_block)
+                self.count_jsonb_objects()
             else:
-                self.insert_metadata(metadata_file_json, execution_block)
+                self.insert_metadata(json.dumps(metadata_file_dict), execution_block)
                 self.logger.info("Inserted new metadata with execution_block %s", execution_block)
                 self.count_jsonb_objects()
 
@@ -173,6 +171,7 @@ VALUES (%s, %s, %s)"
             raise
         except Exception as exception:  # pylint: disable=broad-exception-caught
             self.logger.error("Error saving metadata to PostgreSQL: %s", exception)
+            raise
 
     def count_jsonb_objects(self):
         """Counts the number of JSON objects within a JSONB column.
@@ -185,7 +184,7 @@ VALUES (%s, %s, %s)"
         cursor.execute(f"SELECT COUNT(*) FROM {self.table_name}")
         result = cursor.fetchone()[0]
         cursor.close()
-        self.logger.info("Number of items in the DB: %s", result)
+        self.number_of_dataproducts = int(result)
         return result
 
     def delete_postgres_table(self) -> bool:
@@ -216,11 +215,33 @@ VALUES (%s, %s, %s)"
             self.logger.error("An error occurred while executing the SQL statement: %s", error)
             return False
 
+    def fetch_data(self, table_name: str) -> list[dict]:
+        """Fetches JSONB data from Postgresql table.
 
-persistent_metadata_store = PostgresConnector(
-    host=POSTGRESQL_HOST,
-    port=POSTGRESQL_PORT,
-    user=POSTGRESQL_USER,
-    password=POSTGRESQL_PASSWORD,
-    table_name=POSTGRESQL_TABLE_NAME,
-)
+        Args:
+            table_name (str): Name of the Postgresql table.
+
+        Returns:
+            list[dict]: List of JSON objects.
+        """
+        cursor = self.conn.cursor()
+        cursor.execute(f"SELECT id, data FROM {table_name}")
+        data = cursor.fetchall()
+        cursor.close()
+        return [{"id": row[0], "data": row[1]} for row in data]
+
+    def load_data_products_from_persistent_metadata_store(self) -> None:
+        """ """
+        data_products: list[dict] = self.fetch_data(self.table_name)
+
+        return data_products
+
+        # for data_product in data_products:
+        #     self.add_dataproduct(
+        #         metadata_file=data_product,
+        #     )
+
+        # print("self.list_of_data_product_paths:")
+        # print(self.list_of_data_product_paths)
+        # print("self.metadata_list")
+        # print(self.metadata_list)
