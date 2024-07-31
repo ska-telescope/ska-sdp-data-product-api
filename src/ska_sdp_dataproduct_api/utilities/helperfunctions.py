@@ -28,14 +28,12 @@ class DPDAPIStatus:  # pylint: disable=too-many-instance-attributes
     """This class contains the status and methods related to the Data Product
     dashboard's API"""
 
-    def __init__(
-        self, search_store_status: object = None, persistent_metadata_store_status: object = None
-    ):
+    def __init__(self, search_store_status: object = None, metadata_store: object = None):
         self.api_running = True
 
         self.date_modified: datetime = datetime.datetime.now()
         self.version: str = VERSION
-        self.persistent_metadata_store_status: object = persistent_metadata_store_status
+        self.metadata_store: object = metadata_store
         self.search_store_status: object = search_store_status
         self.startup_time: datetime = datetime.datetime.now()  # Added: Time API started
         self.request_count: int = 0  # Added: Request count
@@ -50,8 +48,8 @@ class DPDAPIStatus:  # pylint: disable=too-many-instance-attributes
             "request_count": self.request_count,  # Added: Request count
             "error_rate": self.get_error_rate(),  # Added: Error rate
             "last_metadata_update_time": self.date_modified,
-            "search_metadata_store_status": self.search_store_status(),
-            "persistent_metadata_store_status": self.persistent_metadata_store_status(),
+            "metadata_store_status": self.metadata_store(),
+            "search_store_status": self.search_store_status(),
         }
 
     def increment_request_count(self):
@@ -273,8 +271,34 @@ def find_metadata(metadata, query_key):
             subsection = subsection[key]
         else:
             return None
-
     return {"key": query_key, "value": subsection}
+
+
+# def find_metadata(metadata, query_key):
+#     """
+#     This function retrieves a nested item from a dictionary.
+
+#     Args:
+#         metadata: The dictionary to search.
+#         key: The key to search for (can be a string with nested keys separated by dots)
+
+#     Returns:
+#         A tuple containing the key and its corresponding value, or None if not found.
+#     """
+#     if isinstance(metadata, dict):
+#         # Split the key into a list of subkeys
+#         subkeys = query_key.split('.')
+#         current_key = subkeys[0]
+#         # Check if the current key exists in the dictionary
+#         if current_key in metadata.keys():
+#             # If it's a nested key, recursively call the function on the value
+#             if len(subkeys) > 1:
+#                 return find_metadata(metadata[current_key], '.'.join(subkeys[1:]))
+#             # If it's the last key, return the key-value pair
+#             else:
+#                 return {"key": current_key, "value": metadata[current_key]}
+#     # If not a dictionary or key not found, return None
+#     return None
 
 
 def compare_integer(operand: int, operator: str, comparator: int | list[int]) -> bool:
@@ -426,7 +450,11 @@ def filter_by_item(
                 if compare_integer(operand, operator, comparator):
                     filtered_data.append(item)
             elif isinstance(comparator, datetime.datetime):
-                date_value = parse_valid_date(operand, "%Y-%m-%d")
+                try:
+                    date_value = parse_valid_date(operand, "%Y-%m-%d")
+                except Exception as exception:  # pylint: disable=broad-exception-caught
+                    logger.error("Error, invalid date=%s", exception)
+                    continue
                 if filter_datetimes(date_value, operator, comparator):
                     filtered_data.append(item)
             else:
@@ -521,4 +549,7 @@ def parse_valid_date(date_string: str, expected_format: str) -> datetime.datetim
         return datetime.datetime.strptime(date_string, expected_format)
     except ValueError as error:
         logging.error("Invalid date format: %s. Expected format: %s", date_string, expected_format)
+        raise error
+    except TypeError as error:
+        logging.error("Invalid date_string: %s", date_string)
         raise error

@@ -129,18 +129,29 @@ app = FastAPI()
 
 app = FastAPI(root_path=API_ROOT_PATH)
 
-origins = [
-    "http://localhost",
-    "http://localhost" + ":" + REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_PORT,
-    REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL,
-    REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL
-    + ":"
-    + REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_PORT,
-]
+
+def origins() -> list:
+    """Returns a list of unique origins.
+
+    Leverages the built-in `set` data structure for efficient removal of duplicates.
+    """
+
+    known_origins = [
+        "http://localhost",
+        "http://localhost:8000",
+        "http://localhost:" + REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_PORT,
+        REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL,
+        REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL
+        + ":"
+        + REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_PORT,
+    ]
+
+    return list(set(known_origins))
+
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

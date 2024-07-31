@@ -2,11 +2,20 @@
 import copy
 import json
 import logging
-from typing import Any, Dict, List
+import pathlib
+from time import time
+from typing import Any, Dict, List, Union
 
-from ska_sdp_dataproduct_api.components.metadatastore.datastore import SearchStoreSuperClass
-from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
-from ska_sdp_dataproduct_api.configuration.settings import DATE_FORMAT
+from ska_sdp_dataproduct_api.components.data_ingestor.data_ingestor import Meta_Data_Ingestor
+from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import (
+    MuiDataGrid,
+    muiDataGridInstance,
+)
+from ska_sdp_dataproduct_api.components.store.in_memory.in_memory_volume_index_metadata_store import (
+    in_memory_volume_index_metadata_store,
+)
+from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
+from ska_sdp_dataproduct_api.configuration.settings import DATE_FORMAT, PERSISTENT_STORAGE_PATH
 from ska_sdp_dataproduct_api.utilities.helperfunctions import (
     filter_by_item,
     filter_by_key_value_pair,
@@ -18,17 +27,52 @@ logger = logging.getLogger(__name__)
 # pylint: disable=no-name-in-module
 
 
-class InMemoryDataproductIndex(SearchStoreSuperClass):
+class InMemoryDataproductSearch:
     """
     This class defines an object that is used to create a list of data products
     based on information contained in the metadata files of these data
     products.
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        metadata_store: Union[PostgresConnector, in_memory_volume_index_metadata_store],
+        muiDataGridInstance: MuiDataGrid,
+    ) -> None:
         super().__init__()
-        self.reindex()
-        self.number_of_dataproducts: int
+        self.mui_data_grid_instance: MuiDataGrid = muiDataGridInstance
+        self.metadata_store: Union[
+            PostgresConnector, in_memory_volume_index_metadata_store
+        ] = metadata_store
+        self.number_of_dataproducts: int = 0
+        self.load_metadata_from_store()
+
+    def load_metadata_from_store(self):
+        """ """
+        if self.metadata_store.postgresql_running:
+            self.load_persistent_metadata_store_data()
+        else:
+            self.load_in_memory_volume_index_metadata_store_data()
+
+    def load_in_memory_volume_index_metadata_store_data(self):
+        """ """
+        for data_product in self.metadata_store.list_of_data_products_metadata:
+            self.insert_metadata_in_search_store(data_product)
+
+    def load_persistent_metadata_store_data(self):
+        """ """
+        for data_product in self.metadata_store.load_data_products_from_persistent_metadata_store():
+            self.insert_metadata_in_search_store(data_product['data'])
+
+    def insert_metadata_in_search_store(self, data_product_metadata_dict: dict):
+        """This method loads the metadata file of a data product, creates a
+        list of keys used in it, and then adds it to the flattened_list_of_dataproducts_metadata"""
+        # generate a list of keys from this object
+        muiDataGridInstance.update_flattened_list_of_keys(data_product_metadata_dict)
+        muiDataGridInstance.update_flattened_list_of_dataproducts_metadata(
+            muiDataGridInstance.flatten_dict(data_product_metadata_dict)
+        )
+        self.number_of_dataproducts = self.number_of_dataproducts + 1
 
     def status(self) -> dict:
         """
@@ -37,7 +81,7 @@ class InMemoryDataproductIndex(SearchStoreSuperClass):
         This method returns a dictionary containing the following information about in-memory
         data product indexing:
 
-        * `metadata_store_in_use`: Indicates that "InMemoryDataproductIndex" is being used for
+        * `metadata_store_in_use`: Indicates that "InMemoryDataproductSearch" is being used for
         data product metadata storage.
         * `indexing`: A boolean indicating whether data product indexing is currently in progress.
         * `indexing_timestamp` (optional): A timestamp representing when the last data product
@@ -49,37 +93,12 @@ class InMemoryDataproductIndex(SearchStoreSuperClass):
         """
 
         return {
-            "metadata_store_in_use": "InMemoryDataproductIndex",
-            "indexing": self.indexing,
-            "indexing_timestamp": self.indexing_timestamp,  # Optional
-            "number_of_data_products": self.number_of_dataproducts,
+            "metadata_search_store_in_use": "In memory search store",
+            "number_of_dataproducts": self.number_of_dataproducts,
         }
 
-    def clear_metadata_indecise(self):
-        """Clears metadata information stored within the class instance.
-
-        This method clears the `metadata_list` attribute
-        and sets the `number_of_dataproducts` attribute to 0.
-        """
-        self.metadata_list.clear()
-        self.number_of_dataproducts = 0
-
-    def insert_metadata_in_search_store(self, metadata_file_json):
-        """This method loads the metadata file of a data product, creates a
-        list of keys used in it, and then adds it to the metadata_list"""
-        # load JSON into object
-        metadata_file = json.loads(metadata_file_json)
-
-        # generate a list of keys from this object
-        self.update_flattened_list_of_keys(metadata_file)
-
-        self.add_dataproduct(
-            metadata_file=metadata_file,
-        )
-        self.number_of_dataproducts = self.number_of_dataproducts + 1
-
     def sort_metadata_list(self, key: str = "date_created", reverse: bool = True) -> None:
-        """Sorts the `metadata_list` attribute of the class instance in-place.
+        """Sorts the `flattened_list_of_dataproducts_metadata` attribute of the class instance in-place.
 
         Args:
             key (str, optional): The key attribute to sort by. Defaults to "date_created".
@@ -87,14 +106,19 @@ class InMemoryDataproductIndex(SearchStoreSuperClass):
 
         Raises:
             TypeError: If the provided `key` is not a string.
-            ValueError: If the `key` is not found in the elements of `metadata_list`.
+            ValueError: If the `key` is not found in the elements of `flattened_list_of_dataproducts_metadata`.
         """
 
-        for element in self.metadata_list:
+        for element in muiDataGridInstance.flattened_list_of_dataproducts_metadata:
             if key not in element:
-                logger.info("Key %s not found in all elements of metadata_list", key)
+                logger.info(
+                    "Key %s not found in all elements of flattened_list_of_dataproducts_metadata",
+                    key,
+                )
 
-        self.metadata_list.sort(key=lambda x: x[key], reverse=reverse)
+        muiDataGridInstance.flattened_list_of_dataproducts_metadata.sort(
+            key=lambda x: x[key], reverse=reverse
+        )
 
     def search_metadata(
         self,
@@ -103,23 +127,43 @@ class InMemoryDataproductIndex(SearchStoreSuperClass):
         metadata_key_value_pairs=None,
     ):
         """Metadata Search method."""
-        start_date = parse_valid_date(start_date, DATE_FORMAT)
-        end_date = parse_valid_date(end_date, DATE_FORMAT)
+        try:
+            start_date = parse_valid_date(start_date, DATE_FORMAT)
+            end_date = parse_valid_date(end_date, DATE_FORMAT)
+        except Exception as exception:  # pylint: disable=broad-exception-caught
+            logger.error(
+                "Error, invalid time range start_date=%s, end_date %s with error: %s. Using defaults:  \
+                    start_date=1970-01-01, end_date 2100-01-01",
+                start_date,
+                end_date,
+                exception,
+            )
+            start_date: str = "1970-01-01"
+            end_date: str = "2100-01-01"
 
         if metadata_key_value_pairs is None or len(metadata_key_value_pairs) == 0:
-            search_results = copy.deepcopy(self.metadata_list)
-            for product in self.metadata_list:
-                product_date = parse_valid_date(product["date_created"], DATE_FORMAT)
+            search_results = copy.deepcopy(
+                muiDataGridInstance.flattened_list_of_dataproducts_metadata
+            )
+            for product in muiDataGridInstance.flattened_list_of_dataproducts_metadata:
+                try:
+                    product_date = parse_valid_date(product["date_created"], DATE_FORMAT)
+                except Exception as exception:  # pylint: disable=broad-exception-caught
+                    logger.error("Error, invalid date=%s", exception)
+                    continue
                 if not start_date <= product_date <= end_date:
                     search_results.remove(product)
                     continue
 
             return json.dumps(search_results)
 
-        search_results = copy.deepcopy(self.metadata_list)
-        for product in self.metadata_list:
-            product_date = parse_valid_date(product["date_created"], DATE_FORMAT)
-
+        search_results = copy.deepcopy(muiDataGridInstance.flattened_list_of_dataproducts_metadata)
+        for product in muiDataGridInstance.flattened_list_of_dataproducts_metadata:
+            try:
+                product_date = parse_valid_date(product["date_created"], DATE_FORMAT)
+            except Exception as exception:  # pylint: disable=broad-exception-caught
+                logger.error("Error, invalid date=%s", exception)
+                continue
             if not start_date <= product_date <= end_date:
                 search_results.remove(product)
                 continue
@@ -139,7 +183,9 @@ class InMemoryDataproductIndex(SearchStoreSuperClass):
 
     def filter_data(self, mui_data_grid_filter_model, search_panel_options):
         """This is implemented in subclasses."""
-        muiDataGridInstance.load_inmemory_store_data(self)
+        muiDataGridInstance.load_metadata_from_list(
+            muiDataGridInstance.flattened_list_of_dataproducts_metadata
+        )
 
         mui_filtered_data = self.apply_filters(
             muiDataGridInstance.rows.copy(), mui_data_grid_filter_model
@@ -197,6 +243,10 @@ class InMemoryDataproductIndex(SearchStoreSuperClass):
                             )
                         except ValueError:
                             continue
+                        except Exception as exception:  # pylint: disable=broad-exception-caught
+                            logger.error("Error=%s", exception)
+                            continue
+
                     case _:
                         try:
                             filtered_data = filter_by_item(

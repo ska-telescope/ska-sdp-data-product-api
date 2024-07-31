@@ -13,7 +13,7 @@ def test_ping_main(test_app):
     assert "error_rate" in response.json()
     assert "last_metadata_update_time" in response.json()
     assert "search_metadata_store_status" in response.json()
-    assert "persistent_metadata_store_status" in response.json()
+    assert "metadata_store" in response.json()
 
 
 def test_reindex_data_products(test_app):

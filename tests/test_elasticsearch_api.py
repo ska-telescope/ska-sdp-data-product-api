@@ -6,6 +6,7 @@ from datetime import datetime  # Assuming connection_established_at uses datetim
 from ska_sdp_dataproduct_api.components.elasticsearch.elasticsearch_api import (
     ElasticsearchMetadataStore,
 )
+
 from ska_sdp_dataproduct_api.configuration.settings import ELASTICSEARCH_METADATA_SCHEMA_FILE
 from ska_sdp_dataproduct_api.utilities.helperfunctions import DPDAPIStatus
 from tests.mock_elasticsearch_api import MockElasticsearch
