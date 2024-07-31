@@ -164,7 +164,6 @@ class in_memory_volume_index_metadata_store:
         # persistent_metadata_store.save_metadata_to_postgresql(metadata_file_json)       # TODO Fix this
         self.list_of_data_products_metadata.append(data_product_metadata_dict)
         self.number_of_dataproducts = self.number_of_dataproducts + 1
-        
 
     def load_metadata(self, file_object: FilePaths) -> dict[str, Any]:
         """This function loads the content of a yaml file and returns it as a dict."""

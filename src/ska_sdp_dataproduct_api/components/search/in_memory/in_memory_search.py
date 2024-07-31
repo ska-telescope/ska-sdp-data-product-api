@@ -2,10 +2,9 @@
 import copy
 import json
 import logging
+import pathlib
 from time import time
 from typing import Any, Dict, List, Union
-import pathlib
-
 
 from ska_sdp_dataproduct_api.components.data_ingestor.data_ingestor import Meta_Data_Ingestor
 from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import (
@@ -46,15 +45,24 @@ class InMemoryDataproductSearch:
             PostgresConnector, in_memory_volume_index_metadata_store
         ] = metadata_store
         self.number_of_dataproducts: int = 0
-        self.load_in_memory_volume_index_metadata_store_data()
-        
+        self.load_metadata_from_store()
+
+    def load_metadata_from_store(self):
+        """ """
+        if self.metadata_store.postgresql_running:
+            self.load_persistent_metadata_store_data()
+        else:
+            self.load_in_memory_volume_index_metadata_store_data()
 
     def load_in_memory_volume_index_metadata_store_data(self):
-        """
-        """
-        for item in self.metadata_store.list_of_data_products_metadata:
-            self.insert_metadata_in_search_store(item)
+        """ """
+        for data_product in self.metadata_store.list_of_data_products_metadata:
+            self.insert_metadata_in_search_store(data_product)
 
+    def load_persistent_metadata_store_data(self):
+        """ """
+        for data_product in self.metadata_store.load_data_products_from_persistent_metadata_store():
+            self.insert_metadata_in_search_store(data_product['data'])
 
     def insert_metadata_in_search_store(self, data_product_metadata_dict: dict):
         """This method loads the metadata file of a data product, creates a
@@ -65,7 +73,6 @@ class InMemoryDataproductSearch:
             muiDataGridInstance.flatten_dict(data_product_metadata_dict)
         )
         self.number_of_dataproducts = self.number_of_dataproducts + 1
-
 
     def status(self) -> dict:
         """
@@ -259,5 +266,3 @@ class InMemoryDataproductSearch:
             # Implement logic based on logicOperator (and or or)
 
         return filtered_data
-
-

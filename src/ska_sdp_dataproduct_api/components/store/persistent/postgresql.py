@@ -186,6 +186,8 @@ VALUES (%s, %s, %s)"
         result = cursor.fetchone()[0]
         cursor.close()
         self.number_of_dataproducts = int(result)
+        print("result:")
+        print(result)
         return result
 
     def delete_postgres_table(self) -> bool:
@@ -231,7 +233,7 @@ VALUES (%s, %s, %s)"
         cursor.close()
         return [{"id": row[0], "data": row[1]} for row in data]
 
-    def load_data_products_from_persistent_metadata_store(self) -> None:
+    def load_data_products_from_persistent_metadata_store(self) -> list:
         """ """
         data_products: list[dict] = self.fetch_data(self.table_name)
 
