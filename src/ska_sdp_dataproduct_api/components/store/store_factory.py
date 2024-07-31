@@ -3,18 +3,16 @@ Elasticsearch availability."""
 import logging
 from typing import Union
 
-from ska_sdp_dataproduct_api.components.elasticsearch.elasticsearch_api import (
+from ska_sdp_dataproduct_api.components.search.elasticsearch.elasticsearch import (
     ElasticsearchMetadataStore,
 )
-from ska_sdp_dataproduct_api.components.in_memory_search_store.in_memory_search_store import (
+from ska_sdp_dataproduct_api.components.search.in_memory.in_memory_search import (
     InMemoryDataproductSearch,
 )
-from ska_sdp_dataproduct_api.components.in_memory_volume_index_metadata_store.in_memory_volume_index_metadata_store import (
+from ska_sdp_dataproduct_api.components.store.in_memory.in_memory_volume_index_metadata_store import (
     in_memory_volume_index_metadata_store,
 )
-from ska_sdp_dataproduct_api.components.persistent_metadata_store.postgresql import (
-    PostgresConnector,
-)
+from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
 from ska_sdp_dataproduct_api.configuration.settings import (
     POSTGRESQL_HOST,
     POSTGRESQL_PASSWORD,
@@ -24,39 +22,6 @@ from ska_sdp_dataproduct_api.configuration.settings import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-def select_correct_search_store_class(
-    metadata_store: Union[
-    PostgresConnector, in_memory_volume_index_metadata_store
-],
-    muiDataGridInstance,
-) -> Union[ElasticsearchMetadataStore, InMemoryDataproductSearch]:
-    """
-    Selects the appropriate dataproduct search store class based on Elasticsearch availability.
-
-    This function attempts to connect to Elasticsearch. If the connection is successful,
-    an instance of `ElasticsearchMetadataStore` is returned. Otherwise, a warning message
-    is logged and an instance of `InMemoryDataproductSearch` is returned for in-memory storage.
-
-    Returns:
-        Union[ElasticsearchMetadataStore, InMemoryDataproductSearch]: An instance of either
-            `ElasticsearchMetadataStore` or `InMemoryDataproductSearch` depending on Elasticsearch
-            availability.
-    """
-
-    try:
-        elastic_store_instance = ElasticsearchMetadataStore()
-        if elastic_store_instance.host and elastic_store_instance.check_and_reconnect():
-            logger.info("Elasticsearch reachable, setting search store to ElasticSearch")
-            return elastic_store_instance
-    except Exception as exception:  # pylint: disable=broad-exception-caught
-        logger.error("Failed to connect to Elasticsearch with exception: %s", exception)
-        logger.warning("Using in-memory search.")
-        return InMemoryDataproductSearch(metadata_store, muiDataGridInstance)
-
-    logger.warning("Elasticsearch not available, setting search store to in-memory store.")
-    return InMemoryDataproductSearch(metadata_store, muiDataGridInstance)
 
 
 def select_persistent_metadata_store_class() -> Union[
@@ -98,3 +63,36 @@ def select_persistent_metadata_store_class() -> Union[
         logger.error("Failed to connect to Elasticsearch with exception: %s", exception)
         logger.warning("Using in-memory store.")
         return in_memory_volume_index_metadata_store()
+
+
+def select_correct_search_store_class(
+    metadata_store: Union[PostgresConnector, in_memory_volume_index_metadata_store],
+    muiDataGridInstance,
+) -> Union[ElasticsearchMetadataStore, InMemoryDataproductSearch]:
+    """
+    Selects the appropriate dataproduct search store class based on Elasticsearch availability.
+
+    This function attempts to connect to Elasticsearch. If the connection is successful,
+    an instance of `ElasticsearchMetadataStore` is returned. Otherwise, a warning message
+    is logged and an instance of `InMemoryDataproductSearch` is returned for in-memory storage.
+
+    Returns:
+        Union[ElasticsearchMetadataStore, InMemoryDataproductSearch]: An instance of either
+            `ElasticsearchMetadataStore` or `InMemoryDataproductSearch` depending on Elasticsearch
+            availability.
+    """
+    elastic_store_instance = ElasticsearchMetadataStore(metadata_store)
+    elastic_store_instance.check_and_reconnect()
+
+    try:
+        elastic_store_instance = ElasticsearchMetadataStore(metadata_store)
+        if elastic_store_instance.host and elastic_store_instance.check_and_reconnect():
+            logger.info("Elasticsearch reachable, setting search store to ElasticSearch")
+            return elastic_store_instance
+    except Exception as exception:  # pylint: disable=broad-exception-caught
+        logger.error("Failed to connect to Elasticsearch with exception: %s", exception)
+        logger.warning("Using in-memory search.")
+        return InMemoryDataproductSearch(metadata_store, muiDataGridInstance)
+
+    logger.warning("Elasticsearch not available, setting search store to in-memory store.")
+    return InMemoryDataproductSearch(metadata_store, muiDataGridInstance)

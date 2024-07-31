@@ -1,11 +1,9 @@
 from typing import Union
 
-from ska_sdp_dataproduct_api.components.in_memory_volume_index_metadata_store.in_memory_volume_index_metadata_store import (
+from ska_sdp_dataproduct_api.components.store.in_memory.in_memory_volume_index_metadata_store import (
     in_memory_volume_index_metadata_store,
 )
-from ska_sdp_dataproduct_api.components.persistent_metadata_store.postgresql import (
-    PostgresConnector,
-)
+from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
 
 
 class Meta_Data_Ingestor:

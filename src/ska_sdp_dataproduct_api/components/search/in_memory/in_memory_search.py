@@ -3,22 +3,17 @@ import copy
 import json
 import logging
 from time import time
-from typing import Any, Dict, List
-from typing import Union
-
+from typing import Any, Dict, List, Union
 
 from ska_sdp_dataproduct_api.components.data_ingestor.data_ingestor import Meta_Data_Ingestor
-from ska_sdp_dataproduct_api.components.in_memory_volume_index_metadata_store.in_memory_volume_index_metadata_store import (
-    in_memory_volume_index_metadata_store,
-)
-from ska_sdp_dataproduct_api.components.persistent_metadata_store.postgresql import PostgresConnector
-from ska_sdp_dataproduct_api.components.metadatastore.search_store_super_class import (
-    SearchStoreSuperClass,
-)
 from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import (
     MuiDataGrid,
     muiDataGridInstance,
 )
+from ska_sdp_dataproduct_api.components.store.in_memory.in_memory_volume_index_metadata_store import (
+    in_memory_volume_index_metadata_store,
+)
+from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
 from ska_sdp_dataproduct_api.configuration.settings import DATE_FORMAT, PERSISTENT_STORAGE_PATH
 from ska_sdp_dataproduct_api.utilities.helperfunctions import (
     filter_by_item,
@@ -40,9 +35,7 @@ class InMemoryDataproductSearch:
 
     def __init__(
         self,
-        metadata_store : Union[
-            PostgresConnector, in_memory_volume_index_metadata_store
-        ],
+        metadata_store: Union[PostgresConnector, in_memory_volume_index_metadata_store],
         muiDataGridInstance: MuiDataGrid,
     ) -> None:
         super().__init__()
@@ -74,7 +67,7 @@ class InMemoryDataproductSearch:
         }
 
     def sort_metadata_list(self, key: str = "date_created", reverse: bool = True) -> None:
-        """Sorts the `metadata_list` attribute of the class instance in-place.
+        """Sorts the `flattened_list_of_dataproducts_metadata` attribute of the class instance in-place.
 
         Args:
             key (str, optional): The key attribute to sort by. Defaults to "date_created".
@@ -82,14 +75,19 @@ class InMemoryDataproductSearch:
 
         Raises:
             TypeError: If the provided `key` is not a string.
-            ValueError: If the `key` is not found in the elements of `metadata_list`.
+            ValueError: If the `key` is not found in the elements of `flattened_list_of_dataproducts_metadata`.
         """
 
-        for element in self.metadata_store.metadata_list:
+        for element in muiDataGridInstance.flattened_list_of_dataproducts_metadata:
             if key not in element:
-                logger.info("Key %s not found in all elements of metadata_list", key)
+                logger.info(
+                    "Key %s not found in all elements of flattened_list_of_dataproducts_metadata",
+                    key,
+                )
 
-        self.metadata_store.metadata_list.sort(key=lambda x: x[key], reverse=reverse)
+        muiDataGridInstance.flattened_list_of_dataproducts_metadata.sort(
+            key=lambda x: x[key], reverse=reverse
+        )
 
     def search_metadata(
         self,
@@ -113,8 +111,10 @@ class InMemoryDataproductSearch:
             end_date: str = "2100-01-01"
 
         if metadata_key_value_pairs is None or len(metadata_key_value_pairs) == 0:
-            search_results = copy.deepcopy(self.metadata_store.metadata_list)
-            for product in self.metadata_store.metadata_list:
+            search_results = copy.deepcopy(
+                muiDataGridInstance.flattened_list_of_dataproducts_metadata
+            )
+            for product in muiDataGridInstance.flattened_list_of_dataproducts_metadata:
                 try:
                     product_date = parse_valid_date(product["date_created"], DATE_FORMAT)
                 except Exception as exception:  # pylint: disable=broad-exception-caught
@@ -126,8 +126,8 @@ class InMemoryDataproductSearch:
 
             return json.dumps(search_results)
 
-        search_results = copy.deepcopy(self.metadata_store.metadata_list)
-        for product in self.metadata_store.metadata_list:
+        search_results = copy.deepcopy(muiDataGridInstance.flattened_list_of_dataproducts_metadata)
+        for product in muiDataGridInstance.flattened_list_of_dataproducts_metadata:
             try:
                 product_date = parse_valid_date(product["date_created"], DATE_FORMAT)
             except Exception as exception:  # pylint: disable=broad-exception-caught
@@ -152,7 +152,9 @@ class InMemoryDataproductSearch:
 
     def filter_data(self, mui_data_grid_filter_model, search_panel_options):
         """This is implemented in subclasses."""
-        muiDataGridInstance.load_inmemory_store_data(self.metadata_store)
+        muiDataGridInstance.load_metadata_from_list(
+            muiDataGridInstance.flattened_list_of_dataproducts_metadata
+        )
 
         mui_filtered_data = self.apply_filters(
             muiDataGridInstance.rows.copy(), mui_data_grid_filter_model
@@ -191,7 +193,6 @@ class InMemoryDataproductSearch:
 
         # logic_operator = filters.get("logicOperator", "and").lower()
         filtered_data = data
-        print(data)
 
         for filter_item in filters.get("items", []):
             field = filter_item.get("field")

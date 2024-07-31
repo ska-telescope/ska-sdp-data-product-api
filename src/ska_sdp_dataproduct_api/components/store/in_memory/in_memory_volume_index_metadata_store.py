@@ -1,13 +1,13 @@
 import datetime
 import logging
 import pathlib
-from collections.abc import MutableMapping
 from time import time
 from typing import Any, List
 
 import yaml
 from ska_sdp_dataproduct_metadata import MetaData
 
+from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
 from ska_sdp_dataproduct_api.configuration.settings import (
     METADATA_FILE_NAME,
     PERSISTENT_STORAGE_PATH,
@@ -29,9 +29,8 @@ class in_memory_volume_index_metadata_store:
     def __init__(self):
         self.postgresql_running: bool = False
         self.number_of_dataproducts: int = 0
-        self.metadata_list = []
-        self.flattened_list_of_keys = []
         self.list_of_data_product_paths: List[pathlib.Path] = []
+        self.list_of_data_products_metadata: list[dict] = []
         self.load_data_products()
 
     def status(self) -> dict:
@@ -55,14 +54,13 @@ class in_memory_volume_index_metadata_store:
         self.reindex_persistent_volume()  # TODO This need to change
 
     def reindex(self) -> None:
-            """This method resets and recreates the metadata_list. This is added
-            to enable the user to reindex if the data products were changed or
-            appended since the initial load of the data"""
-            self.reindex_persistent_volume()
-
+        """This method resets and recreates the flattened_list_of_dataproducts_metadata. This is added
+        to enable the user to reindex if the data products were changed or
+        appended since the initial load of the data"""
+        self.reindex_persistent_volume()
 
     def reindex_persistent_volume(self) -> None:
-        """This method resets and recreates the metadata_list. This is added
+        """This method resets and recreates the flattened_list_of_dataproducts_metadata. This is added
         to enable the user to reindex if the data products were changed or
         appended since the initial load of the data"""
         try:
@@ -82,10 +80,10 @@ class in_memory_volume_index_metadata_store:
     def clear_metadata_indecise(self):
         """Clears metadata information stored within the class instance.
 
-        This method clears the `metadata_list` attribute
+        This method clears the `flattened_list_of_dataproducts_metadata` attribute
         and sets the `number_of_dataproducts` attribute to 0.
         """
-        self.metadata_list.clear()
+        muiDataGridInstance.flattened_list_of_dataproducts_metadata.clear()
         self.number_of_dataproducts = 0
 
     def list_all_data_product_files(self, full_path_name: pathlib.Path) -> None:
@@ -159,15 +157,15 @@ class in_memory_volume_index_metadata_store:
         )
         data_product_file_paths.relativePathName = get_relative_path(data_product_path)
 
-        print(data_product_file_paths.fullPathName)
-        metadata_file_json = self.load_metadata(data_product_file_paths)
+        data_product_metadata_dict = self.load_metadata(data_product_file_paths)
 
         # Check if any metadata was actually loaded before inserting
-        if not metadata_file_json:
+        if not data_product_metadata_dict:
             return
 
         # persistent_metadata_store.save_metadata_to_postgresql(metadata_file_json)       # TODO Fix this
-        self.insert_metadata_in_search_store(metadata_file_json)
+        self.list_of_data_products_metadata.append(data_product_metadata_dict)
+        self.insert_metadata_in_search_store(data_product_metadata_dict)
 
     def load_metadata(self, file_object: FilePaths) -> dict[str, Any]:
         """This function loads the content of a yaml file and returns it as a dict."""
@@ -228,14 +226,13 @@ class in_memory_volume_index_metadata_store:
 
         return metadata_dict
 
-    def insert_metadata_in_search_store(self, metadata_file: dict):
+    def insert_metadata_in_search_store(self, data_product_metadata_dict: dict):
         """This method loads the metadata file of a data product, creates a
-        list of keys used in it, and then adds it to the metadata_list"""
+        list of keys used in it, and then adds it to the flattened_list_of_dataproducts_metadata"""
         # generate a list of keys from this object
-        self.update_flattened_list_of_keys(metadata_file)
-
-        self.add_dataproduct(
-            metadata_file=metadata_file,
+        muiDataGridInstance.update_flattened_list_of_keys(data_product_metadata_dict)
+        muiDataGridInstance.update_flattened_list_of_dataproducts_metadata(
+            muiDataGridInstance.flatten_dict(data_product_metadata_dict)
         )
         self.number_of_dataproducts = self.number_of_dataproducts + 1
 
@@ -281,87 +278,3 @@ class in_memory_volume_index_metadata_store:
         except Exception as exception:
             logger.warning("Unexpected error occurred: %s", exception)
             raise exception
-
-    def update_flattened_list_of_keys(self, metadata_file: dict) -> None:
-        """
-        Updates the `flattened_list_of_keys` attribute with new keys extracted from the specified
-        metadata file.
-
-        Args:
-            metadata_file (str): The path to the metadata file containing keys to be added.
-
-        Raises:
-            TypeError: If `metadata_file` is not a string.
-        """
-        print("Updating keys")
-        for key in self.generate_metadata_keys_list(metadata_file, [], "", "."):
-            if key not in self.flattened_list_of_keys:
-                self.flattened_list_of_keys.append(key)
-                print("Appended: %s", key)
-
-    def generate_metadata_keys_list(self, metadata: dict, ignore_keys, parent_key="", sep="_"):
-        """Given a nested dict, return the flattened list of keys"""
-        flattened_list_of_keys = []  # Create an empty list to store flattened keys
-        for key, value in metadata.items():
-            new_key = parent_key + sep + key if parent_key else key
-            if isinstance(value, MutableMapping):
-                flattened_list_of_keys.extend(
-                    self.generate_metadata_keys_list(value, ignore_keys, new_key, sep=sep)
-                )
-            else:
-                if new_key not in ignore_keys and new_key not in flattened_list_of_keys:
-                    flattened_list_of_keys.append(new_key)
-        return flattened_list_of_keys  # Return the flattened list at the end
-
-    def add_dataproduct(self, metadata_file: dict):
-        """
-        Populates a list of data products with their associated metadata.
-
-        Args:
-            metadata_file: A dictionary containing the metadata for a data product.
-
-        Raises:
-            ValueError: If the provided metadata_file is not a dictionary.
-        """
-        required_keys = {"execution_block", "date_created", "dataproduct_file", "metadata_file"}
-        data_product_details = {}
-
-        # Handle top-level required keys
-        for key in required_keys:
-            if key in metadata_file:
-                data_product_details[key] = metadata_file[key]
-
-        # Add additional keys based on query (assuming find_metadata is defined)
-        print("self.flattened_list_of_keys")
-        print(self.flattened_list_of_keys)
-        for query_key in self.flattened_list_of_keys:
-            query_metadata = find_metadata(metadata_file, query_key)
-            if query_metadata:
-                data_product_details[query_metadata["key"]] = query_metadata["value"]
-
-        self.update_dataproduct_list(data_product_details)
-
-    def update_dataproduct_list(self, data_product_details):
-        """
-        Updates the internal list of data products with the provided metadata.
-
-        This method adds the provided `data_product_details` dictionary to the internal
-        `metadata_list` attribute. If the list is empty, it assigns an "id" of 1 to the
-        first data product. Otherwise, it assigns an "id" based on the current length
-        of the list + 1.
-
-        Args:
-            data_product_details: A dictionary containing the metadata for a data product.
-
-        Returns:
-            None
-        """
-        # Adds the first dictionary to the list
-        if len(self.metadata_list) == 0:
-            data_product_details["id"] = 1
-            self.metadata_list.append(data_product_details)
-            return
-
-        data_product_details["id"] = len(self.metadata_list) + 1
-        self.metadata_list.append(data_product_details)
-        return

@@ -235,13 +235,3 @@ VALUES (%s, %s, %s)"
         data_products: list[dict] = self.fetch_data(self.table_name)
 
         return data_products
-
-        # for data_product in data_products:
-        #     self.add_dataproduct(
-        #         metadata_file=data_product,
-        #     )
-
-        # print("self.list_of_data_product_paths:")
-        # print(self.list_of_data_product_paths)
-        # print("self.metadata_list")
-        # print(self.metadata_list)

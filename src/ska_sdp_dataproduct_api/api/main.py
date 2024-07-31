@@ -3,16 +3,16 @@
 import logging
 from typing import Dict, List, Optional
 
-from fastapi import BackgroundTasks, Body, Response
+from fastapi import BackgroundTasks, Body
 from fastapi.exceptions import HTTPException
 
-from ska_sdp_dataproduct_api.components.metadatastore.store_factory import (
+from ska_sdp_dataproduct_api.components.data_ingestor.data_ingestor import Meta_Data_Ingestor
+from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
+from ska_sdp_dataproduct_api.components.store.store_factory import (
     select_correct_search_store_class,
     select_persistent_metadata_store_class,
 )
-from ska_sdp_dataproduct_api.components.data_ingestor.data_ingestor import Meta_Data_Ingestor
-from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
-from ska_sdp_dataproduct_api.configuration.settings import DEFAULT_DISPLAY_LAYOUT, app, origins
+from ska_sdp_dataproduct_api.configuration.settings import DEFAULT_DISPLAY_LAYOUT, app
 from ska_sdp_dataproduct_api.utilities.helperfunctions import (
     DataProductMetaData,
     DPDAPIStatus,
@@ -32,7 +32,6 @@ DPD_API_Status = DPDAPIStatus(
     search_store_status=search_store.status,
     metadata_store=metadata_store.status,
 )
-
 
 
 @app.get("/status")
@@ -109,7 +108,6 @@ async def filter_data(body: Optional[Dict] = Body(...)) -> List:
     search_panel_options = body.get("searchPanelOptions", {})
 
     filtered_data = search_store.filter_data(mui_data_grid_filter_model, search_panel_options)
-
     return filtered_data
 
 
@@ -124,7 +122,6 @@ async def get_muidatagridconfig() -> Dict:
     Returns:
         Dict: The MUI DataGrid configuration object.
     """
-
     return muiDataGridInstance.table_config
 
 
