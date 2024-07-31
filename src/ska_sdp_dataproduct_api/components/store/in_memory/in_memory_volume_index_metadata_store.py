@@ -13,9 +13,7 @@ from ska_sdp_dataproduct_api.configuration.settings import (
     PERSISTENT_STORAGE_PATH,
 )
 from ska_sdp_dataproduct_api.utilities.helperfunctions import (
-    DataProductMetaData,
     FilePaths,
-    find_metadata,
     get_date_from_name,
     get_relative_path,
 )
@@ -165,7 +163,8 @@ class in_memory_volume_index_metadata_store:
 
         # persistent_metadata_store.save_metadata_to_postgresql(metadata_file_json)       # TODO Fix this
         self.list_of_data_products_metadata.append(data_product_metadata_dict)
-        self.insert_metadata_in_search_store(data_product_metadata_dict)
+        self.number_of_dataproducts = self.number_of_dataproducts + 1
+        
 
     def load_metadata(self, file_object: FilePaths) -> dict[str, Any]:
         """This function loads the content of a yaml file and returns it as a dict."""
@@ -225,16 +224,6 @@ class in_memory_volume_index_metadata_store:
         )
 
         return metadata_dict
-
-    def insert_metadata_in_search_store(self, data_product_metadata_dict: dict):
-        """This method loads the metadata file of a data product, creates a
-        list of keys used in it, and then adds it to the flattened_list_of_dataproducts_metadata"""
-        # generate a list of keys from this object
-        muiDataGridInstance.update_flattened_list_of_keys(data_product_metadata_dict)
-        muiDataGridInstance.update_flattened_list_of_dataproducts_metadata(
-            muiDataGridInstance.flatten_dict(data_product_metadata_dict)
-        )
-        self.number_of_dataproducts = self.number_of_dataproducts + 1
 
     def check_file_exists(self, file_object: pathlib.Path) -> bool:
         """

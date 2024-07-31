@@ -4,6 +4,8 @@ import json
 import logging
 from time import time
 from typing import Any, Dict, List, Union
+import pathlib
+
 
 from ska_sdp_dataproduct_api.components.data_ingestor.data_ingestor import Meta_Data_Ingestor
 from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import (
@@ -43,6 +45,27 @@ class InMemoryDataproductSearch:
         self.metadata_store: Union[
             PostgresConnector, in_memory_volume_index_metadata_store
         ] = metadata_store
+        self.number_of_dataproducts: int = 0
+        self.load_in_memory_volume_index_metadata_store_data()
+        
+
+    def load_in_memory_volume_index_metadata_store_data(self):
+        """
+        """
+        for item in self.metadata_store.list_of_data_products_metadata:
+            self.insert_metadata_in_search_store(item)
+
+
+    def insert_metadata_in_search_store(self, data_product_metadata_dict: dict):
+        """This method loads the metadata file of a data product, creates a
+        list of keys used in it, and then adds it to the flattened_list_of_dataproducts_metadata"""
+        # generate a list of keys from this object
+        muiDataGridInstance.update_flattened_list_of_keys(data_product_metadata_dict)
+        muiDataGridInstance.update_flattened_list_of_dataproducts_metadata(
+            muiDataGridInstance.flatten_dict(data_product_metadata_dict)
+        )
+        self.number_of_dataproducts = self.number_of_dataproducts + 1
+
 
     def status(self) -> dict:
         """
@@ -63,7 +86,8 @@ class InMemoryDataproductSearch:
         """
 
         return {
-            "metadata_search_store_in_use": "InMemoryDataproductSearch",
+            "metadata_search_store_in_use": "In memory search store",
+            "number_of_dataproducts": self.number_of_dataproducts,
         }
 
     def sort_metadata_list(self, key: str = "date_created", reverse: bool = True) -> None:
@@ -235,3 +259,5 @@ class InMemoryDataproductSearch:
             # Implement logic based on logicOperator (and or or)
 
         return filtered_data
+
+

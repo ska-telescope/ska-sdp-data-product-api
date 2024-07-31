@@ -40,6 +40,7 @@ class PostgresConnector:
             A dictionary containing the current status information.
         """
         return {
+            "store_type": "Persistent PosgreSQL metadata store",
             "host": self.host,
             "port": self.port,
             "user": self.user,
