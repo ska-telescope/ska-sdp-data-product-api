@@ -247,7 +247,6 @@ class ElasticsearchMetadataStore:  # pylint: disable=too-many-instance-attribute
         except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error("Error inserting metadata into search store: %s", exception)
 
-
     def index_metadata_to_elasticsearch(self, index: str, metadata_dict: dict) -> bool:
         """Indexes metadata into Elasticsearch.
 
@@ -261,7 +260,7 @@ class ElasticsearchMetadataStore:  # pylint: disable=too-many-instance-attribute
         """
 
         try:
-            execution_block = metadata_dict.get('execution_block')
+            execution_block = metadata_dict.get("execution_block")
             if not execution_block:
                 raise ValueError("Missing 'execution_block' in metadata")
 
@@ -276,7 +275,6 @@ class ElasticsearchMetadataStore:  # pylint: disable=too-many-instance-attribute
         except Exception as exception:
             logger.error("Error inserting metadata into Elasticsearch: %s", exception)
             raise Exception(f"Error indexing metadata: {str(exception)}")
-
 
     def sort_metadata_list(self) -> None:
         """This method sorts the metadata_list according to the set key"""

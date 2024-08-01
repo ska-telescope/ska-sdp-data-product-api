@@ -3,9 +3,19 @@
 import hashlib
 import json
 import logging
+from typing import Any, List
 
 import psycopg
 from psycopg.errors import OperationalError
+from ska_sdp_dataproduct_metadata import MetaData
+
+from ska_sdp_dataproduct_api.utilities.helperfunctions import (
+    FilePaths,
+    get_date_from_name,
+    get_relative_path,
+)
+
+logger = logging.getLogger(__name__)
 
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=too-many-arguments
@@ -23,7 +33,6 @@ class PostgresConnector:
         self.password = password
         self.table_name = table_name
         self.conn = None
-        self.logger = logging.getLogger(__name__)
         self.postgresql_running: bool = False
         self.postgresql_version: str = ""
         self.number_of_dataproducts: int = 0
@@ -62,10 +71,10 @@ class PostgresConnector:
                 host=self.host, port=self.port, user=self.user, password=self.password
             )
             self.postgresql_running = True
-            self.logger.info("Connected to PostgreSQL successfully")
+            logger.info("Connected to PostgreSQL successfully")
         except OperationalError as error:
             self.postgresql_running = False
-            self.logger.error(
+            logger.error(
                 "An error occurred while connecting to the PostgreSQL database: %s", error
             )
 
@@ -83,23 +92,23 @@ class PostgresConnector:
         """
 
         try:
-            self.logger.info("Creating PostgreSQL metadata table: %s", self.table_name)
+            logger.info("Creating PostgreSQL metadata table: %s", self.table_name)
 
             create_table_query = f"""
                 CREATE TABLE IF NOT EXISTS {self.table_name} (
                     id SERIAL PRIMARY KEY,
                     data JSONB NOT NULL,
-                    execution_block VARCHAR(255) DEFAULT NULL,
+                    execution_block VARCHAR(255) DEFAULT NULL UNIQUE,
                     json_hash CHAR(64) UNIQUE
                 );
             """
             cursor = self.conn.cursor()
             cursor.execute(create_table_query)
             cursor.close()
-            self.logger.info("PostgreSQL metadata table %s created.", self.table_name)
+            logger.info("PostgreSQL metadata table %s created.", self.table_name)
 
         except psycopg.Error as error:
-            self.logger.error("Error creating metadata table: %s", error)
+            logger.error("Error creating metadata table: %s", error)
             raise
 
     def calculate_metadata_hash(self, metadata_file_json: dict) -> str:
@@ -147,31 +156,31 @@ VALUES (%s, %s, %s)"
         """Saves metadata to PostgreSQL."""
         try:
             if not self.postgresql_running:
-                self.logger.error("Error saving metadata to PostgreSQL, instance not available")
+                logger.error("Error saving metadata to PostgreSQL, instance not available")
                 return
 
             json_hash = self.calculate_metadata_hash(metadata_file_dict)
             execution_block = metadata_file_dict["execution_block"]
 
             if self.check_metadata_exists_by_hash(json_hash):
-                self.logger.info("Metadata with hash %s already exists.", json_hash)
+                logger.info("Metadata with hash %s already exists.", json_hash)
                 return
 
             metadata_id = self.check_metadata_exists_by_execution_block(execution_block)
             if metadata_id:
                 self.update_metadata(json.dumps(metadata_file_dict), metadata_id)
-                self.logger.info("Updated metadata with execution_block %s", execution_block)
+                logger.info("Updated metadata with execution_block %s", execution_block)
                 self.count_jsonb_objects()
             else:
                 self.insert_metadata(json.dumps(metadata_file_dict), execution_block)
-                self.logger.info("Inserted new metadata with execution_block %s", execution_block)
+                logger.info("Inserted new metadata with execution_block %s", execution_block)
                 self.count_jsonb_objects()
 
         except psycopg.Error as error:
-            self.logger.error("Error saving metadata to PostgreSQL: %s", error)
+            logger.error("Error saving metadata to PostgreSQL: %s", error)
             raise
         except Exception as exception:  # pylint: disable=broad-exception-caught
-            self.logger.error("Error saving metadata to PostgreSQL: %s", exception)
+            logger.error("Error saving metadata to PostgreSQL: %s", exception)
             raise
 
     def count_jsonb_objects(self):
@@ -201,21 +210,21 @@ VALUES (%s, %s, %s)"
         """
 
         try:
-            self.logger.info("PostgreSQL deleting database table %s", self.table_name)
+            logger.info("PostgreSQL deleting database table %s", self.table_name)
             cursor = self.conn.cursor()
             cursor.execute(f"DROP TABLE IF EXISTS {self.table_name}")
             self.conn.commit()
             cursor.close()
-            self.logger.info("PostgreSQL database table %s deleted.", self.table_name)
+            logger.info("PostgreSQL database table %s deleted.", self.table_name)
             return True
 
         except psycopg.OperationalError as error:
-            self.logger.error(
+            logger.error(
                 "An error occurred while connecting to the PostgreSQL database: %s", error
             )
             return False
         except psycopg.ProgrammingError as error:
-            self.logger.error("An error occurred while executing the SQL statement: %s", error)
+            logger.error("An error occurred while executing the SQL statement: %s", error)
             return False
 
     def fetch_data(self, table_name: str) -> list[dict]:
@@ -238,3 +247,55 @@ VALUES (%s, %s, %s)"
         data_products: list[dict] = self.fetch_data(self.table_name)
 
         return data_products
+
+    def load_metadata(self, file_object: FilePaths) -> dict[str, Any]:
+        """This function loads the content of a yaml file and returns it as a dict."""
+        # Test that the metadata file exists
+        cursor = self.conn.cursor()
+        check_query = f"SELECT data FROM {self.table_name} WHERE execution_block = %s"
+        cursor.execute(check_query, (file_object.execution_block,))
+        result = cursor.fetchone()
+        cursor.close()
+        metadata_dict = result[0]
+
+        # Validate the metadata against the schema
+        validation_errors = MetaData.validator.iter_errors(metadata_dict)
+
+        # Loop over the errors
+        for validation_error in validation_errors:
+            logger.error(
+                "Not loading dataproduct due to schema validation error when ingesting: %s : %s",
+                str(file_object.fullPathName),
+                str(validation_error.message),
+            )
+
+            if (
+                str(validation_error.validator) == "required"
+                or str(validation_error.message) == "None is not of type 'object'"
+            ):
+                logger.error(
+                    "Not loading dataproduct due to schema validation error when ingesting: %s : %s",
+                    str(file_object.fullPathName),
+                    str(validation_error.message),
+                )
+                return {}
+
+        try:
+            metadata_date = get_date_from_name(metadata_dict["execution_block"])
+        except Exception as exception:  # pylint: disable=broad-exception-caught
+            logger.error(
+                "Not loading dataproduct due to failure to extract the date from execution block: %s : %s",
+                str(file_object.fullPathName),
+                exception,
+            )
+            return {}
+
+        metadata_dict.update(
+            {
+                "date_created": metadata_date,
+                "dataproduct_file": str(file_object.relativePathName.parent),
+                "metadata_file": str(file_object.relativePathName),
+            }
+        )
+
+        return metadata_dict

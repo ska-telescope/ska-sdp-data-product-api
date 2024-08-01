@@ -26,14 +26,14 @@ def test_reindex_data_products(test_app):
 def test_download_file(test_app):
     """Test if a file can be downloaded from the test files"""
     data = (
-        '{"fileName": "TestDataFile1.txt","relativePathName": \
+        '{"execution_block": "TestDataFile1.txt","relativePathName": \
         "eb-m001-20221212-12345/ska-sub-system/scan_id_1/pb_id_1'
         + '/TestDataFile1.txt"}'
     )
     response = test_app.post("/download", data=data)
     assert response.status_code == 200
 
-    data = '{"fileName": "pb-notebookvr-20240201-54576","relativePathName": \
+    data = '{"execution_block": "pb-notebookvr-20240201-54576","relativePathName": \
         "eb-notebook-20240201-54576/ska-sdp/pb-notebookvr-20240201-54576"}'
     response = test_app.post("/download", data=data)
     assert response.status_code == 200
@@ -41,7 +41,7 @@ def test_download_file(test_app):
 
 def test_download_folder(test_app):
     """Test if a folder can be downloaded from the test files"""
-    data = '{"fileName": "eb-m001-20221212-12345","relativePathName": \
+    data = '{"execution_block": "eb-m001-20221212-12345","relativePathName": \
         "eb-m001-20221212-12345"}'
     response = test_app.post("/download", data=data)
     assert response.status_code == 200
@@ -49,7 +49,7 @@ def test_download_folder(test_app):
 
 def test_data_product_metadata(test_app):
     """Test if metadata can be retrieved for a data product"""
-    data = '{"fileName": "ska-data-product.yaml","relativePathName": \
+    data = '{"execution_block": "ska-data-product.yaml","relativePathName": \
     "eb-m001-20221212-12345/ska-data-product.yaml"}'
     response = test_app.post("/dataproductmetadata", data=data)
     assert response.status_code == 200

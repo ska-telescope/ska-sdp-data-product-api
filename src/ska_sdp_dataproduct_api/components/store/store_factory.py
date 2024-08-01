@@ -3,6 +3,7 @@ Elasticsearch availability."""
 import logging
 from typing import Union
 
+from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
 from ska_sdp_dataproduct_api.components.search.elasticsearch.elasticsearch import (
     ElasticsearchMetadataStore,
 )
@@ -24,7 +25,7 @@ from ska_sdp_dataproduct_api.configuration.settings import (
 logger = logging.getLogger(__name__)
 
 
-def select_persistent_metadata_store_class() -> Union[
+def select_metadata_store_class() -> Union[
     PostgresConnector, in_memory_volume_index_metadata_store
 ]:
     """
@@ -65,9 +66,8 @@ def select_persistent_metadata_store_class() -> Union[
         return in_memory_volume_index_metadata_store()
 
 
-def select_correct_search_store_class(
+def select_search_store_class(
     metadata_store: Union[PostgresConnector, in_memory_volume_index_metadata_store],
-    muiDataGridInstance,
 ) -> Union[ElasticsearchMetadataStore, InMemoryDataproductSearch]:
     """
     Selects the appropriate dataproduct search store class based on Elasticsearch availability.

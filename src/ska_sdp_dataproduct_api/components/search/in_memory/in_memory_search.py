@@ -61,8 +61,10 @@ class InMemoryDataproductSearch:
 
     def load_persistent_metadata_store_data(self):
         """ """
-        for data_product in self.metadata_store.load_data_products_from_persistent_metadata_store():
-            self.insert_metadata_in_search_store(data_product['data'])
+        for (
+            data_product
+        ) in self.metadata_store.load_data_products_from_persistent_metadata_store():
+            self.insert_metadata_in_search_store(data_product["data"])
 
     def insert_metadata_in_search_store(self, data_product_metadata_dict: dict):
         """This method loads the metadata file of a data product, creates a

@@ -72,14 +72,14 @@ class FilePaths(BaseModel):
     A class that represents a file URL.
 
     Attributes:
-        fileName (str): The name of the file.
+        execution_block (str): The name of the file.
         relativePathName (pathlib.Path): The relative path name of the file.
         fullPathName (pathlib.Path): The full path name of the file.
         metaDataFile (pathlib.Path): The metadata file of the file.
 
     """
 
-    fileName: str
+    execution_block: str
     relativePathName: pathlib.Path = None
     fullPathName: Optional[pathlib.Path] = None
     metaDataFile: Optional[pathlib.Path] = None

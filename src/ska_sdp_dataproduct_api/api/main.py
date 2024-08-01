@@ -9,8 +9,8 @@ from fastapi.exceptions import HTTPException
 from ska_sdp_dataproduct_api.components.data_ingestor.data_ingestor import Meta_Data_Ingestor
 from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
 from ska_sdp_dataproduct_api.components.store.store_factory import (
-    select_correct_search_store_class,
-    select_persistent_metadata_store_class,
+    select_metadata_store_class,
+    select_search_store_class,
 )
 from ska_sdp_dataproduct_api.configuration.settings import DEFAULT_DISPLAY_LAYOUT, app
 from ska_sdp_dataproduct_api.utilities.helperfunctions import (
@@ -23,10 +23,10 @@ from ska_sdp_dataproduct_api.utilities.helperfunctions import (
 
 logger = logging.getLogger(__name__)
 
-metadata_store = select_persistent_metadata_store_class()
+metadata_store = select_metadata_store_class()
 metadata_ingestor_instance = Meta_Data_Ingestor(metadata_store)
 
-search_store = select_correct_search_store_class(metadata_store, muiDataGridInstance)
+search_store = select_search_store_class(metadata_store)
 
 DPD_API_Status = DPDAPIStatus(
     search_store_status=search_store.status,
@@ -136,6 +136,8 @@ async def download(file_object: FilePaths):
 async def data_product_metadata(file_object: FilePaths):
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
+    print("file_object:")
+    print(file_object)
     return metadata_store.load_metadata(file_object)
 
 

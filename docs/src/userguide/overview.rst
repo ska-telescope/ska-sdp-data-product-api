@@ -131,7 +131,7 @@ The body of the post request must contain the name of the file and the relative 
 .. code-block:: bash
 
     {
-        "fileName": "eb-test-20200325-00001",
+        "execution_block": "eb-test-20200325-00001",
         "relativePathName": "product/eb-test-20200325-00001"
     }
 
@@ -159,7 +159,7 @@ For example, the post request body:
 .. code-block:: bash
 
     {
-        "fileName": "ska-data-product.yaml",
+        "execution_block": "ska-data-product.yaml",
         "relativePathName": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml"
     }
 
@@ -203,7 +203,7 @@ Sending a POST request to the ingestnewdataproduct endpoint will load and parse 
 .. code-block:: bash
 
     {
-        "fileName": "eb-test-20200325-00001",
+        "execution_block": "eb-test-20200325-00001",
         "relativePathName": "product/eb-test-20200325-00001"
     }
 
@@ -304,7 +304,7 @@ The download endpoint returns a response that can be used to stream the data pro
 
 .. code-block:: python
 
-    data = {"fileName": product["dataproduct_file"],"relativePathName": product["dataproduct_file"]}
+    data = {"execution_block": product["dataproduct_file"],"relativePathName": product["dataproduct_file"]}
     response = requests.post(f"{BASE_URL}/download", json=data)
 
     with open('product.tar', 'wb') as fd:
