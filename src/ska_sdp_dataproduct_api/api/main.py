@@ -31,7 +31,7 @@ search_store = select_search_store_class(metadata_store)
 
 DPD_API_Status = DPDAPIStatus(
     search_store_status=search_store.status,
-    metadata_store=metadata_store.status,
+    metadata_store_status=metadata_store.status,
 )
 
 

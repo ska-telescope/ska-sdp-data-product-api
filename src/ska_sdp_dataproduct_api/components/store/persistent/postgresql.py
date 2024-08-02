@@ -46,6 +46,7 @@ class PostgresConnector:
         if self.postgresql_running:
             self.postgresql_version = self._get_postgresql_version()
             self.create_metadata_table()
+            self.count_jsonb_objects()
 
     def status(self) -> dict:
         """
