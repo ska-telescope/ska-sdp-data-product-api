@@ -55,9 +55,13 @@ class InMemoryDataproductSearch:
             self.load_in_memory_volume_index_metadata_store_data()
 
     def load_in_memory_volume_index_metadata_store_data(self):
-        """ """
-        for data_product in self.metadata_store.list_of_data_products_metadata:
-            self.insert_metadata_in_search_store(data_product)
+        """Loads metadata from the metadata store into the search store."""
+        for (
+            execution_block,
+            data_product,
+        ) in self.metadata_store.dict_of_data_products_metadata.items():
+            print("Loading execution_block %s into search store", execution_block)
+            self.insert_metadata_in_search_store(data_product.metadata_dict)
 
     def load_persistent_metadata_store_data(self):
         """ """

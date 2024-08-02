@@ -182,8 +182,15 @@ class ElasticsearchMetadataStore:  # pylint: disable=too-many-instance-attribute
     def load_data_products(self):
         """ """
         self.clear_metadata_indecise()
-        for item in self.metadata_store.list_of_data_products_metadata:
-            self.insert_metadata_in_search_store(muiDataGridInstance.flatten_dict(item))
+        """Loads metadata from the metadata store into the search store."""
+        for (
+            execution_block,
+            data_product,
+        ) in self.metadata_store.dict_of_data_products_metadata.items():
+            print("Loading execution_block %s into search store", execution_block)
+            self.insert_metadata_in_search_store(
+                muiDataGridInstance.flatten_dict(data_product.metadata_dict)
+            )
 
     def clear_metadata_indecise(self) -> None:
         """Deletes specific indices from the Elasticsearch instance and clear the metadata_list.

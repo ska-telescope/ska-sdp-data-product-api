@@ -29,7 +29,7 @@ class in_memory_volume_index_metadata_store:
         self.postgresql_running: bool = False
         self.number_of_dataproducts: int = 0
         self.list_of_data_product_paths: List[pathlib.Path] = []
-        self.list_of_data_products_metadata: list[dict] = []
+        self.dict_of_data_products_metadata: dict[DataProductMetadata] = {}
         self.load_data_products()
 
     def status(self) -> dict:
@@ -154,11 +154,10 @@ class in_memory_volume_index_metadata_store:
             )
             data_product_metadata_instance.get_date_from_metadata()
             data_product_metadata_instance.append_metadata_file_details()
-            self.list_of_data_products_metadata.append(
-                data_product_metadata_instance.metadata_dict
-            )
+            self.dict_of_data_products_metadata[
+                data_product_metadata_instance.metadata_dict["execution_block"]
+            ] = data_product_metadata_instance
             self.number_of_dataproducts = self.number_of_dataproducts + 1
-            del data_product_metadata_instance
 
         except Exception as error:
             logger.error(
@@ -166,6 +165,21 @@ class in_memory_volume_index_metadata_store:
                 data_product_metadata_file_path,
                 error,
             )
+
+    def get_metadata(self, execution_block: str) -> dict[str, Any]:
+        """Retrieves metadata for the given execution block.
+
+        Args:
+            execution_block: The execution block identifier.
+
+        Returns:
+            A dictionary containing the metadata for the execution block, or None if not found.
+        """
+        try:
+            return self.dict_of_data_products_metadata[execution_block].metadata_dict
+        except KeyError:
+            logger.warning(f"Metadata not found for execution block: {execution_block}")
+            return {}
 
     def load_metadata(self, file_object: FilePaths) -> dict[str, Any]:
         """This function loads the content of a yaml file and returns it as a dict."""

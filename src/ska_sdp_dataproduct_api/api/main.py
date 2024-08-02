@@ -16,6 +16,7 @@ from ska_sdp_dataproduct_api.configuration.settings import DEFAULT_DISPLAY_LAYOU
 from ska_sdp_dataproduct_api.utilities.helperfunctions import (
     DataProductMetaData,
     DPDAPIStatus,
+    ExecutionBlock,
     FilePaths,
     SearchParametersClass,
     download_file,
@@ -133,12 +134,15 @@ async def download(file_object: FilePaths):
 
 
 @app.post("/dataproductmetadata")
-async def data_product_metadata(file_object: FilePaths):
-    """This API endpoint returns the data products metadata in json format of
-    a specified data product."""
-    print("file_object:")
-    print(file_object)
-    return metadata_store.load_metadata(file_object)
+async def data_product_metadata(data: ExecutionBlock):
+    """This API endpoint returns the data products metadata in json format of a specified data product."""
+    try:
+        if not data.execution_block:
+            raise HTTPException(status_code=400, detail="Missing execution_block field in request")
+
+        return metadata_store.get_metadata(data.execution_block)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 @app.post("/ingestnewdataproduct")

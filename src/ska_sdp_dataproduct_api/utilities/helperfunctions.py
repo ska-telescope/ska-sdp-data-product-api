@@ -137,6 +137,12 @@ class FilePaths(BaseModel):
         return derived_full_path_name or full_path_name
 
 
+class ExecutionBlock(BaseModel):
+    """Class for defining search parameters"""
+
+    execution_block: str = None
+
+
 class SearchParametersClass(BaseModel):
     """Class for defining search parameters"""
 
