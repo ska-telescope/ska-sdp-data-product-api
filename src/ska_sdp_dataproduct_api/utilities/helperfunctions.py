@@ -3,7 +3,7 @@ import datetime
 import logging
 import pathlib
 import subprocess
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Generator
 
 # pylint: disable=no-name-in-module
 import pydantic
@@ -166,9 +166,17 @@ class DataProductMetaData(BaseModel):
     obscore: dict | None = None
 
 
-def generate_data_stream(file_path: pathlib.Path):
-    """This function creates a subprocess that stream a specified file in
-    chunks"""
+def generate_data_stream(file_path: pathlib.Path) -> Generator[bytes, None, None]:
+    """
+    This function creates a subprocess that generates data chunks from the specified file for 
+    streaming.
+
+    Args:
+        file_path (pathlib.Path): The path to the file to read.
+
+    Yields:
+        bytes: Chunks of data read from the file.
+    """
     # create a subprocess to run the tar command
     with subprocess.Popen(
         ["tar", "-C", str(file_path.parent), "-c", str(file_path.name)],
@@ -181,11 +189,18 @@ def generate_data_stream(file_path: pathlib.Path):
             chunk = process.stdout.read(STREAM_CHUNK_SIZE)
 
 
-def download_file(file_object: FilePaths):
-    """This function returns a response that can be used to download a file
-    pointed to by the file_object"""
+def download_file(data_product_file_path: pathlib.Path):
+    """
+    Streams the contents of the specified file as a download response.
+
+    Args:
+        data_product_file_path (pathlib.Path): The path to the file to be downloaded.
+
+    Returns:
+        fastapi.StreamingResponse: A streaming response object representing the file content.
+    """
     return StreamingResponse(
-        generate_data_stream(file_object.fullPathName),
+        generate_data_stream(data_product_file_path),
         media_type="application/x-tar",
     )
 

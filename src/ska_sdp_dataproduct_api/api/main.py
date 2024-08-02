@@ -127,10 +127,10 @@ async def get_muidatagridconfig() -> Dict:
 
 
 @app.post("/download")
-async def download(file_object: FilePaths):
+async def download(data: ExecutionBlock):
     """This API endpoint returns a FileResponse that is used by a
     frontend to download a file"""
-    return download_file(file_object)
+    return download_file(metadata_store.get_data_product_file_path(data.execution_block))
 
 
 @app.post("/dataproductmetadata")

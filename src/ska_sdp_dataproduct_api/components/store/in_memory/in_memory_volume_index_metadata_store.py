@@ -181,6 +181,21 @@ class in_memory_volume_index_metadata_store:
             logger.warning(f"Metadata not found for execution block: {execution_block}")
             return {}
 
+    def get_data_product_file_path(self, execution_block: str) -> pathlib.Path:
+        """Retrieves the file path to the data product for the given execution block.
+
+        Args:
+            execution_block: The execution block to retrieve metadata for.
+
+        Returns:
+            The file path as a pathlib.Path object, or {} if not found.
+        """
+        try:
+            return pathlib.Path(self.dict_of_data_products_metadata[execution_block].metadata_dict["dataproduct_file"])
+        except KeyError:
+            logger.warning(f"File path not found for execution block: {execution_block}")
+            return {}
+
     def load_metadata(self, file_object: FilePaths) -> dict[str, Any]:
         """This function loads the content of a yaml file and returns it as a dict."""
         # Test that the metadata file exists
@@ -282,3 +297,4 @@ class in_memory_volume_index_metadata_store:
         except Exception as exception:
             logger.warning("Unexpected error occurred: %s", exception)
             raise exception
+
