@@ -410,3 +410,22 @@ VALUES (%s, %s, %s)"
             return metadata_dict
         else:
             return {}
+
+    def get_data_product_file_path(self, execution_block: str) -> pathlib.Path:
+        """Retrieves the file path to the data product for the given execution block.
+
+        Args:
+            execution_block: The execution block to retrieve metadata for.
+
+        Returns:
+            The file path as a pathlib.Path object, or {} if not found.
+        """
+
+        try:
+            data_product_metadata = self.get_data_by_execution_block(execution_block)
+            return pathlib.Path(
+                data_product_metadata["dataproduct_file"]
+            )
+        except KeyError:
+            logger.warning(f"File path not found for execution block: {execution_block}")
+            return {}

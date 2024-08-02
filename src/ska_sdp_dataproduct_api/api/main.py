@@ -5,6 +5,8 @@ from typing import Dict, List, Optional
 
 from fastapi import BackgroundTasks, Body
 from fastapi.exceptions import HTTPException
+from fastapi.responses import StreamingResponse
+
 
 from ska_sdp_dataproduct_api.components.data_ingestor.data_ingestor import Meta_Data_Ingestor
 from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
@@ -126,12 +128,11 @@ async def get_muidatagridconfig() -> Dict:
     return muiDataGridInstance.table_config
 
 
-@app.post("/download")
+@app.post("/download", response_class=StreamingResponse)
 async def download(data: ExecutionBlock):
     """This API endpoint returns a FileResponse that is used by a
     frontend to download a file"""
     return download_file(metadata_store.get_data_product_file_path(data.execution_block))
-
 
 @app.post("/dataproductmetadata")
 async def data_product_metadata(data: ExecutionBlock):
