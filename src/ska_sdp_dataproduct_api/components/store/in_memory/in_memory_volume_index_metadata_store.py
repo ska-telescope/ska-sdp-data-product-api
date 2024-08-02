@@ -7,6 +7,7 @@ from typing import Any, List
 import yaml
 from ska_sdp_dataproduct_metadata import MetaData
 
+from ska_sdp_dataproduct_api.components.metadata.metadata import DataProductMetadata
 from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
 from ska_sdp_dataproduct_api.configuration.settings import (
     METADATA_FILE_NAME,
@@ -138,32 +139,33 @@ class in_memory_volume_index_metadata_store:
         added or modified in the data product store by this API"""
         self.date_modified = datetime.datetime.now()
 
-    def ingest_file(self, data_product_path: pathlib.Path) -> None:
+    def ingest_file(self, data_product_metadata_file_path: pathlib.Path) -> None:
         """
         Ingests a data product file by loading its metadata, structuring the information,
         and inserting it into the metadata store.
 
         Args:
-            data_product_path (pathlib.Path): The path to the data file.
+            data_product_metadata_file_path (pathlib.Path): The path to the data file.
         """
-        if not data_product_path.is_file():
-            logger.error("Invalid path: %s. Expected a file.", data_product_path)
+        data_product_metadata_instance: DataProductMetadata = DataProductMetadata()
+        try:
+            data_product_metadata_instance.load_metadata_from_yaml_file(
+                file_path=data_product_metadata_file_path
+            )
+            data_product_metadata_instance.get_date_from_metadata()
+            data_product_metadata_instance.append_metadata_file_details()
+            self.list_of_data_products_metadata.append(
+                data_product_metadata_instance.metadata_dict
+            )
+            self.number_of_dataproducts = self.number_of_dataproducts + 1
+            del data_product_metadata_instance
 
-        data_product_file_paths = FilePaths
-        data_product_file_paths.fullPathName = PERSISTENT_STORAGE_PATH.joinpath(
-            get_relative_path(data_product_path)
-        )
-        data_product_file_paths.relativePathName = get_relative_path(data_product_path)
-
-        data_product_metadata_dict = self.load_metadata(data_product_file_paths)
-
-        # Check if any metadata was actually loaded before inserting
-        if not data_product_metadata_dict:
-            return
-
-        # persistent_metadata_store.save_metadata_to_postgresql(metadata_file_json)       # TODO Fix this
-        self.list_of_data_products_metadata.append(data_product_metadata_dict)
-        self.number_of_dataproducts = self.number_of_dataproducts + 1
+        except Exception as error:
+            logger.error(
+                "Failed to load dataproduct %s in list of products paths. Error: %s",
+                data_product_metadata_file_path,
+                error,
+            )
 
     def load_metadata(self, file_object: FilePaths) -> dict[str, Any]:
         """This function loads the content of a yaml file and returns it as a dict."""
