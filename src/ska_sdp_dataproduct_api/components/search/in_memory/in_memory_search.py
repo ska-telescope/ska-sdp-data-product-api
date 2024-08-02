@@ -183,7 +183,7 @@ class InMemoryDataproductSearch:
                     continue
         return json.dumps(search_results)
 
-    def filter_data(self, mui_data_grid_filter_model, search_panel_options):
+    def filter_data(self, mui_data_grid_filter_model:Dict[str, Any], search_panel_options:Dict[str, Any]):
         """This is implemented in subclasses."""
         muiDataGridInstance.load_metadata_from_list(
             muiDataGridInstance.flattened_list_of_dataproducts_metadata

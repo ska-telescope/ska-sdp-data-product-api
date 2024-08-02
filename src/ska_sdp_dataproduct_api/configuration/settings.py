@@ -21,6 +21,12 @@ REINDEXING_DELAY = 300  # Only allow reindexing after 5 minutes
 PERSISTENT_STORAGE_PATH: pathlib.Path = pathlib.Path(
     config("PERSISTENT_STORAGE_PATH", default="./tests/test_files/product"),
 )
+try:
+    ABSOLUTE_PERSISTENT_STORAGE_PATH = PERSISTENT_STORAGE_PATH.resolve()
+except Exception as exception:
+    logger.exception("Could not resolve PERSISTENT_STORAGE_PATH: %s", PERSISTENT_STORAGE_PATH)
+    ABSOLUTE_PERSISTENT_STORAGE_PATH = PERSISTENT_STORAGE_PATH
+
 
 CONFIGURATION_FILES_PATH: pathlib.Path = pathlib.Path(__file__).parent
 
