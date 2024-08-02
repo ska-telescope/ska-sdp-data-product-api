@@ -46,16 +46,6 @@ class in_memory_volume_index_metadata_store:
 
     def load_data_products(self):
         """ """
-        self.load_data_products_from_persistent_volume()
-
-    def load_data_products_from_persistent_volume(self) -> None:
-        """ """
-        self.reindex_persistent_volume()  # TODO This need to change
-
-    def reindex(self) -> None:
-        """This method resets and recreates the flattened_list_of_dataproducts_metadata. This is added
-        to enable the user to reindex if the data products were changed or
-        appended since the initial load of the data"""
         self.reindex_persistent_volume()
 
     def reindex_persistent_volume(self) -> None:

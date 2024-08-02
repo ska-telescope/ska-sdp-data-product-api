@@ -3,12 +3,18 @@
 import hashlib
 import json
 import logging
+import pathlib
 from typing import Any, List
 
 import psycopg
 from psycopg.errors import OperationalError
 from ska_sdp_dataproduct_metadata import MetaData
 
+from ska_sdp_dataproduct_api.components.metadata.metadata import DataProductMetadata
+from ska_sdp_dataproduct_api.configuration.settings import (
+    METADATA_FILE_NAME,
+    PERSISTENT_STORAGE_PATH,
+)
 from ska_sdp_dataproduct_api.utilities.helperfunctions import (
     FilePaths,
     get_date_from_name,
@@ -110,6 +116,75 @@ class PostgresConnector:
         except psycopg.Error as error:
             logger.error("Error creating metadata table: %s", error)
             raise
+
+    def reindex_persistent_volume(self) -> None:
+        """ """
+        list_of_data_product_paths = self.list_all_data_product_files(PERSISTENT_STORAGE_PATH)
+        for product_path in list_of_data_product_paths:
+            self.ingest_file(product_path)
+        self.count_jsonb_objects()
+
+    def list_all_data_product_files(self, full_path_name: pathlib.Path) -> list:
+        """
+        Lists all data product files within the specified directory path.
+
+        This method recursively traverses the directory structure starting at `full_path_name`
+        and identifies files that are considered data products based on pre-defined criteria
+        of the folder containing a metadata file.
+
+        Args:
+            full_path_name (pathlib.Path): The path to the directory containing data products.
+
+        Returns:
+            List[pathlib.Path]: A list of `pathlib.Path` objects representing the identified
+                                data product files within the directory and its subdirectories.
+                                If no data product files are found, an empty list is returned.
+
+        Raises:
+            ValueError: If `full_path_name` does not represent a valid directory or is a symbolic
+            link.
+        """
+
+        if not full_path_name.is_dir():
+            logger.warning("Invalid directory path: %s", full_path_name)
+
+        if full_path_name.is_symlink():
+            logger.warning("Symbolic links are not supported:  %s", full_path_name)
+
+        logger.info("Identifying data product files within directory: %s", full_path_name)
+
+        list_of_data_product_paths = []
+        for file_path in PERSISTENT_STORAGE_PATH.rglob(METADATA_FILE_NAME):
+            if file_path not in list_of_data_product_paths:
+                list_of_data_product_paths.append(file_path)
+
+        return list_of_data_product_paths
+
+    def ingest_file(self, data_product_metadata_file_path: pathlib.Path) -> None:
+        """
+        Ingests a data product file by loading its metadata, structuring the information,
+        and inserting it into the metadata store.
+
+        Args:
+            data_product_metadata_file_path (pathlib.Path): The path to the data file.
+        """
+        data_product_metadata_instance: DataProductMetadata = DataProductMetadata()
+        try:
+            data_product_metadata_instance.load_metadata_from_yaml_file(
+                file_path=data_product_metadata_file_path
+            )
+            data_product_metadata_instance.get_date_from_metadata()
+            data_product_metadata_instance.append_metadata_file_details()
+            self.save_metadata_to_postgresql(
+                metadata_file_dict=data_product_metadata_instance.metadata_dict
+            )
+
+        except Exception as error:
+            logger.error(
+                "Failed to load dataproduct %s in list of products paths. Error: %s",
+                data_product_metadata_file_path,
+                error,
+            )
 
     def calculate_metadata_hash(self, metadata_file_json: dict) -> str:
         """Calculates a SHA256 hash of the given metadata JSON."""

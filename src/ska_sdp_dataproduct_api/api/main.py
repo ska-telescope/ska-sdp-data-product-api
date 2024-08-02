@@ -46,7 +46,7 @@ async def root():
 async def reindex_data_products(background_tasks: BackgroundTasks):
     """This endpoint clears the list of data products from memory and
     re-ingest the metadata of all data products found"""
-    background_tasks.add_task(metadata_store.reindex)
+    background_tasks.add_task(metadata_store.reindex_persistent_volume)
     logger.info("Metadata search_store cleared and re-indexed")
     return "Metadata is set to be cleared and re-indexed"
 
