@@ -3,7 +3,7 @@ import datetime
 import logging
 import pathlib
 import subprocess
-from typing import Any, Dict, List, Optional, Generator
+from typing import Any, Dict, Generator, List, Optional
 
 # pylint: disable=no-name-in-module
 import pydantic
@@ -168,7 +168,7 @@ class DataProductMetaData(BaseModel):
 
 def generate_data_stream(file_path: pathlib.Path) -> Generator[bytes, None, None]:
     """
-    This function creates a subprocess that generates data chunks from the specified file for 
+    This function creates a subprocess that generates data chunks from the specified file for
     streaming.
 
     Args:

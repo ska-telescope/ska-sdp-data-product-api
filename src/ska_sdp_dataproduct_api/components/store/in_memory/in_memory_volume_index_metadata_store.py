@@ -191,7 +191,11 @@ class in_memory_volume_index_metadata_store:
             The file path as a pathlib.Path object, or {} if not found.
         """
         try:
-            return pathlib.Path(self.dict_of_data_products_metadata[execution_block].metadata_dict["dataproduct_file"])
+            return pathlib.Path(
+                self.dict_of_data_products_metadata[execution_block].metadata_dict[
+                    "dataproduct_file"
+                ]
+            )
         except KeyError:
             logger.warning(f"File path not found for execution block: {execution_block}")
             return {}
@@ -297,4 +301,3 @@ class in_memory_volume_index_metadata_store:
         except Exception as exception:
             logger.warning("Unexpected error occurred: %s", exception)
             raise exception
-

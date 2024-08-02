@@ -299,3 +299,38 @@ VALUES (%s, %s, %s)"
         )
 
         return metadata_dict
+
+    def get_metadata(self, execution_block: str) -> dict[str, Any]:
+        """Retrieves metadata for the given execution block.
+
+        Args:
+            execution_block: The execution block identifier.
+
+        Returns:
+            A dictionary containing the metadata for the execution block, or None if not found.
+        """
+        try:
+            return self.get_data_by_execution_block(execution_block)
+        except KeyError:
+            logger.warning(f"Metadata not found for execution block: {execution_block}")
+            return {}
+
+    def get_data_by_execution_block(self, execution_block: str) -> dict[str, Any]:
+        """Retrieves data from the PostgreSQL table based on the execution_block.
+
+        Args:
+            execution_block: The execution block string.
+
+        Returns:
+            The data (JSONB) associated with the execution block, or None if not found.
+        """
+        cursor = self.conn.cursor()
+        check_query = f"SELECT data FROM {self.table_name} WHERE execution_block = %s"
+        cursor.execute(check_query, (execution_block,))
+        result = cursor.fetchone()
+        cursor.close()
+        metadata_dict = result[0]
+        if metadata_dict:
+            return metadata_dict
+        else:
+            return {}
