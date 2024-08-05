@@ -143,17 +143,21 @@ async def data_product_metadata(data: ExecutionBlock):
             raise HTTPException(status_code=400, detail="Missing execution_block field in request")
 
         return metadata_store.get_metadata(data.execution_block)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+    except Exception as exception:
+        raise HTTPException(
+            status_code=500, detail=f"Internal server error: {str(exception)}"
+        ) from exception
 
 
 @app.post("/ingestnewdataproduct")
-async def ingest_new_data_product(file_object: FilePaths):
+async def ingest_new_data_product(
+    file_object: FilePaths,
+):  # TODO Write tests and verify this method
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
-    search_store.update_data_store_date_modified()
-    search_store.list_all_data_product_files(file_object.fullPathName)
-    search_store.ingest_list_of_data_product_paths()
+    metadata_store.update_data_store_date_modified()
+    metadata_store.list_all_data_product_files(file_object.fullPathName)
+    metadata_store.ingest_list_of_data_product_paths()
     search_store.sort_metadata_list()
 
     logger.info("New data product metadata file loaded and search_store index updated")
@@ -161,11 +165,13 @@ async def ingest_new_data_product(file_object: FilePaths):
 
 
 @app.post("/ingestnewmetadata")
-async def ingest_new_metadata(metadata: DataProductMetaData):
+async def ingest_new_metadata(
+    metadata: DataProductMetaData,
+):  # TODO Write tests and verify this method
     """This API endpoint takes JSON data product metadata and ingests into
     the appropriate search_store."""
-    search_store.update_data_store_date_modified()
-    search_store.ingest_metadata_object(metadata)
+    metadata_store.update_data_store_date_modified()
+    metadata_store.ingest_metadata(metadata)
     logger.info("New data product metadata received and search_store index updated")
     return "New data product metadata received and search store index updated"
 

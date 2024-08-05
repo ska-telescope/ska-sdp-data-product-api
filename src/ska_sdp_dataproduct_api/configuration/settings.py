@@ -23,7 +23,7 @@ PERSISTENT_STORAGE_PATH: pathlib.Path = pathlib.Path(
 )
 try:
     ABSOLUTE_PERSISTENT_STORAGE_PATH = PERSISTENT_STORAGE_PATH.resolve()
-except Exception as exception:
+except Exception as exception:  # pylint: disable=broad-exception-caught
     logger.exception(
         "Could not resolve PERSISTENT_STORAGE_PATH: %s, %s", PERSISTENT_STORAGE_PATH, exception
     )

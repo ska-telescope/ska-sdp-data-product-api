@@ -576,14 +576,28 @@ def parse_valid_date(date_string: str, expected_format: str) -> datetime.datetim
         raise error
 
 
-def verify_persistent_storage_file_path(full_path_name: pathlib.Path) -> bool:
-    """ """
-    if not full_path_name.is_dir():
-        logger.warning("Invalid directory path: %s", full_path_name)
+def verify_persistent_storage_file_path(path: pathlib.Path) -> bool:
+    """Verifies if the given path is a valid directory for persistent storage.
+
+    Checks if the path is an existing directory and not a symbolic link.
+
+    Args:
+        path: The full path to the directory to be verified.
+
+    Returns:
+        True if the path is valid, False otherwise.
+    """
+
+    if not path.exists():
+        logger.warning("Directory does not exist: %s", path)
         return False
 
-    if full_path_name.is_symlink():
-        logger.warning("Symbolic links are not supported:  %s", full_path_name)
+    if not path.is_dir():
+        logger.warning("Invalid directory path: %s", path)
+        return False
+
+    if path.is_symlink():
+        logger.warning("Symbolic links are not supported: %s", path)
         return False
 
     return True

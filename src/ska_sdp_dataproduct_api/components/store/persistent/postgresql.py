@@ -10,6 +10,7 @@ import psycopg
 from psycopg.errors import OperationalError
 
 from ska_sdp_dataproduct_api.components.metadata.metadata import load_and_append_metadata
+from ska_sdp_dataproduct_api.components.store.metadata_store_base_class import MetadataStore
 from ska_sdp_dataproduct_api.configuration.settings import (
     METADATA_FILE_NAME,
     PERSISTENT_STORAGE_PATH,
@@ -22,12 +23,13 @@ logger = logging.getLogger(__name__)
 # pylint: disable=too-many-arguments
 
 
-class PostgresConnector:
+class PostgresConnector(MetadataStore):
     """
     A class to connect to a PostgreSQL instance and test its availability.
     """
 
     def __init__(self, host: str, port: int, user: str, password: str, table_name: str):
+        super().__init__()
         self.host = host
         self.port = port
         self.user = user
@@ -172,6 +174,7 @@ class PostgresConnector:
                 data_product_metadata_file_path,
                 error,
             )
+        self.update_data_store_date_modified()
 
     def calculate_metadata_hash(self, metadata_file_json: dict) -> str:
         """Calculates a SHA256 hash of the given metadata JSON."""
