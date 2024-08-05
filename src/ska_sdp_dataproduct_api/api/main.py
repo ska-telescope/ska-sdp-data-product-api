@@ -1,7 +1,7 @@
 """This API exposes SDP Data Products to the SDP Data Product Dashboard."""
 
 import logging
-from typing import Dict, List, Optional
+from typing import Optional
 
 from fastapi import BackgroundTasks, Body
 from fastapi.exceptions import HTTPException
@@ -90,7 +90,7 @@ async def data_products_search(search_parameters: SearchParametersClass):
 
 
 @app.post("/filterdataproducts")
-async def filter_data(body: Optional[Dict] = Body(...)) -> List:
+async def filter_data(body: Optional[dict] = Body(...)) -> list:
     """
     Filters product data based on provided criteria.
 
@@ -98,11 +98,11 @@ async def filter_data(body: Optional[Dict] = Body(...)) -> List:
     It applies filters to the in-memory data search_store.
 
     Args:
-        filter_data (Optional[List]): The filter criteria.
+        filter_data (Optional[list]): The filter criteria.
             Defaults to None.
 
     Returns:
-        List: A list of filtered product data objects.
+        list: A list of filtered product data objects.
     """
     mui_data_grid_filter_model = body.get("filterModel", {})
     search_panel_options = body.get("searchPanelOptions", {})
@@ -112,7 +112,7 @@ async def filter_data(body: Optional[Dict] = Body(...)) -> List:
 
 
 @app.get("/muidatagridconfig")
-async def get_muidatagridconfig() -> Dict:
+async def get_muidatagridconfig() -> dict:
     """
     Retrieves the MUI DataGrid configuration.
 
@@ -120,7 +120,7 @@ async def get_muidatagridconfig() -> Dict:
     providing information about columns, sorting, filtering, and other aspects of the grid.
 
     Returns:
-        Dict: The MUI DataGrid configuration object.
+        dict: The MUI DataGrid configuration object.
     """
     return muiDataGridInstance.table_config
 

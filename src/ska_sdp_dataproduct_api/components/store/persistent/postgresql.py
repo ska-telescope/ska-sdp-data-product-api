@@ -145,7 +145,7 @@ class PostgresConnector(MetadataStore):
             full_path_name (pathlib.Path): The path to the directory containing data products.
 
         Returns:
-            List[pathlib.Path]: A list of `pathlib.Path` objects representing the identified
+            list[pathlib.Path]: A list of `pathlib.Path` objects representing the identified
                                 data product files within the directory and its subdirectories.
                                 If no data product files are found, an empty list is returned.
 
@@ -314,7 +314,7 @@ VALUES (%s, %s, %s)"
             table_name (str): Name of the Postgresql table.
 
         Returns:
-            list[dict]: List of JSON objects.
+            list[dict]: list of JSON objects.
         """
         cursor = self.conn.cursor()
         cursor.execute(f"SELECT id, data FROM {table_name}")
@@ -326,7 +326,7 @@ VALUES (%s, %s, %s)"
         """Loads data products metadata from the persistent metadata store.
 
         Returns:
-            List[Dict[str, any]]: List of data products.
+            list[Dict[str, any]]: list of data products.
         """
         return self.fetch_data(self.table_name)
 

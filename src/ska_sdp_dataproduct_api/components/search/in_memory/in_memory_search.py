@@ -2,12 +2,9 @@
 import copy
 import json
 import logging
-from typing import Any, Dict, List, Union
+from typing import Any, Union
 
-from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import (
-    MuiDataGrid,
-    muiDataGridInstance,
-)
+from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
 from ska_sdp_dataproduct_api.components.search.search_store_base_class import MetadataSearchStore
 from ska_sdp_dataproduct_api.components.store.in_memory.in_memory import (
     InMemoryVolumeIndexMetadataStore,
@@ -35,20 +32,18 @@ class InMemoryDataproductSearch(MetadataSearchStore):
     def __init__(
         self,
         metadata_store: Union[PostgresConnector, InMemoryVolumeIndexMetadataStore],
-        muiDataGridInstance: MuiDataGrid,
     ) -> None:
         super().__init__(metadata_store)
-        self.mui_data_grid_instance: MuiDataGrid = muiDataGridInstance
         self.number_of_dataproducts: int = 0
         self.load_metadata_from_store()
 
-    def insert_metadata_in_search_store(self, data_product_metadata_dict: dict):
+    def insert_metadata_in_search_store(self, metadata_dict: dict):
         """This method loads the metadata file of a data product, creates a
         list of keys used in it, and then adds it to the flattened_list_of_dataproducts_metadata"""
         # generate a list of keys from this object
-        muiDataGridInstance.update_flattened_list_of_keys(data_product_metadata_dict)
+        muiDataGridInstance.update_flattened_list_of_keys(metadata_dict)
         muiDataGridInstance.update_flattened_list_of_dataproducts_metadata(
-            muiDataGridInstance.flatten_dict(data_product_metadata_dict)
+            muiDataGridInstance.flatten_dict(metadata_dict)
         )
         self.number_of_dataproducts = self.number_of_dataproducts + 1
 
@@ -162,7 +157,7 @@ class InMemoryDataproductSearch(MetadataSearchStore):
         return json.dumps(search_results)
 
     def filter_data(
-        self, mui_data_grid_filter_model: Dict[str, Any], search_panel_options: Dict[str, Any]
+        self, mui_data_grid_filter_model: dict[str, Any], search_panel_options: dict[str, Any]
     ):
         """This is implemented in subclasses."""
         muiDataGridInstance.load_metadata_from_list(
@@ -177,8 +172,8 @@ class InMemoryDataproductSearch(MetadataSearchStore):
         return searchbox_filtered_data
 
     def apply_filters(
-        self, data: List[Dict[str, Any]], filters: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        self, data: list[dict[str, Any]], filters: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """
         Filters a list of dictionaries based on a provided set of filter criteria.
 

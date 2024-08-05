@@ -51,6 +51,7 @@ class ElasticsearchMetadataStore(
         self.connection_established_at: datetime = ""
         self.cluster_info: dict = {}
 
+        self.metadata_list = []
         self.query_body = {"query": {"bool": {"should": [], "filter": []}}}
         self.number_of_dataproducts: int = 0
 
@@ -187,7 +188,7 @@ class ElasticsearchMetadataStore(
         )
         self.number_of_dataproducts = 0
 
-    def insert_metadata_in_search_store(self, metadata_dict: dict) -> dict:
+    def insert_metadata_in_search_store(self, metadata_dict: dict) -> None:
         """Inserts metadata from a JSON file into the Elasticsearch index.
 
         Args:
@@ -195,13 +196,6 @@ class ElasticsearchMetadataStore(
                 The expected structure of the dictionary depends on your specific Elasticsearch
                 schema, but it should generally represent the document you want to store
                 in the index.
-
-        Returns:
-            dict: The response dictionary from the Elasticsearch client's `index` method,
-                containing information about the successful or failed indexing operation.
-                The structure of this dictionary will vary depending on your Elasticsearch
-                version and configuration. Consult the Elasticsearch documentation for
-                details.
 
         """
         try:
@@ -228,14 +222,13 @@ class ElasticsearchMetadataStore(
                 raise ValueError("Missing 'execution_block' in metadata")
 
             response = self.es_client.index(index=index, id=execution_block, body=metadata_dict)
-            if response["result"] == "created":
-                return True
-            elif response["result"] == "updated":
+            if response["result"] == "created" or response["result"] == "updated":
                 return True
             logger.warning("Error inserting metadata into Elasticsearch: %s", str(response))
             return False
         except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error("Error inserting metadata into search store: %s", exception)
+            return False
 
     def sort_metadata_list(self) -> None:
         """This method sorts the metadata_list according to the set key"""

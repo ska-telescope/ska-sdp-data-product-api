@@ -3,7 +3,7 @@ import datetime
 import logging
 import pathlib
 import subprocess
-from typing import Any, Dict, Generator, List, Optional
+from typing import Any, Generator, Optional
 
 # pylint: disable=no-name-in-module
 import pydantic
@@ -400,7 +400,7 @@ def filter_strings(operand: str, operator: str, comparator: str) -> bool:
 
 def filter_datetimes(
     operand: datetime.datetime, operator: str, comparator: datetime.datetime
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     This function filters datetime objects based on a provided operator and comparator datetime
     object.
@@ -442,8 +442,8 @@ def filter_datetimes(
 
 
 def filter_by_item(
-    data: List[Dict[str, Any]], field: str, operator: str, comparator: Any
-) -> List[Dict[str, Any]]:
+    data: list[dict[str, Any]], field: str, operator: str, comparator: Any
+) -> list[dict[str, Any]]:
     """
     Filters a list of dictionaries based on a single field, operator, and value.
 
@@ -461,7 +461,7 @@ def filter_by_item(
         A new list containing only the dictionaries that match the filter criteria.
     """
 
-    filtered_data: List[Dict[str, Any]] = []
+    filtered_data: list[dict[str, Any]] = []
 
     for item in data:
         try:
@@ -520,8 +520,8 @@ def has_nested_status(operand: dict | list, searched_key: str, comparator: str) 
 
 
 def filter_by_key_value_pair(
-    data: List[Dict[str, Any]], key_value_pairs: List[Dict[str, Any]]
-) -> List[Dict[str, Any]]:
+    data: list[dict[str, Any]], key_value_pairs: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
     """
     Filters a list of dictionaries based on key-value pairs.
 

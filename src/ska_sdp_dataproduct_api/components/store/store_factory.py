@@ -3,7 +3,6 @@ Elasticsearch availability."""
 import logging
 from typing import Union
 
-from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
 from ska_sdp_dataproduct_api.components.search.elasticsearch.elasticsearch import (
     ElasticsearchMetadataStore,
 )
@@ -91,7 +90,7 @@ def select_search_store_class(
     except Exception as exception:  # pylint: disable=broad-exception-caught
         logger.error("Failed to connect to Elasticsearch with exception: %s", exception)
         logger.warning("Using in-memory search.")
-        return InMemoryDataproductSearch(metadata_store, muiDataGridInstance)
+        return InMemoryDataproductSearch(metadata_store)
 
     logger.warning("Elasticsearch not available, setting search store to in-memory store.")
-    return InMemoryDataproductSearch(metadata_store, muiDataGridInstance)
+    return InMemoryDataproductSearch(metadata_store)

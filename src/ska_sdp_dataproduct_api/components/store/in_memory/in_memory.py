@@ -22,7 +22,7 @@ persistent PostgreSQL deployments.
 """
 import logging
 import pathlib
-from typing import Any, List
+from typing import Any
 
 from ska_sdp_dataproduct_api.components.metadata.metadata import DataProductMetadata
 from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
@@ -46,7 +46,7 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
         super().__init__()
         self.postgresql_running: bool = False
         self.number_of_dataproducts: int = 0
-        self.list_of_data_product_paths: List[pathlib.Path] = []
+        self.list_of_data_product_paths: list[pathlib.Path] = []
         self.dict_of_data_products_metadata: dict[DataProductMetadata] = {}
         self.reindex_persistent_volume()
 
@@ -100,7 +100,7 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
             full_path_name (pathlib.Path): The path to the directory containing data products.
 
         Returns:
-            List[pathlib.Path]: A list of `pathlib.Path` objects representing the identified
+            list[pathlib.Path]: A list of `pathlib.Path` objects representing the identified
                                 data product files within the directory and its subdirectories.
                                 If no data product files are found, an empty list is returned.
 
