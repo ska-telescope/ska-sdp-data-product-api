@@ -85,13 +85,13 @@ ELASTICSEARCH_PASSWORD: str = config(
     default="",
 )
 
-ELASTICSEARCH_METADATA_SCHEMA_FILE: str = config(
+ELASTICSEARCH_METADATA_SCHEMA_FILE: pathlib.Path = pathlib.Path(config(
     "SDP_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE",
     default=(
-        "./src/ska_sdp_dataproduct_api/components/elasticsearch/"
+        "./src/ska_sdp_dataproduct_api/components/search/elasticsearch/"
         "data_product_metadata_schema.json"
     ),
-)
+)).resolve()
 
 ELASTICSEARCH_INDICES: str = config(
     "SDP_DATAPRODUCT_API_ELASTIC_INDICES",

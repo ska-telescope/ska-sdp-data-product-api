@@ -7,6 +7,8 @@ from typing import Union
 
 import elasticsearch
 from elasticsearch import Elasticsearch
+from ska_sdp_dataproduct_metadata import MetaData
+
 
 from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
 from ska_sdp_dataproduct_api.components.store.in_memory.in_memory_volume_index_metadata_store import (
@@ -134,8 +136,7 @@ class ElasticsearchMetadataStore:  # pylint: disable=too-many-instance-attribute
             self.cluster_info = self.es_client.info()
             logger.info("Connected to Elasticsearch; creating default schema...")
             self.create_schema_if_not_existing(index=self.elasticsearch_indices)
-            # self.metadata_store.reindex()  # TODO This need to change
-            self.load_data_products()
+            self.load_metadata_from_store()
 
             return True
         return False
@@ -179,18 +180,29 @@ class ElasticsearchMetadataStore:  # pylint: disable=too-many-instance-attribute
                 index=index, ignore=400, body=metadata_schema_json
             )
 
-    def load_data_products(self):
+    def load_metadata_from_store(self):
         """ """
-        self.clear_metadata_indecise()
+        if self.metadata_store.postgresql_running:
+            self.load_persistent_metadata_store_data()
+        else:
+            self.load_in_memory_volume_index_metadata_store_data()
+
+    def load_in_memory_volume_index_metadata_store_data(self):
         """Loads metadata from the metadata store into the search store."""
         for (
             execution_block,
             data_product,
         ) in self.metadata_store.dict_of_data_products_metadata.items():
             print("Loading execution_block %s into search store", execution_block)
-            self.insert_metadata_in_search_store(
-                muiDataGridInstance.flatten_dict(data_product.metadata_dict)
-            )
+            self.insert_metadata_in_search_store(data_product.metadata_dict)
+
+    def load_persistent_metadata_store_data(self):
+        """ """
+        for (
+            data_product
+        ) in self.metadata_store.load_data_products_from_persistent_metadata_store():
+            self.insert_metadata_in_search_store(data_product["data"])
+
 
     def clear_metadata_indecise(self) -> None:
         """Deletes specific indices from the Elasticsearch instance and clear the metadata_list.
