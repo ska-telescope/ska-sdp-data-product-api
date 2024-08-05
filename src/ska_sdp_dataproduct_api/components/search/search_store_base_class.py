@@ -2,7 +2,7 @@ import logging
 from typing import Union
 
 from ska_sdp_dataproduct_api.components.store.in_memory.in_memory import (
-    in_memory_volume_index_metadata_store,
+    InMemoryVolumeIndexMetadataStore,
 )
 from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
 
@@ -10,11 +10,9 @@ logger = logging.getLogger(__name__)
 
 
 class MetadataSearchStore:
-    def __init__(
-        self, metadata_store: Union[PostgresConnector, in_memory_volume_index_metadata_store]
-    ):
+    def __init__(self, metadata_store: Union[PostgresConnector, InMemoryVolumeIndexMetadataStore]):
         self.metadata_store: Union[
-            PostgresConnector, in_memory_volume_index_metadata_store
+            PostgresConnector, InMemoryVolumeIndexMetadataStore
         ] = metadata_store
 
     def load_metadata_from_store(self):

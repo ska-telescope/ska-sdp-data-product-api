@@ -1,11 +1,14 @@
 import datetime
 import logging
+from time import time
 
 logger = logging.getLogger(__name__)
 
 
 class MetadataStore:
     def __init__(self):
+        self.indexing_timestamp: time = time()
+        self.indexing: bool = False
         pass
 
     def update_data_store_date_modified(self):

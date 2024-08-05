@@ -10,7 +10,7 @@ from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import (
 )
 from ska_sdp_dataproduct_api.components.search.search_store_base_class import MetadataSearchStore
 from ska_sdp_dataproduct_api.components.store.in_memory.in_memory import (
-    in_memory_volume_index_metadata_store,
+    InMemoryVolumeIndexMetadataStore,
 )
 from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
 from ska_sdp_dataproduct_api.configuration.settings import DATE_FORMAT
@@ -34,7 +34,7 @@ class InMemoryDataproductSearch(MetadataSearchStore):
 
     def __init__(
         self,
-        metadata_store: Union[PostgresConnector, in_memory_volume_index_metadata_store],
+        metadata_store: Union[PostgresConnector, InMemoryVolumeIndexMetadataStore],
         muiDataGridInstance: MuiDataGrid,
     ) -> None:
         super().__init__(metadata_store)

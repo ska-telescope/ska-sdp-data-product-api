@@ -11,7 +11,7 @@ from ska_sdp_dataproduct_api.components.search.in_memory.in_memory_search import
     InMemoryDataproductSearch,
 )
 from ska_sdp_dataproduct_api.components.store.in_memory.in_memory import (
-    in_memory_volume_index_metadata_store,
+    InMemoryVolumeIndexMetadataStore,
 )
 from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
 from ska_sdp_dataproduct_api.configuration.settings import (
@@ -25,9 +25,7 @@ from ska_sdp_dataproduct_api.configuration.settings import (
 logger = logging.getLogger(__name__)
 
 
-def select_metadata_store_class() -> Union[
-    PostgresConnector, in_memory_volume_index_metadata_store
-]:
+def select_metadata_store_class() -> Union[PostgresConnector, InMemoryVolumeIndexMetadataStore]:
     """
     Selects the appropriate dataproduct search store class based on Elasticsearch availability.
 
@@ -60,15 +58,15 @@ def select_metadata_store_class() -> Union[
             "PostgreSQL not available, loading metadata from persistent volume into in memory \
             store."
         )
-        return in_memory_volume_index_metadata_store()
+        return InMemoryVolumeIndexMetadataStore()
     except Exception as exception:  # pylint: disable=broad-exception-caught
         logger.error("Failed to connect to Elasticsearch with exception: %s", exception)
         logger.warning("Using in-memory store.")
-        return in_memory_volume_index_metadata_store()
+        return InMemoryVolumeIndexMetadataStore()
 
 
 def select_search_store_class(
-    metadata_store: Union[PostgresConnector, in_memory_volume_index_metadata_store],
+    metadata_store: Union[PostgresConnector, InMemoryVolumeIndexMetadataStore],
 ) -> Union[ElasticsearchMetadataStore, InMemoryDataproductSearch]:
     """
     Selects the appropriate dataproduct search store class based on Elasticsearch availability.

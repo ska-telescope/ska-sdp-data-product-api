@@ -1,6 +1,27 @@
+"""
+Module for in-memory volume index metadata store.
+
+This module implements the `InMemoryVolumeIndexMetadataStore` class,
+which inherits from the base `MetadataStore` class. It provides functionalities
+for managing data product metadata in an in-memory store with the ability to
+reindex from persistent storage.
+
+The class offers methods to:
+
+* Retrieve the current store status.
+* Re-index the metadata store from a persistent storage location.
+* List all data product files within a specified directory.
+* Ingest metadata from YAML files or `DataProductMetadata` instances.
+* Retrieve metadata for a specific execution block.
+* Retrieve the data product file path for a given execution block.
+* Check if a file exists at a specified path.
+
+NOTE: This in-memory store is deprecated and will be removed after all users have access to
+persistent PostgreSQL deployments.
+
+"""
 import logging
 import pathlib
-from time import time
 from typing import Any, List
 
 from ska_sdp_dataproduct_api.components.metadata.metadata import DataProductMetadata
@@ -18,7 +39,7 @@ from ska_sdp_dataproduct_api.utilities.helperfunctions import (
 logger = logging.getLogger(__name__)
 
 
-class in_memory_volume_index_metadata_store(MetadataStore):
+class InMemoryVolumeIndexMetadataStore(MetadataStore):
     """Class to handle data ingest from various sources"""
 
     def __init__(self):
@@ -27,7 +48,7 @@ class in_memory_volume_index_metadata_store(MetadataStore):
         self.number_of_dataproducts: int = 0
         self.list_of_data_product_paths: List[pathlib.Path] = []
         self.dict_of_data_products_metadata: dict[DataProductMetadata] = {}
-        self.load_data_products()
+        self.reindex_persistent_volume()
 
     def status(self) -> dict:
         """
@@ -41,10 +62,6 @@ class in_memory_volume_index_metadata_store(MetadataStore):
             "number_of_dataproducts": self.number_of_dataproducts,
         }
 
-    def load_data_products(self):
-        """ """
-        self.reindex_persistent_volume()
-
     def reindex_persistent_volume(self) -> None:
         """This method resets and recreates the flattened_list_of_dataproducts_metadata. This is
         added to enable the user to reindex if the data products were changed or
@@ -55,7 +72,6 @@ class in_memory_volume_index_metadata_store(MetadataStore):
             self.clear_metadata_indecise()
             self.list_all_data_product_files(PERSISTENT_STORAGE_PATH)
             self.ingest_list_of_data_product_paths()
-            self.indexing_timestamp = time()
             self.update_data_store_date_modified()
             self.indexing = False
             logger.info("Metadata store cleared and re-indexed")
@@ -136,7 +152,7 @@ class in_memory_volume_index_metadata_store(MetadataStore):
             ] = data_product_metadata_instance
             self.number_of_dataproducts = self.number_of_dataproducts + 1
 
-        except Exception as error:
+        except Exception as error:  # pylint: disable=broad-exception-caught
             logger.error(
                 "Failed to ingest dataproduct %s in list of products paths. Error: %s",
                 data_product_metadata_file_path,
@@ -160,10 +176,8 @@ class in_memory_volume_index_metadata_store(MetadataStore):
             ] = data_product_metadata_instance
             self.number_of_dataproducts = self.number_of_dataproducts + 1
         except Exception as error:
-            logger.error(
-                "Failed to ingest ingest_metadata, error: %s",
-                error,
-            )
+            logger.error("Failed to ingest ingest_metadata, error: %s", error)
+            raise
 
     def get_metadata(self, execution_block: str) -> dict[str, Any]:
         """Retrieves metadata for the given execution block.
@@ -177,7 +191,7 @@ class in_memory_volume_index_metadata_store(MetadataStore):
         try:
             return self.dict_of_data_products_metadata[execution_block].metadata_dict
         except KeyError:
-            logger.warning(f"Metadata not found for execution block: {execution_block}")
+            logger.warning("Metadata not found for execution block: %s", execution_block)
             return {}
 
     def get_data_product_file_path(self, execution_block: str) -> pathlib.Path:
@@ -196,7 +210,7 @@ class in_memory_volume_index_metadata_store(MetadataStore):
                 ]
             )
         except KeyError:
-            logger.warning(f"File path not found for execution block: {execution_block}")
+            logger.warning("File path not found for execution block: %s", execution_block)
             return {}
 
     def check_file_exists(self, file_object: pathlib.Path) -> bool:

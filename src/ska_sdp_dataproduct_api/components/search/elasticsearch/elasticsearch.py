@@ -11,7 +11,7 @@ from elasticsearch import Elasticsearch
 from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
 from ska_sdp_dataproduct_api.components.search.search_store_base_class import MetadataSearchStore
 from ska_sdp_dataproduct_api.components.store.in_memory.in_memory import (
-    in_memory_volume_index_metadata_store,
+    InMemoryVolumeIndexMetadataStore,
 )
 from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
 from ska_sdp_dataproduct_api.configuration.settings import (
@@ -34,9 +34,7 @@ class ElasticsearchMetadataStore(
 ):  # pylint: disable=too-many-instance-attributes
     """Class to insert data into Elasticsearch instance."""
 
-    def __init__(
-        self, metadata_store: Union[PostgresConnector, in_memory_volume_index_metadata_store]
-    ):
+    def __init__(self, metadata_store: Union[PostgresConnector, InMemoryVolumeIndexMetadataStore]):
         super().__init__(metadata_store)
         self.elasticsearch_indices = ELASTICSEARCH_INDICES
 

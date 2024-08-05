@@ -7,7 +7,6 @@ from fastapi import BackgroundTasks, Body
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 
-from ska_sdp_dataproduct_api.components.data_ingestor.data_ingestor import Meta_Data_Ingestor
 from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
 from ska_sdp_dataproduct_api.components.store.store_factory import (
     select_metadata_store_class,
@@ -26,7 +25,6 @@ from ska_sdp_dataproduct_api.utilities.helperfunctions import (
 logger = logging.getLogger(__name__)
 
 metadata_store = select_metadata_store_class()
-metadata_ingestor_instance = Meta_Data_Ingestor(metadata_store)
 
 search_store = select_search_store_class(metadata_store)
 
