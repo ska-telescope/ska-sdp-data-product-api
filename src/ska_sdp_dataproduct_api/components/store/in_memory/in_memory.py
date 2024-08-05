@@ -13,6 +13,7 @@ from ska_sdp_dataproduct_api.configuration.settings import (
     METADATA_FILE_NAME,
     PERSISTENT_STORAGE_PATH,
 )
+from ska_sdp_dataproduct_api.utilities.helperfunctions import verify_persistent_storage_file_path
 
 logger = logging.getLogger(__name__)
 
@@ -91,12 +92,8 @@ class in_memory_volume_index_metadata_store:
             link.
         """
 
-        if not full_path_name.is_dir():
-            logger.warning("Invalid directory path: %s", full_path_name)
-
-        if full_path_name.is_symlink():
-            logger.warning("Symbolic links are not supported:  %s", full_path_name)
-
+        if not verify_persistent_storage_file_path(full_path_name):
+            return
         logger.info("Identifying data product files within directory: %s", full_path_name)
 
         self.list_of_data_product_paths.clear()
@@ -132,16 +129,17 @@ class in_memory_volume_index_metadata_store:
         Args:
             data_product_metadata_file_path (pathlib.Path): The path to the data file.
         """
-        data_product_metadata_instance = load_and_append_metadata(data_product_metadata_file_path)
         try:
+            data_product_metadata_instance = load_and_append_metadata(
+                data_product_metadata_file_path
+            )
             self.dict_of_data_products_metadata[
                 data_product_metadata_instance.metadata_dict["execution_block"]
             ] = data_product_metadata_instance
             self.number_of_dataproducts = self.number_of_dataproducts + 1
-
         except Exception as error:
             logger.error(
-                "Failed to load dataproduct %s in list of products paths. Error: %s",
+                "Failed to ingest dataproduct %s in list of products paths. Error: %s",
                 data_product_metadata_file_path,
                 error,
             )

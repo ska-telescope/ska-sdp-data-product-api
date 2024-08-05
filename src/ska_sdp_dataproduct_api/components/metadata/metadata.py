@@ -89,7 +89,7 @@ def load_and_append_metadata(data_product_metadata_file_path: pathlib.Path):
         return data_product_metadata_instance
     except Exception as error:
         logger.error(
-            "Failed to load dataproduct %s in list of products paths. Error: %s",
+            "Failed to load and append metadata for %s. Error: %s",
             data_product_metadata_file_path,
             error,
         )

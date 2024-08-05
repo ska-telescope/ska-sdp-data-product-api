@@ -574,3 +574,16 @@ def parse_valid_date(date_string: str, expected_format: str) -> datetime.datetim
     except TypeError as error:
         logging.error("Invalid date_string: %s", date_string)
         raise error
+
+
+def verify_persistent_storage_file_path(full_path_name: pathlib.Path) -> bool:
+    """ """
+    if not full_path_name.is_dir():
+        logger.warning("Invalid directory path: %s", full_path_name)
+        return False
+
+    if full_path_name.is_symlink():
+        logger.warning("Symbolic links are not supported:  %s", full_path_name)
+        return False
+
+    return True

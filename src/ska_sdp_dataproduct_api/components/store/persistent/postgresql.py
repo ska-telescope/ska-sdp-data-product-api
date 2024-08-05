@@ -14,6 +14,7 @@ from ska_sdp_dataproduct_api.configuration.settings import (
     METADATA_FILE_NAME,
     PERSISTENT_STORAGE_PATH,
 )
+from ska_sdp_dataproduct_api.utilities.helperfunctions import verify_persistent_storage_file_path
 
 logger = logging.getLogger(__name__)
 
@@ -140,12 +141,8 @@ class PostgresConnector:
             link.
         """
 
-        if not full_path_name.is_dir():
-            logger.warning("Invalid directory path: %s", full_path_name)
-
-        if full_path_name.is_symlink():
-            logger.warning("Symbolic links are not supported:  %s", full_path_name)
-
+        if not verify_persistent_storage_file_path(full_path_name):
+            return
         logger.info("Identifying data product files within directory: %s", full_path_name)
 
         list_of_data_product_paths = []
@@ -171,7 +168,7 @@ class PostgresConnector:
 
         except Exception as error:
             logger.error(
-                "Failed to load dataproduct %s in list of products paths. Error: %s",
+                "Failed to ingest_file dataproduct %s into PostgreSQL. Error: %s",
                 data_product_metadata_file_path,
                 error,
             )
