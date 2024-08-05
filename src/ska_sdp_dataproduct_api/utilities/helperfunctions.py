@@ -244,41 +244,6 @@ def get_relative_path(absolute_path: pathlib.Path) -> pathlib.Path:
     return absolute_path
 
 
-def get_date_from_name(execution_block: str) -> str:
-    """
-    Extracts a date string from an execution block (type-generatorID-datetime-localSeq from
-    https://confluence.skatelescope.org/display/SWSI/SKA+Unique+Identifiers) and converts it
-    to the format 'YYYY-MM-DD'.
-
-    Args:
-        execution_block (str): A string containing metadata information.
-
-    Returns:
-        str: The formatted date string in 'YYYY-MM-DD' format.
-
-    Raises:
-        ValueError: If the date cannot be parsed from the execution block.
-
-    Example:
-        >>> get_date_from_name("type-generatorID-20230411-localSeq")
-        '2023-04-11'
-    """
-    metadata_date_str = execution_block.split("-")[2]
-    year = metadata_date_str[0:4]
-    month = metadata_date_str[4:6]
-    day = metadata_date_str[6:8]
-    try:
-        date_obj = datetime.datetime(int(year), int(month), int(day))
-        return date_obj.strftime("%Y-%m-%d")
-    except ValueError as error:
-        logger.warning(
-            "Date retrieved from execution_block '%s' caused and error: %s",
-            execution_block,
-            error,
-        )
-        raise
-
-
 def find_metadata(metadata, query_key):
     """Given a dict of metadata, and a period-separated hierarchy of keys,
     return the key and the value found within the dict.

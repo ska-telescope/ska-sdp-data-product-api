@@ -12,15 +12,13 @@ Functions:
     None
 """
 
+import datetime
 import logging
 import pathlib
 
 import yaml
 
-from ska_sdp_dataproduct_api.utilities.helperfunctions import (
-    DataProductMetaData,
-    get_date_from_name,
-)
+from ska_sdp_dataproduct_api.utilities.helperfunctions import DataProductMetaData
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +38,7 @@ class DataProductMetadata:
         self.metadata_dict: dict = None
         self.date_created: str = None
 
-    def load_yaml_file(self, file_path: pathlib.Path) -> dict:
+    def load_yaml_file(self, file_path: pathlib.Path) -> None:
         """
         Loads metadata from a YAML file.
 
@@ -60,7 +58,6 @@ class DataProductMetadata:
         try:
             with open(self.data_product_metadata_file_path, "r", encoding="utf-8") as file:
                 self.metadata_dict = yaml.safe_load(file)
-            return self.metadata_dict
         except FileNotFoundError as error:
             raise FileNotFoundError(
                 f"Metadata file not found: {self.data_product_metadata_file_path}"
@@ -79,8 +76,7 @@ class DataProductMetadata:
         Returns:
             A dictionary containing the loaded metadata.
         """
-        data_product_metadata_instance: DataProductMetadata = DataProductMetadata()
-        data_product_metadata_instance.load_yaml_file(file_path=file_path)
+        self.load_yaml_file(file_path=file_path)
         self.append_metadata()
         return self.metadata_dict
 
@@ -124,7 +120,7 @@ class DataProductMetadata:
         """
 
         try:
-            self.date_created = get_date_from_name(self.metadata_dict["execution_block"])
+            self.date_created = self.get_date_from_name(self.metadata_dict["execution_block"])
         except (KeyError, ValueError, TypeError) as exception:
             logger.error(
                 "Failed to extract date from execution block: %s. Error: %s",
@@ -152,3 +148,37 @@ class DataProductMetadata:
                 ),  # TODO This file path needs to be updated in case where not loaded form file
             }
         )
+
+    def get_date_from_name(self, execution_block: str) -> str:
+        """
+        Extracts a date string from an execution block (type-generatorID-datetime-localSeq from
+        https://confluence.skatelescope.org/display/SWSI/SKA+Unique+Identifiers) and converts it
+        to the format 'YYYY-MM-DD'.
+
+        Args:
+            execution_block (str): A string containing metadata information.
+
+        Returns:
+            str: The formatted date string in 'YYYY-MM-DD' format.
+
+        Raises:
+            ValueError: If the date cannot be parsed from the execution block.
+
+        Example:
+            >>> get_date_from_name("type-generatorID-20230411-localSeq")
+            '2023-04-11'
+        """
+        metadata_date_str = execution_block.split("-")[2]
+        year = metadata_date_str[0:4]
+        month = metadata_date_str[4:6]
+        day = metadata_date_str[6:8]
+        try:
+            date_obj = datetime.datetime(int(year), int(month), int(day))
+            return date_obj.strftime("%Y-%m-%d")
+        except ValueError as error:
+            logger.warning(
+                "Date retrieved from execution_block '%s' caused and error: %s",
+                execution_block,
+                error,
+            )
+            raise

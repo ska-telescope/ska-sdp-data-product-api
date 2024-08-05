@@ -275,8 +275,6 @@ VALUES (%s, %s, %s)"
         result = cursor.fetchone()[0]
         cursor.close()
         self.number_of_dataproducts = int(result)
-        print("result:")
-        print(result)
         return result
 
     def delete_postgres_table(self) -> bool:
