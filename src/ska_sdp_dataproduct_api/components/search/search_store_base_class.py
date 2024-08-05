@@ -64,7 +64,11 @@ class MetadataSearchStore:
         Iterates through the dictionary of data product metadata provided by the in-memory store
         and extracts the metadata dictionary for insertion into the search store.
         """
-        for (data_product,) in self.metadata_store.dict_of_data_products_metadata.items():
+        for (
+            execution_block,
+            data_product,
+        ) in self.metadata_store.dict_of_data_products_metadata.items():
+            print("Loading execution_block %s into search store", execution_block)
             self.insert_metadata_in_search_store(data_product.metadata_dict)
 
     def insert_metadata_in_search_store(self, metadata_dict: dict) -> dict:

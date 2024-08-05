@@ -150,7 +150,7 @@ async def data_product_metadata(data: ExecutionBlock):
 @app.post("/ingestnewdataproduct")
 async def ingest_new_data_product(
     file_object: FilePaths,
-):  # TODO Write tests and verify this method
+):
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
     metadata_store.update_data_store_date_modified()
@@ -165,7 +165,7 @@ async def ingest_new_data_product(
 @app.post("/ingestnewmetadata")
 async def ingest_new_metadata(
     metadata: DataProductMetaData,
-):  # TODO Write tests and verify this method
+):
     """This API endpoint takes JSON data product metadata and ingests into
     the appropriate search_store."""
     metadata_store.update_data_store_date_modified()

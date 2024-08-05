@@ -140,12 +140,8 @@ class DataProductMetadata:
         self.metadata_dict.update(
             {
                 "date_created": self.date_created,
-                "dataproduct_file": str(
-                    self.data_product_file_path
-                ),  # TODO This file path needs to be updated in case where not loaded from file
-                "metadata_file": str(
-                    self.data_product_metadata_file_path
-                ),  # TODO This file path needs to be updated in case where not loaded form file
+                "dataproduct_file": str(self.data_product_file_path),
+                "metadata_file": str(self.data_product_metadata_file_path),
             }
         )
 

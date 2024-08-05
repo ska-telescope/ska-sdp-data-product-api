@@ -76,6 +76,8 @@ ELASTICSEARCH_HTTP_CA: str = config(
     "SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA",
     default=None,
 )
+print("ELASTICSEARCH_HTTP_CA!!!!!!!!!!!!!!!!!!!!!!!!!!")
+print(ELASTICSEARCH_HTTP_CA)
 
 ELASTICSEARCH_USER: str = config(
     "SDP_DATAPRODUCT_API_ELASTIC_USER",

@@ -1,10 +1,8 @@
 """Module to test PostgresConnector"""
 
 import pytest
-from ska_sdp_dataproduct_api.components.persistent_metadata_store.postgresql import (
-    PostgresConnector,
-)
 
+from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
 from ska_sdp_dataproduct_api.configuration.settings import (
     POSTGRESQL_HOST,
     POSTGRESQL_PASSWORD,
@@ -54,7 +52,7 @@ def test_create_metadata_table(mocker):
                 CREATE TABLE IF NOT EXISTS {POSTGRESQL_TABLE_NAME} (
                     id SERIAL PRIMARY KEY,
                     data JSONB NOT NULL,
-                    execution_block VARCHAR(255) DEFAULT NULL,
+                    execution_block VARCHAR(255) DEFAULT NULL UNIQUE,
                     json_hash CHAR(64) UNIQUE
                 );
             """

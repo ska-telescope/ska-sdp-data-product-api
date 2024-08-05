@@ -12,8 +12,8 @@ def test_ping_main(test_app):
     assert "request_count" in response.json()
     assert "error_rate" in response.json()
     assert "last_metadata_update_time" in response.json()
-    assert "search_metadata_store_status" in response.json()
-    assert "metadata_store" in response.json()
+    assert "search_store_status" in response.json()
+    assert "metadata_store_status" in response.json()
 
 
 def test_reindex_data_products(test_app):
@@ -25,32 +25,21 @@ def test_reindex_data_products(test_app):
 
 def test_download_file(test_app):
     """Test if a file can be downloaded from the test files"""
-    data = (
-        '{"execution_block": "TestDataFile1.txt","relativePathName": \
-        "eb-m001-20221212-12345/ska-sub-system/scan_id_1/pb_id_1'
-        + '/TestDataFile1.txt"}'
-    )
-    response = test_app.post("/download", data=data)
-    assert response.status_code == 200
-
-    data = '{"execution_block": "pb-notebookvr-20240201-54576","relativePathName": \
-        "eb-notebook-20240201-54576/ska-sdp/pb-notebookvr-20240201-54576"}'
+    data = '{"execution_block": "eb-test-20200325-00001"}'
     response = test_app.post("/download", data=data)
     assert response.status_code == 200
 
 
 def test_download_folder(test_app):
     """Test if a folder can be downloaded from the test files"""
-    data = '{"execution_block": "eb-m001-20221212-12345","relativePathName": \
-        "eb-m001-20221212-12345"}'
+    data = '{"execution_block": "eb-m001-20191031-12345"}'
     response = test_app.post("/download", data=data)
     assert response.status_code == 200
 
 
 def test_data_product_metadata(test_app):
     """Test if metadata can be retrieved for a data product"""
-    data = '{"execution_block": "ska-data-product.yaml","relativePathName": \
-    "eb-m001-20221212-12345/ska-data-product.yaml"}'
+    data = '{"execution_block": "eb-m005-20231031-12345"}'
     response = test_app.post("/dataproductmetadata", data=data)
     assert response.status_code == 200
     assert "Experimental run as part of XYZ-123" in str(response.json())
@@ -106,12 +95,10 @@ def test_in_memory_search_empty_key_value_list(test_app):
 
 def test_in_memory_search_no_key_value_list(test_app):
     """This tests the in-memory precise search."""
-    data = {
-        "start_date": "2001-12-12",
-        "end_date": "2032-12-12",
-    }
+    data = {"start_date": "2001-12-12", "end_date": "2032-12-12"}
     response = test_app.post("/dataproductsearch", json=data)
     assert response.status_code == 200
+    print(response.json())
     assert len(response.json()) > 0
 
 

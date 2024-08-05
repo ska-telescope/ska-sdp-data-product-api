@@ -177,6 +177,7 @@ def generate_data_stream(file_path: pathlib.Path) -> Generator[bytes, None, None
     Yields:
         bytes: Chunks of data read from the file.
     """
+    verify_file_path(file_path.parent)
     # create a subprocess to run the tar command
     with subprocess.Popen(
         ["tar", "-C", str(file_path.parent), "-c", str(file_path.name)],
