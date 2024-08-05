@@ -116,8 +116,19 @@ class PostgresConnector(MetadataStore):
             raise
 
     def reindex_persistent_volume(self) -> None:
-        """ """
-        list_of_data_product_paths = self.list_all_data_product_files(PERSISTENT_STORAGE_PATH)
+        """
+        Reindexes the persistent volume by ingesting all data product files.
+
+        This method iterates over all data product files in the persistent storage path,
+        ingests each file, and finally counts the JSONB objects.
+
+        Raises:
+            Exception: If an error occurs during the reindexing process.
+        """
+
+        list_of_data_product_paths: list[str] = self.list_all_data_product_files(
+            PERSISTENT_STORAGE_PATH
+        )
         for product_path in list_of_data_product_paths:
             self.ingest_file(product_path)
         self.count_jsonb_objects()
@@ -144,7 +155,7 @@ class PostgresConnector(MetadataStore):
         """
 
         if not verify_persistent_storage_file_path(full_path_name):
-            return
+            return []
         logger.info("Identifying data product files within directory: %s", full_path_name)
 
         list_of_data_product_paths = []
@@ -172,7 +183,7 @@ class PostgresConnector(MetadataStore):
                 metadata_file_dict=data_product_metadata_instance.metadata_dict
             )
 
-        except Exception as error:
+        except Exception as error:  # pylint: disable=broad-exception-caught
             logger.error(
                 "Failed to ingest_file dataproduct %s into PostgreSQL. Error: %s",
                 data_product_metadata_file_path,
@@ -311,11 +322,13 @@ VALUES (%s, %s, %s)"
         cursor.close()
         return [{"id": row[0], "data": row[1]} for row in data]
 
-    def load_data_products_from_persistent_metadata_store(self) -> list:
-        """ """
-        data_products: list[dict] = self.fetch_data(self.table_name)
+    def load_data_products_from_persistent_metadata_store(self) -> list[dict[str, any]]:
+        """Loads data products metadata from the persistent metadata store.
 
-        return data_products
+        Returns:
+            List[Dict[str, any]]: List of data products.
+        """
+        return self.fetch_data(self.table_name)
 
     def get_metadata(self, execution_block: str) -> dict[str, Any]:
         """Retrieves metadata for the given execution block.
@@ -329,7 +342,7 @@ VALUES (%s, %s, %s)"
         try:
             return self.get_data_by_execution_block(execution_block)
         except KeyError:
-            logger.warning(f"Metadata not found for execution block: {execution_block}")
+            logger.warning("Metadata not found for execution block: %s", execution_block)
             return {}
 
     def get_data_by_execution_block(self, execution_block: str) -> dict[str, Any]:
@@ -349,8 +362,7 @@ VALUES (%s, %s, %s)"
         metadata_dict = result[0]
         if metadata_dict:
             return metadata_dict
-        else:
-            return {}
+        return {}
 
     def get_data_product_file_path(self, execution_block: str) -> pathlib.Path:
         """Retrieves the file path to the data product for the given execution block.
@@ -366,5 +378,5 @@ VALUES (%s, %s, %s)"
             data_product_metadata = self.get_data_by_execution_block(execution_block)
             return pathlib.Path(data_product_metadata["dataproduct_file"])
         except KeyError:
-            logger.warning(f"File path not found for execution block: {execution_block}")
+            logger.warning("File path not found for execution block: %s", execution_block)
             return {}
