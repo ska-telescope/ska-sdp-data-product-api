@@ -3,11 +3,7 @@ import pathlib
 from time import time
 from typing import Any, List
 
-from ska_sdp_dataproduct_api.components.metadata.metadata import (
-    DataProductMetadata,
-    append_metadata,
-    load_and_append_metadata,
-)
+from ska_sdp_dataproduct_api.components.metadata.metadata import DataProductMetadata
 from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
 from ska_sdp_dataproduct_api.components.store.metadata_store_base_class import MetadataStore
 from ska_sdp_dataproduct_api.configuration.settings import (
@@ -130,13 +126,16 @@ class in_memory_volume_index_metadata_store(MetadataStore):
             data_product_metadata_file_path (pathlib.Path): The path to the data file.
         """
         try:
-            data_product_metadata_instance = load_and_append_metadata(
+            data_product_metadata_instance: DataProductMetadata = DataProductMetadata()
+            data_product_metadata_instance.load_metadata_from_yaml_file(
                 data_product_metadata_file_path
             )
+
             self.dict_of_data_products_metadata[
                 data_product_metadata_instance.metadata_dict["execution_block"]
             ] = data_product_metadata_instance
             self.number_of_dataproducts = self.number_of_dataproducts + 1
+
         except Exception as error:
             logger.error(
                 "Failed to ingest dataproduct %s in list of products paths. Error: %s",
@@ -155,7 +154,7 @@ class in_memory_volume_index_metadata_store(MetadataStore):
         try:
             data_product_metadata_instance: DataProductMetadata = DataProductMetadata()
             data_product_metadata_instance.load_metadata_from_class(metadata)
-            append_metadata(data_product_metadata_instance)
+
             self.dict_of_data_products_metadata[
                 data_product_metadata_instance.metadata_dict["execution_block"]
             ] = data_product_metadata_instance

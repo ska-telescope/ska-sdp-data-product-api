@@ -9,7 +9,7 @@ from typing import Any
 import psycopg
 from psycopg.errors import OperationalError
 
-from ska_sdp_dataproduct_api.components.metadata.metadata import load_and_append_metadata
+from ska_sdp_dataproduct_api.components.metadata.metadata import DataProductMetadata
 from ska_sdp_dataproduct_api.components.store.metadata_store_base_class import MetadataStore
 from ska_sdp_dataproduct_api.configuration.settings import (
     METADATA_FILE_NAME,
@@ -162,7 +162,11 @@ class PostgresConnector(MetadataStore):
         Args:
             data_product_metadata_file_path (pathlib.Path): The path to the data file.
         """
-        data_product_metadata_instance = load_and_append_metadata(data_product_metadata_file_path)
+        data_product_metadata_instance: DataProductMetadata = DataProductMetadata()
+        data_product_metadata_instance.load_metadata_from_yaml_file(
+            data_product_metadata_file_path
+        )
+
         try:
             self.save_metadata_to_postgresql(
                 metadata_file_dict=data_product_metadata_instance.metadata_dict

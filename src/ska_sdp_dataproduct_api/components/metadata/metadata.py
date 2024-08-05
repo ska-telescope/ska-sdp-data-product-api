@@ -1,3 +1,17 @@
+"""
+Module for handling data product metadata.
+
+This module provides a class for encapsulating and managing metadata associated with data products.
+It offers functionalities to load metadata from YAML files, append additional metadata, and extract
+relevant information.
+
+Classes:
+    DataProductMetadata: Encapsulates metadata for a data product.
+
+Functions:
+    None
+"""
+
 import logging
 import pathlib
 
@@ -26,7 +40,7 @@ class DataProductMetadata:
         self.metadata_dict: dict = None
         self.date_created: str = None
 
-    def load_metadata_from_yaml_file(self, file_path: pathlib.Path) -> dict:
+    def load_yaml_file(self, file_path: pathlib.Path) -> dict:
         """
         Loads metadata from a YAML file.
 
@@ -56,80 +70,85 @@ class DataProductMetadata:
                 f"Error parsing YAML file: {self.data_product_metadata_file_path}"
             ) from error
 
-    def load_metadata_from_class(self, metadata: DataProductMetaData) -> dict:
-        """
-        Loads metadata from a DataProductMetaData class.
+    def load_metadata_from_yaml_file(self, file_path: pathlib.Path) -> dict[str, any]:
+        """Loads metadata from a DataProductMetaData class.
 
         Args:
-            data_product_file_path (pathlib.Path): Path to the metadata file.
+            metadata: The DataProductMetaData instance containing the metadata.
 
         Returns:
-            dict: Loaded metadata as a dictionary.
-
-        Raises:
-            FileNotFoundError: If the specified file does not exist.
-            yaml.YAMLError: If there's an error parsing the YAML file.
+            A dictionary containing the loaded metadata.
         """
-        self.metadata_dict = yaml.safe_load(metadata)
+        data_product_metadata_instance: DataProductMetadata = DataProductMetadata()
+        data_product_metadata_instance.load_yaml_file(file_path=file_path)
+        self.append_metadata()
         return self.metadata_dict
 
+    def load_metadata_from_class(self, metadata: DataProductMetaData) -> dict[str, any]:
+        """Loads metadata from a DataProductMetaData class.
+
+        Args:
+            metadata: The DataProductMetaData instance containing the metadata.
+
+        Returns:
+            A dictionary containing the loaded metadata.
+        """
+        self.metadata_dict = metadata.dict()
+        self.append_metadata()
+        return self.metadata_dict
+
+    def append_metadata(self) -> None:
+        """Appends metadata to the object.
+
+        This method attempts to get the date from metadata and append file details.
+        Any exceptions encountered during the process are logged.
+
+        Raises:
+            Exception: If an error occurs during metadata appending.
+        """
+
+        try:
+            self.get_date_from_metadata()
+            self.append_metadata_file_details()
+        except Exception as error:  # pylint: disable=broad-exception-caught
+            logger.error("Failed to append metadata, error: %s", error)
+
     def get_date_from_metadata(self) -> None:
-        """ """
+        """Extracts the date from the metadata and assigns it to self.date_created.
+
+        Attempts to extract the date from the 'execution_block' key in the metadata dictionary.
+        If an error occurs, logs an error message and does not set the date.
+
+        Args:
+            self: The object instance.
+        """
+
         try:
             self.date_created = get_date_from_name(self.metadata_dict["execution_block"])
-        except Exception as exception:  # pylint: disable=broad-exception-caught
+        except (KeyError, ValueError, TypeError) as exception:
             logger.error(
-                "Not loading dataproduct due to failure to extract the date from execution block: \
-                    %s : %s",
-                str(self.metadata_dict["execution_block"]),
+                "Failed to extract date from execution block: %s. Error: %s",
+                self.metadata_dict.get("execution_block", "Unknown"),
                 exception,
             )
 
     def append_metadata_file_details(self) -> None:
-        """ """
+        """Appends metadata file details to the metadata dictionary.
+
+        Updates the metadata dictionary with the following keys:
+        - 'date_created': The date the metadata was created.
+        - 'dataproduct_file': The path to the data product file as a string.
+        - 'metadata_file': The path to the metadata file as a string.
+        """
 
         self.metadata_dict.update(
             {
                 "date_created": self.date_created,
-                "dataproduct_file": str(self.data_product_file_path),
-                "metadata_file": str(self.data_product_metadata_file_path),
+                "dataproduct_file": str(
+                    self.data_product_file_path
+                ),  # TODO This file path needs to be updated in case where not loaded from file
+                "metadata_file": str(
+                    self.data_product_metadata_file_path
+                ),  # TODO This file path needs to be updated in case where not loaded form file
             }
-        )
-
-
-def load_and_append_metadata(data_product_metadata_file_path: pathlib.Path):
-    """ """
-    data_product_metadata_instance: DataProductMetadata = load_metadata(
-        data_product_metadata_file_path
-    )
-    append_metadata(data_product_metadata_instance)
-    return data_product_metadata_instance
-
-
-def load_metadata(data_product_metadata_file_path: pathlib.Path):
-    """ """
-    data_product_metadata_instance: DataProductMetadata = DataProductMetadata()
-    try:
-        data_product_metadata_instance.load_metadata_from_yaml_file(
-            file_path=data_product_metadata_file_path
-        )
-        return data_product_metadata_instance
-    except Exception as error:
-        logger.error(
-            "Failed to load and append metadata for %s. Error: %s",
-            data_product_metadata_file_path,
-            error,
-        )
-
-
-def append_metadata(data_product_metadata_instance: DataProductMetadata):
-    """ """
-    try:
-        data_product_metadata_instance.get_date_from_metadata()
-        data_product_metadata_instance.append_metadata_file_details()
-        return data_product_metadata_instance
-    except Exception as error:
-        logger.error(
-            "Failed to append metadata, error: %s",
-            error,
         )
