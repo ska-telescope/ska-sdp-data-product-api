@@ -25,7 +25,6 @@ import pathlib
 from typing import Any
 
 from ska_sdp_dataproduct_api.components.metadata.metadata import DataProductMetadata
-from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
 from ska_sdp_dataproduct_api.components.store.metadata_store_base_class import MetadataStore
 from ska_sdp_dataproduct_api.configuration.settings import (
     METADATA_FILE_NAME,
@@ -69,7 +68,7 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
         try:
             logger.info("Re-indexing persistent volume store...")
             self.indexing = True
-            self.clear_metadata_indecise()
+            self.number_of_dataproducts = 0
             self.list_all_data_product_files(PERSISTENT_STORAGE_PATH)
             self.ingest_list_of_data_product_paths()
             self.update_data_store_date_modified()
@@ -78,15 +77,6 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
         except Exception as exception:
             self.indexing = False
             raise exception
-
-    def clear_metadata_indecise(self):
-        """Clears metadata information stored within the class instance.
-
-        This method clears the `flattened_list_of_dataproducts_metadata` attribute
-        and sets the `number_of_dataproducts` attribute to 0.
-        """
-        muiDataGridInstance.flattened_list_of_dataproducts_metadata.clear()
-        self.number_of_dataproducts = 0
 
     def list_all_data_product_files(self, full_path_name: pathlib.Path) -> None:
         """

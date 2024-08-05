@@ -83,9 +83,7 @@ async def data_products_search(search_parameters: SearchParametersClass):
         ],
         "logicOperator": "and",
     }
-
     filtered_data = search_store.filter_data({}, search_options)
-
     return filtered_data
 
 
