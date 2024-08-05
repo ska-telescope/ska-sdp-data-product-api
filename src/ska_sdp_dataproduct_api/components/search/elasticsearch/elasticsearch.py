@@ -7,11 +7,10 @@ from typing import Union
 
 import elasticsearch
 from elasticsearch import Elasticsearch
-from ska_sdp_dataproduct_metadata import MetaData
-
 
 from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
-from ska_sdp_dataproduct_api.components.store.in_memory.in_memory_volume_index_metadata_store import (
+from ska_sdp_dataproduct_api.components.search.search_store_base_class import MetadataSearchStore
+from ska_sdp_dataproduct_api.components.store.in_memory.in_memory import (
     in_memory_volume_index_metadata_store,
 )
 from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
@@ -30,18 +29,16 @@ from ska_sdp_dataproduct_api.utilities.helperfunctions import find_metadata
 logger = logging.getLogger(__name__)
 
 
-class ElasticsearchMetadataStore:  # pylint: disable=too-many-instance-attributes
+class ElasticsearchMetadataStore(
+    MetadataSearchStore
+):  # pylint: disable=too-many-instance-attributes
     """Class to insert data into Elasticsearch instance."""
 
     def __init__(
         self, metadata_store: Union[PostgresConnector, in_memory_volume_index_metadata_store]
     ):
-        super().__init__()
+        super().__init__(metadata_store)
         self.elasticsearch_indices = ELASTICSEARCH_INDICES
-
-        self.metadata_store: Union[
-            PostgresConnector, in_memory_volume_index_metadata_store
-        ] = metadata_store
 
         self.host: str = ELASTICSEARCH_HOST
         self.port: int = ELASTICSEARCH_PORT
@@ -180,30 +177,6 @@ class ElasticsearchMetadataStore:  # pylint: disable=too-many-instance-attribute
                 index=index, ignore=400, body=metadata_schema_json
             )
 
-    def load_metadata_from_store(self):
-        """ """
-        if self.metadata_store.postgresql_running:
-            self.load_persistent_metadata_store_data()
-        else:
-            self.load_in_memory_volume_index_metadata_store_data()
-
-    def load_in_memory_volume_index_metadata_store_data(self):
-        """Loads metadata from the metadata store into the search store."""
-        for (
-            execution_block,
-            data_product,
-        ) in self.metadata_store.dict_of_data_products_metadata.items():
-            print("Loading execution_block %s into search store", execution_block)
-            self.insert_metadata_in_search_store(data_product.metadata_dict)
-
-    def load_persistent_metadata_store_data(self):
-        """ """
-        for (
-            data_product
-        ) in self.metadata_store.load_data_products_from_persistent_metadata_store():
-            self.insert_metadata_in_search_store(data_product["data"])
-
-
     def clear_metadata_indecise(self) -> None:
         """Deletes specific indices from the Elasticsearch instance and clear the metadata_list.
 
@@ -265,35 +238,6 @@ class ElasticsearchMetadataStore:  # pylint: disable=too-many-instance-attribute
             return False
         except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error("Error inserting metadata into search store: %s", exception)
-
-    def index_metadata_to_elasticsearch(self, index: str, metadata_dict: dict) -> bool:
-        """Indexes metadata into Elasticsearch.
-
-        Args:
-            index: The Elasticsearch index name.
-            metadata_dict: The metadata to be indexed as a dictionary.
-
-        Raises:
-            ValueError: If the metadata is invalid or missing 'execution_block'.
-            elasticsearch.exceptions.ElasticsearchException: For Elasticsearch-specific errors.
-        """
-
-        try:
-            execution_block = metadata_dict.get("execution_block")
-            if not execution_block:
-                raise ValueError("Missing 'execution_block' in metadata")
-
-            response = self.es_client.index(index=index, id=execution_block, body=metadata_dict)
-            if response["result"] == "created":
-                return True
-            logger.warning("Error indexing metadata into Elasticsearch: %s", str(response))
-            return False
-        except ValueError as error:
-            logger.error("Invalid metadata: %s", error)
-            raise ValueError(f"Invalid metadata: {str(error)}")
-        except Exception as exception:
-            logger.error("Error inserting metadata into Elasticsearch: %s", exception)
-            raise Exception(f"Error indexing metadata: {str(exception)}")
 
     def sort_metadata_list(self) -> None:
         """This method sorts the metadata_list according to the set key"""

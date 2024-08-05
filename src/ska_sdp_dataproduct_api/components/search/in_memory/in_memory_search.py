@@ -2,20 +2,18 @@
 import copy
 import json
 import logging
-import pathlib
-from time import time
 from typing import Any, Dict, List, Union
 
-from ska_sdp_dataproduct_api.components.data_ingestor.data_ingestor import Meta_Data_Ingestor
 from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import (
     MuiDataGrid,
     muiDataGridInstance,
 )
-from ska_sdp_dataproduct_api.components.store.in_memory.in_memory_volume_index_metadata_store import (
+from ska_sdp_dataproduct_api.components.search.search_store_base_class import MetadataSearchStore
+from ska_sdp_dataproduct_api.components.store.in_memory.in_memory import (
     in_memory_volume_index_metadata_store,
 )
 from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
-from ska_sdp_dataproduct_api.configuration.settings import DATE_FORMAT, PERSISTENT_STORAGE_PATH
+from ska_sdp_dataproduct_api.configuration.settings import DATE_FORMAT
 from ska_sdp_dataproduct_api.utilities.helperfunctions import (
     filter_by_item,
     filter_by_key_value_pair,
@@ -27,7 +25,7 @@ logger = logging.getLogger(__name__)
 # pylint: disable=no-name-in-module
 
 
-class InMemoryDataproductSearch:
+class InMemoryDataproductSearch(MetadataSearchStore):
     """
     This class defines an object that is used to create a list of data products
     based on information contained in the metadata files of these data
@@ -39,36 +37,10 @@ class InMemoryDataproductSearch:
         metadata_store: Union[PostgresConnector, in_memory_volume_index_metadata_store],
         muiDataGridInstance: MuiDataGrid,
     ) -> None:
-        super().__init__()
+        super().__init__(metadata_store)
         self.mui_data_grid_instance: MuiDataGrid = muiDataGridInstance
-        self.metadata_store: Union[
-            PostgresConnector, in_memory_volume_index_metadata_store
-        ] = metadata_store
         self.number_of_dataproducts: int = 0
         self.load_metadata_from_store()
-
-    def load_metadata_from_store(self):
-        """ """
-        if self.metadata_store.postgresql_running:
-            self.load_persistent_metadata_store_data()
-        else:
-            self.load_in_memory_volume_index_metadata_store_data()
-
-    def load_in_memory_volume_index_metadata_store_data(self):
-        """Loads metadata from the metadata store into the search store."""
-        for (
-            execution_block,
-            data_product,
-        ) in self.metadata_store.dict_of_data_products_metadata.items():
-            print("Loading execution_block %s into search store", execution_block)
-            self.insert_metadata_in_search_store(data_product.metadata_dict)
-
-    def load_persistent_metadata_store_data(self):
-        """ """
-        for (
-            data_product
-        ) in self.metadata_store.load_data_products_from_persistent_metadata_store():
-            self.insert_metadata_in_search_store(data_product["data"])
 
     def insert_metadata_in_search_store(self, data_product_metadata_dict: dict):
         """This method loads the metadata file of a data product, creates a
@@ -104,7 +76,8 @@ class InMemoryDataproductSearch:
         }
 
     def sort_metadata_list(self, key: str = "date_created", reverse: bool = True) -> None:
-        """Sorts the `flattened_list_of_dataproducts_metadata` attribute of the class instance in-place.
+        """Sorts the `flattened_list_of_dataproducts_metadata` attribute of the class instance
+        in-place.
 
         Args:
             key (str, optional): The key attribute to sort by. Defaults to "date_created".
@@ -112,7 +85,8 @@ class InMemoryDataproductSearch:
 
         Raises:
             TypeError: If the provided `key` is not a string.
-            ValueError: If the `key` is not found in the elements of `flattened_list_of_dataproducts_metadata`.
+            ValueError: If the `key` is not found in the elements of
+            `flattened_list_of_dataproducts_metadata`.
         """
 
         for element in muiDataGridInstance.flattened_list_of_dataproducts_metadata:
@@ -138,8 +112,8 @@ class InMemoryDataproductSearch:
             end_date = parse_valid_date(end_date, DATE_FORMAT)
         except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error(
-                "Error, invalid time range start_date=%s, end_date %s with error: %s. Using defaults:  \
-                    start_date=1970-01-01, end_date 2100-01-01",
+                "Error, invalid time range start_date=%s, end_date %s with error: %s. \
+                    Using defaults: start_date=1970-01-01, end_date 2100-01-01",
                 start_date,
                 end_date,
                 exception,

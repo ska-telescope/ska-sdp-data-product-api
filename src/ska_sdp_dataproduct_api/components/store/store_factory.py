@@ -10,7 +10,7 @@ from ska_sdp_dataproduct_api.components.search.elasticsearch.elasticsearch impor
 from ska_sdp_dataproduct_api.components.search.in_memory.in_memory_search import (
     InMemoryDataproductSearch,
 )
-from ska_sdp_dataproduct_api.components.store.in_memory.in_memory_volume_index_metadata_store import (
+from ska_sdp_dataproduct_api.components.store.in_memory.in_memory import (
     in_memory_volume_index_metadata_store,
 )
 from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
@@ -57,7 +57,8 @@ def select_metadata_store_class() -> Union[
             )
             return persistent_metadata_store
         logger.warning(
-            "PostgreSQL not available, loading metadata from persistent volume into in memory store."
+            "PostgreSQL not available, loading metadata from persistent volume into in memory \
+            store."
         )
         return in_memory_volume_index_metadata_store()
     except Exception as exception:  # pylint: disable=broad-exception-caught

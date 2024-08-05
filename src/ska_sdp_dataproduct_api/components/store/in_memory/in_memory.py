@@ -4,19 +4,14 @@ import pathlib
 from time import time
 from typing import Any, List
 
-import yaml
-from ska_sdp_dataproduct_metadata import MetaData
-
-from ska_sdp_dataproduct_api.components.metadata.metadata import DataProductMetadata
+from ska_sdp_dataproduct_api.components.metadata.metadata import (
+    DataProductMetadata,
+    load_and_append_metadata,
+)
 from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
 from ska_sdp_dataproduct_api.configuration.settings import (
     METADATA_FILE_NAME,
     PERSISTENT_STORAGE_PATH,
-)
-from ska_sdp_dataproduct_api.utilities.helperfunctions import (
-    FilePaths,
-    get_date_from_name,
-    get_relative_path,
 )
 
 logger = logging.getLogger(__name__)
@@ -49,8 +44,8 @@ class in_memory_volume_index_metadata_store:
         self.reindex_persistent_volume()
 
     def reindex_persistent_volume(self) -> None:
-        """This method resets and recreates the flattened_list_of_dataproducts_metadata. This is added
-        to enable the user to reindex if the data products were changed or
+        """This method resets and recreates the flattened_list_of_dataproducts_metadata. This is
+        added to enable the user to reindex if the data products were changed or
         appended since the initial load of the data"""
         try:
             logger.info("Re-indexing persistent volume store...")
@@ -137,13 +132,8 @@ class in_memory_volume_index_metadata_store:
         Args:
             data_product_metadata_file_path (pathlib.Path): The path to the data file.
         """
-        data_product_metadata_instance: DataProductMetadata = DataProductMetadata()
+        data_product_metadata_instance = load_and_append_metadata(data_product_metadata_file_path)
         try:
-            data_product_metadata_instance.load_metadata_from_yaml_file(
-                file_path=data_product_metadata_file_path
-            )
-            data_product_metadata_instance.get_date_from_metadata()
-            data_product_metadata_instance.append_metadata_file_details()
             self.dict_of_data_products_metadata[
                 data_product_metadata_instance.metadata_dict["execution_block"]
             ] = data_product_metadata_instance
@@ -190,65 +180,6 @@ class in_memory_volume_index_metadata_store:
             logger.warning(f"File path not found for execution block: {execution_block}")
             return {}
 
-    def load_metadata(self, file_object: FilePaths) -> dict[str, Any]:
-        """This function loads the content of a yaml file and returns it as a dict."""
-        # Test that the metadata file exists
-        if not self.check_file_exists(file_object.fullPathName):
-            return {}
-
-        # Load the metadata file into memory
-        try:
-            metadata_dict = self.load_metadata_file(file_object)
-        except Exception as exception:  # pylint: disable=broad-exception-caught
-            logger.error(
-                "Not loading dataproduct due to a loading of metadata failure: %s, %s",
-                str(file_object.fullPathName),
-                exception,
-            )
-            return {}
-
-        # Validate the metadata against the schema
-        validation_errors = MetaData.validator.iter_errors(metadata_dict)
-
-        # Loop over the errors
-        for validation_error in validation_errors:
-            logger.error(
-                "Not loading dataproduct due to schema validation error when ingesting: %s : %s",
-                str(file_object.fullPathName),
-                str(validation_error.message),
-            )
-
-            if (
-                str(validation_error.validator) == "required"
-                or str(validation_error.message) == "None is not of type 'object'"
-            ):
-                logger.error(
-                    "Not loading dataproduct due to schema validation error when ingesting: %s : %s",
-                    str(file_object.fullPathName),
-                    str(validation_error.message),
-                )
-                return {}
-
-        try:
-            metadata_date = get_date_from_name(metadata_dict["execution_block"])
-        except Exception as exception:  # pylint: disable=broad-exception-caught
-            logger.error(
-                "Not loading dataproduct due to failure to extract the date from execution block: %s : %s",
-                str(file_object.fullPathName),
-                exception,
-            )
-            return {}
-
-        metadata_dict.update(
-            {
-                "date_created": metadata_date,
-                "dataproduct_file": str(file_object.relativePathName.parent),
-                "metadata_file": str(file_object.relativePathName),
-            }
-        )
-
-        return metadata_dict
-
     def check_file_exists(self, file_object: pathlib.Path) -> bool:
         """
         Checks if the given file path points to an existing file.
@@ -266,28 +197,3 @@ class in_memory_volume_index_metadata_store:
             )
             return False
         return True
-
-    def load_metadata_file(self, file_object: FilePaths) -> dict[str, Any]:
-        """
-        Load metadata from a YAML file.
-
-        Args:
-            file_object: An object representing the file to read metadata from.
-
-        Returns:
-            A dictionary containing the loaded metadata, or an empty dictionary if an error occurs
-            during loading.
-        """
-        try:
-            with open(file_object.fullPathName, "r", encoding="utf-8") as metadata_yaml_file:
-                metadata_yaml_object = yaml.safe_load(metadata_yaml_file)
-                return metadata_yaml_object
-        except FileNotFoundError as file_not_found_error:
-            logger.warning("Metadata file not found: %s", str(file_object.fullPathName))
-            raise file_not_found_error
-        except yaml.YAMLError as yaml_error:
-            logger.warning("Error while parsing YAML: %s", yaml_error)
-            raise yaml_error
-        except Exception as exception:
-            logger.warning("Unexpected error occurred: %s", exception)
-            raise exception

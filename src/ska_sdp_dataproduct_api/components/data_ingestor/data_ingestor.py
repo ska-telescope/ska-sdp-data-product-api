@@ -1,6 +1,6 @@
 from typing import Union
 
-from ska_sdp_dataproduct_api.components.store.in_memory.in_memory_volume_index_metadata_store import (
+from ska_sdp_dataproduct_api.components.store.in_memory.in_memory import (
     in_memory_volume_index_metadata_store,
 )
 from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector

@@ -2,6 +2,8 @@
 applications"""
 from collections.abc import MutableMapping
 
+# pylint: disable=too-many-instance-attributes
+
 
 class MuiDataGrid:
     """Class containing components used with the MUI DataGrid"""
@@ -195,7 +197,6 @@ class MuiDataGrid:
             )
 
         muiDataGridInstance.flattened_list_of_dataproducts_metadata.append(data_product_details)
-        return
 
 
 muiDataGridInstance = MuiDataGrid()

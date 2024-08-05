@@ -4,21 +4,15 @@ import hashlib
 import json
 import logging
 import pathlib
-from typing import Any, List
+from typing import Any
 
 import psycopg
 from psycopg.errors import OperationalError
-from ska_sdp_dataproduct_metadata import MetaData
 
-from ska_sdp_dataproduct_api.components.metadata.metadata import DataProductMetadata
+from ska_sdp_dataproduct_api.components.metadata.metadata import load_and_append_metadata
 from ska_sdp_dataproduct_api.configuration.settings import (
     METADATA_FILE_NAME,
     PERSISTENT_STORAGE_PATH,
-)
-from ska_sdp_dataproduct_api.utilities.helperfunctions import (
-    FilePaths,
-    get_date_from_name,
-    get_relative_path,
 )
 
 logger = logging.getLogger(__name__)
@@ -169,13 +163,8 @@ class PostgresConnector:
         Args:
             data_product_metadata_file_path (pathlib.Path): The path to the data file.
         """
-        data_product_metadata_instance: DataProductMetadata = DataProductMetadata()
+        data_product_metadata_instance = load_and_append_metadata(data_product_metadata_file_path)
         try:
-            data_product_metadata_instance.load_metadata_from_yaml_file(
-                file_path=data_product_metadata_file_path
-            )
-            data_product_metadata_instance.get_date_from_metadata()
-            data_product_metadata_instance.append_metadata_file_details()
             self.save_metadata_to_postgresql(
                 metadata_file_dict=data_product_metadata_instance.metadata_dict
             )
@@ -324,58 +313,6 @@ VALUES (%s, %s, %s)"
 
         return data_products
 
-    def load_metadata(self, file_object: FilePaths) -> dict[str, Any]:
-        """This function loads the content of a yaml file and returns it as a dict."""
-        # Test that the metadata file exists
-        cursor = self.conn.cursor()
-        check_query = f"SELECT data FROM {self.table_name} WHERE execution_block = %s"
-        cursor.execute(check_query, (file_object.execution_block,))
-        result = cursor.fetchone()
-        cursor.close()
-        metadata_dict = result[0]
-
-        # Validate the metadata against the schema
-        validation_errors = MetaData.validator.iter_errors(metadata_dict)
-
-        # Loop over the errors
-        for validation_error in validation_errors:
-            logger.error(
-                "Not loading dataproduct due to schema validation error when ingesting: %s : %s",
-                str(file_object.fullPathName),
-                str(validation_error.message),
-            )
-
-            if (
-                str(validation_error.validator) == "required"
-                or str(validation_error.message) == "None is not of type 'object'"
-            ):
-                logger.error(
-                    "Not loading dataproduct due to schema validation error when ingesting: %s : %s",
-                    str(file_object.fullPathName),
-                    str(validation_error.message),
-                )
-                return {}
-
-        try:
-            metadata_date = get_date_from_name(metadata_dict["execution_block"])
-        except Exception as exception:  # pylint: disable=broad-exception-caught
-            logger.error(
-                "Not loading dataproduct due to failure to extract the date from execution block: %s : %s",
-                str(file_object.fullPathName),
-                exception,
-            )
-            return {}
-
-        metadata_dict.update(
-            {
-                "date_created": metadata_date,
-                "dataproduct_file": str(file_object.relativePathName.parent),
-                "metadata_file": str(file_object.relativePathName),
-            }
-        )
-
-        return metadata_dict
-
     def get_metadata(self, execution_block: str) -> dict[str, Any]:
         """Retrieves metadata for the given execution block.
 
@@ -423,9 +360,7 @@ VALUES (%s, %s, %s)"
 
         try:
             data_product_metadata = self.get_data_by_execution_block(execution_block)
-            return pathlib.Path(
-                data_product_metadata["dataproduct_file"]
-            )
+            return pathlib.Path(data_product_metadata["dataproduct_file"])
         except KeyError:
             logger.warning(f"File path not found for execution block: {execution_block}")
             return {}

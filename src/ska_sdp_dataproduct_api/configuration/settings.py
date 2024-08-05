@@ -24,7 +24,9 @@ PERSISTENT_STORAGE_PATH: pathlib.Path = pathlib.Path(
 try:
     ABSOLUTE_PERSISTENT_STORAGE_PATH = PERSISTENT_STORAGE_PATH.resolve()
 except Exception as exception:
-    logger.exception("Could not resolve PERSISTENT_STORAGE_PATH: %s", PERSISTENT_STORAGE_PATH)
+    logger.exception(
+        "Could not resolve PERSISTENT_STORAGE_PATH: %s, %s", PERSISTENT_STORAGE_PATH, exception
+    )
     ABSOLUTE_PERSISTENT_STORAGE_PATH = PERSISTENT_STORAGE_PATH
 
 
@@ -85,13 +87,15 @@ ELASTICSEARCH_PASSWORD: str = config(
     default="",
 )
 
-ELASTICSEARCH_METADATA_SCHEMA_FILE: pathlib.Path = pathlib.Path(config(
-    "SDP_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE",
-    default=(
-        "./src/ska_sdp_dataproduct_api/components/search/elasticsearch/"
-        "data_product_metadata_schema.json"
-    ),
-)).resolve()
+ELASTICSEARCH_METADATA_SCHEMA_FILE: pathlib.Path = pathlib.Path(
+    config(
+        "SDP_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE",
+        default=(
+            "./src/ska_sdp_dataproduct_api/components/search/elasticsearch/"
+            "data_product_metadata_schema.json"
+        ),
+    )
+).resolve()
 
 ELASTICSEARCH_INDICES: str = config(
     "SDP_DATAPRODUCT_API_ELASTIC_INDICES",
