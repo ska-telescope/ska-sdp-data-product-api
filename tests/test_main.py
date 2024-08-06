@@ -9,8 +9,6 @@ def test_ping_main(test_app):
     assert response.json()["api_running"] is True
     assert "api_version" in response.json()
     assert "startup_time" in response.json()
-    assert "request_count" in response.json()
-    assert "error_rate" in response.json()
     assert "last_metadata_update_time" in response.json()
     assert "search_store_status" in response.json()
     assert "metadata_store_status" in response.json()
@@ -98,7 +96,6 @@ def test_in_memory_search_no_key_value_list(test_app):
     data = {"start_date": "2001-12-12", "end_date": "2032-12-12"}
     response = test_app.post("/dataproductsearch", json=data)
     assert response.status_code == 200
-    print(response.json())
     assert len(response.json()) > 0
 
 

@@ -35,23 +35,43 @@ Verify the API's status by sending a GET request to the /status endpoint. The re
     {
         "api_running": true,
         "api_version": "0.8.0",
-        "startup_time": "2024-07-09T09:33:22.858611",
-        "request_count": 0,
-        "error_rate": 0,
-        "last_metadata_update_time": "2024-07-09T09:33:22.858558",
-        "search_metadata_store_status": {
-            "metadata_store_in_use": "InMemoryDataproductSearch",
-            "indexing": false,
-            "indexing_timestamp": 1720510402.8141217,
-            "number_of_data_products": 11
-        },
-        "metadata_store": {
+        "startup_time": "2024-08-06T09:01:23.768773",
+        "last_metadata_update_time": "2024-08-06T09:01:23.768757",
+        "metadata_store_status": {
+            "store_type": "Persistent PosgreSQL metadata store",
             "host": "localhost",
             "port": 5432,
             "user": "postgres",
             "running": true,
-            "postgresql_version": "PostgreSQL 16.3 on x86_64-pc-linux-musl, compiled by gcc (Alpine 13.2.1_git20240309) 13.2.1 20240309, 64-bit",
-            "connection_error": ""
+            "table_name": "localhost_sdp_dataproduct_dashboard_dev_v1",
+            "number_of_dataproducts": 10,
+            "postgresql_version": "PostgreSQL 16.3 on x86_64-pc-linux-musl, compiled by gcc (Alpine 13.2.1_git20240309) 13.2.1 20240309, 64-bit"
+        },
+        "search_store_status": {
+            "metadata_store_in_use": "ElasticsearchMetadataStore",
+            "url": "https://localhost:9200",
+            "user": "elastic",
+            "running": true,
+            "connection_established_at": "2024-08-06T09:01:23.555295",
+            "number_of_dataproducts": 10,
+            "indices": "localhost-sdp-dataproduct-dashboard-dev-v1",
+            "cluster_info": {
+                "name": "46f82bbc7307",
+                "cluster_name": "docker-cluster",
+                "cluster_uuid": "5nqaD334QZuVZjjMYAFCmQ",
+                "version": {
+                    "number": "8.14.2",
+                    "build_flavor": "default",
+                    "build_type": "docker",
+                    "build_hash": "2afe7caceec8a26ff53817e5ed88235e90592a1b",
+                    "build_date": "2024-07-01T22:06:58.515911606Z",
+                    "build_snapshot": false,
+                    "lucene_version": "9.10.0",
+                    "minimum_wire_compatibility_version": "7.17.0",
+                    "minimum_index_compatibility_version": "7.0.0"
+                },
+                "tagline": "You Know, for Search"
+            }
         }
     }
 
@@ -131,8 +151,7 @@ The body of the post request must contain the name of the file and the relative 
 .. code-block:: bash
 
     {
-        "execution_block": "eb-test-20200325-00001",
-        "relativePathName": "product/eb-test-20200325-00001"
+        "execution_block": "eb-test-20200325-00001"
     }
 
 *Response*
@@ -159,8 +178,7 @@ For example, the post request body:
 .. code-block:: bash
 
     {
-        "execution_block": "ska-data-product.yaml",
-        "relativePathName": "product/eb_id_2/ska-sub-system/scan_id_2/pb_id_2/ska-data-product.yaml"
+        "execution_block": "eb-test-20200325-00001"
     }
 
 *Response*

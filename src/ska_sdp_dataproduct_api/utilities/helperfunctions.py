@@ -6,7 +6,6 @@ import subprocess
 from typing import Any, Generator, Optional
 
 # pylint: disable=no-name-in-module
-import pydantic
 from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -45,8 +44,6 @@ class DPDAPIStatus:  # pylint: disable=too-many-instance-attributes
             "api_running": True,
             "api_version": self.version,
             "startup_time": self.startup_time.isoformat(),
-            "request_count": self.request_count,  # Added: Request count
-            "error_rate": self.get_error_rate(),  # Added: Error rate
             "last_metadata_update_time": self.date_modified,
             "metadata_store_status": self.metadata_store_status(),
             "search_store_status": self.search_store_status(),
@@ -83,58 +80,6 @@ class FilePaths(BaseModel):
     relativePathName: pathlib.Path = None
     fullPathName: Optional[pathlib.Path] = None
     metaDataFile: Optional[pathlib.Path] = None
-
-    class Config:
-        """Config the behaviour of pydantic"""
-
-        arbitrary_types_allowed = True
-        validate_assignment = True
-        validate_default = True
-        extra = "forbid"
-
-    @pydantic.validator("relativePathName")
-    @classmethod
-    def relative_path_name_validator(cls, relative_path: pathlib.Path):
-        """
-        A validator that validates the relative path name.
-
-        Args:
-            relative_path (pathlib.Path): The relative path name.
-
-        Returns:
-            pathlib.Path: The validated relative path name.
-
-        Raises:
-            HTTPException: If the path is invalid.
-
-        """
-        path = PERSISTENT_STORAGE_PATH.joinpath(relative_path)
-        verify_file_path(path)
-        return relative_path
-
-    @pydantic.validator("fullPathName", pre=True)
-    @classmethod
-    def full_path_name_validator(cls, full_path_name: pathlib.Path, values):
-        """
-        A validator that validates the full path name.
-
-        Args:
-            full_path_name (pathlib.Path): The full path name.
-            values (dict): The values of the attributes.
-
-        Returns:
-            pathlib.Path: The validated full path name.
-
-        Raises:
-            HTTPException: If the path is invalid.
-
-        """
-        if full_path_name is None:
-            derived_full_path_name = PERSISTENT_STORAGE_PATH.joinpath(values["relativePathName"])
-            verify_file_path(derived_full_path_name)
-        else:
-            verify_file_path(full_path_name)
-        return derived_full_path_name or full_path_name
 
 
 class ExecutionBlock(BaseModel):

@@ -12,7 +12,12 @@ from ska_sdp_dataproduct_api.components.store.store_factory import (
     select_metadata_store_class,
     select_search_store_class,
 )
-from ska_sdp_dataproduct_api.configuration.settings import DEFAULT_DISPLAY_LAYOUT, app
+from ska_sdp_dataproduct_api.configuration.settings import (
+    ABSOLUTE_PERSISTENT_STORAGE_PATH,
+    DEFAULT_DISPLAY_LAYOUT,
+    METADATA_FILE_NAME,
+    app,
+)
 from ska_sdp_dataproduct_api.utilities.helperfunctions import (
     DataProductMetaData,
     DPDAPIStatus,
@@ -152,8 +157,9 @@ async def ingest_new_data_product(
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
     metadata_store.update_data_store_date_modified()
-    metadata_store.list_all_data_product_files(file_object.fullPathName)
-    metadata_store.ingest_list_of_data_product_paths()
+    metadata_store.ingest_file(
+        ABSOLUTE_PERSISTENT_STORAGE_PATH / file_object.execution_block / METADATA_FILE_NAME
+    )
     search_store.sort_metadata_list()
 
     logger.info("New data product metadata file loaded and search_store index updated")

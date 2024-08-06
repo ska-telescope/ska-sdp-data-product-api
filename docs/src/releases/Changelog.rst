@@ -7,7 +7,8 @@ Current Development
 
 * `NAL-1132 <https://jira.skatelescope.org/browse/NAL-1132>`_ 
 
-  - [?] ...
+  - [Changed] Updated project structure to align with the component functions, separating metadata stores and search stores.
+  - **BREAKING** [Changed] 
 
 * `NAL-1128 <https://jira.skatelescope.org/browse/NAL-1128>`_ 
 
