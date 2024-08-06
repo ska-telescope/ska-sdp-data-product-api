@@ -8,7 +8,8 @@ Current Development
 * `NAL-1132 <https://jira.skatelescope.org/browse/NAL-1132>`_ 
 
   - [Changed] Updated project structure to align with the component functions, separating metadata stores and search stores.
-  - **BREAKING** [Changed] 
+  - **BREAKING** [Changed] Changed the body or API request to specify the *execution_block* ID instead of *fileName* and *relativePathName*.
+  - [Added] Added DataProductMetadata class that contains methods related to handling of metadata in the application.
 
 * `NAL-1128 <https://jira.skatelescope.org/browse/NAL-1128>`_ 
 

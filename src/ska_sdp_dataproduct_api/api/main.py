@@ -131,6 +131,8 @@ async def get_muidatagridconfig() -> dict:
 async def download(data: ExecutionBlock):
     """This API endpoint returns a FileResponse that is used by a
     frontend to download a file"""
+    if not data.execution_block:
+        raise HTTPException(status_code=400, detail="Missing execution_block field in request")
     return download_file(metadata_store.get_data_product_file_path(data.execution_block))
 
 
@@ -138,15 +140,9 @@ async def download(data: ExecutionBlock):
 async def data_product_metadata(data: ExecutionBlock):
     """This API endpoint returns the data products metadata in json format of a specified data
     product."""
-    try:
-        if not data.execution_block:
-            raise HTTPException(status_code=400, detail="Missing execution_block field in request")
-
-        return metadata_store.get_metadata(data.execution_block)
-    except Exception as exception:
-        raise HTTPException(
-            status_code=500, detail=f"Internal server error: {str(exception)}"
-        ) from exception
+    if not data.execution_block:
+        raise HTTPException(status_code=400, detail="Missing execution_block field in request")
+    return metadata_store.get_metadata(data.execution_block)
 
 
 @app.post("/ingestnewdataproduct")
@@ -155,12 +151,11 @@ async def ingest_new_data_product(
 ):
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
-    metadata_store.update_data_store_date_modified()
     metadata_store.ingest_file(
         ABSOLUTE_PERSISTENT_STORAGE_PATH / file_object.execution_block / METADATA_FILE_NAME
     )
     search_store.sort_metadata_list()
-
+    metadata_store.update_data_store_date_modified()
     logger.info("New data product metadata file loaded and search_store index updated")
     return "New data product metadata file loaded and search_store index updated"
 
@@ -171,9 +166,9 @@ async def ingest_new_metadata(
 ):
     """This API endpoint takes JSON data product metadata and ingests into
     the appropriate search_store."""
-    metadata_store.update_data_store_date_modified()
     metadata_store.ingest_metadata(metadata)
     search_store.insert_metadata_in_search_store(metadata)
+    metadata_store.update_data_store_date_modified()
     logger.info("New data product metadata received and search_store index updated")
     return "New data product metadata received and search store index updated"
 

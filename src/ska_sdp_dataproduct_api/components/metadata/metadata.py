@@ -28,8 +28,10 @@ class DataProductMetadata:
     Encapsulates metadata for a data product.
 
     Attributes:
-        data_product_file_path (pathlib.Path): Path to the metadata file.
+        data_product_file_path (pathlib.Path): Path to the data product file.
+        data_product_metadata_file_path (pathlib.Path): Path to the metadata file.
         metadata_dict (dict): Loaded metadata as a dictionary.
+        date_created (str): Date when the metadata was created.
     """
 
     def __init__(self):
@@ -44,9 +46,6 @@ class DataProductMetadata:
 
         Args:
             data_product_file_path (pathlib.Path): Path to the metadata file.
-
-        Returns:
-            dict: Loaded metadata as a dictionary.
 
         Raises:
             FileNotFoundError: If the specified file does not exist.
@@ -68,20 +67,22 @@ class DataProductMetadata:
             ) from error
 
     def load_metadata_from_yaml_file(self, file_path: pathlib.Path) -> dict[str, any]:
-        """Loads metadata from a DataProductMetaData class.
+        """
+        Loads metadata from a YAML file into the object.
 
         Args:
-            metadata: The DataProductMetaData instance containing the metadata.
+            file_path (pathlib.Path): Path to the YAML file containing metadata.
 
         Returns:
-            A dictionary containing the loaded metadata.
+            dict[str, any]: Loaded metadata as a dictionary.
         """
         self.load_yaml_file(file_path=file_path)
         self.append_metadata()
         return self.metadata_dict
 
     def load_metadata_from_class(self, metadata: DataProductMetaData) -> dict[str, any]:
-        """Loads metadata from a DataProductMetaData class.
+        """
+        Loads metadata from a DataProductMetaData class.
 
         Args:
             metadata: The DataProductMetaData instance containing the metadata.
@@ -114,9 +115,6 @@ class DataProductMetadata:
 
         Attempts to extract the date from the 'execution_block' key in the metadata dictionary.
         If an error occurs, logs an error message and does not set the date.
-
-        Args:
-            self: The object instance.
         """
 
         try:
