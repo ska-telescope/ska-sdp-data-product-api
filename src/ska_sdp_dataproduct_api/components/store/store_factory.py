@@ -14,6 +14,11 @@ from ska_sdp_dataproduct_api.components.store.in_memory.in_memory import (
 )
 from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
 from ska_sdp_dataproduct_api.configuration.settings import (
+    ELASTICSEARCH_HOST,
+    ELASTICSEARCH_INDICES,
+    ELASTICSEARCH_PASSWORD,
+    ELASTICSEARCH_PORT,
+    ELASTICSEARCH_USER,
     POSTGRESQL_HOST,
     POSTGRESQL_PASSWORD,
     POSTGRESQL_PORT,
@@ -82,11 +87,25 @@ def select_search_store_class(
             `ElasticsearchMetadataStore` or `InMemoryDataproductSearch` depending on Elasticsearch
             availability.
     """
-    elastic_store_instance = ElasticsearchMetadataStore(metadata_store)
+    elastic_store_instance = ElasticsearchMetadataStore(
+        host=ELASTICSEARCH_HOST,
+        port=ELASTICSEARCH_PORT,
+        user=ELASTICSEARCH_USER,
+        password=ELASTICSEARCH_PASSWORD,
+        indices=ELASTICSEARCH_INDICES,
+        metadata_store=metadata_store,
+    )
     elastic_store_instance.check_and_reconnect()
 
     try:
-        elastic_store_instance = ElasticsearchMetadataStore(metadata_store)
+        elastic_store_instance = ElasticsearchMetadataStore(
+            host=ELASTICSEARCH_HOST,
+            port=ELASTICSEARCH_PORT,
+            user=ELASTICSEARCH_USER,
+            password=ELASTICSEARCH_PASSWORD,
+            indices=ELASTICSEARCH_INDICES,
+            metadata_store=metadata_store,
+        )
         if elastic_store_instance.host and elastic_store_instance.check_and_reconnect():
             logger.info("Elasticsearch reachable, setting search store to ElasticSearch")
             return elastic_store_instance

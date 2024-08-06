@@ -16,33 +16,37 @@ from ska_sdp_dataproduct_api.components.store.in_memory.in_memory import (
 from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
 from ska_sdp_dataproduct_api.configuration.settings import (
     CONFIGURATION_FILES_PATH,
-    ELASTICSEARCH_HOST,
     ELASTICSEARCH_HTTP_CA,
-    ELASTICSEARCH_INDICES,
     ELASTICSEARCH_METADATA_SCHEMA_FILE,
-    ELASTICSEARCH_PASSWORD,
-    ELASTICSEARCH_PORT,
-    ELASTICSEARCH_USER,
 )
 from ska_sdp_dataproduct_api.utilities.helperfunctions import find_metadata
 
 logger = logging.getLogger(__name__)
 
+# pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-arguments
 
-class ElasticsearchMetadataStore(
-    MetadataSearchStore
-):  # pylint: disable=too-many-instance-attributes
+
+class ElasticsearchMetadataStore(MetadataSearchStore):
     """Class to insert data into Elasticsearch instance."""
 
-    def __init__(self, metadata_store: Union[PostgresConnector, InMemoryVolumeIndexMetadataStore]):
+    def __init__(
+        self,
+        host,
+        port,
+        user,
+        password,
+        indices,
+        metadata_store: Union[PostgresConnector, InMemoryVolumeIndexMetadataStore],
+    ):
         super().__init__(metadata_store)
-        self.elasticsearch_indices = ELASTICSEARCH_INDICES
+        self.indices = indices
 
-        self.host: str = ELASTICSEARCH_HOST
-        self.port: int = ELASTICSEARCH_PORT
+        self.host: str = host
+        self.port: int = port
         self.url: str = self.host + ":" + str(self.port)
-        self.user: str = ELASTICSEARCH_USER
-        self.password: str = ELASTICSEARCH_PASSWORD
+        self.user: str = user
+        self.password: str = password
         self.ca_cert: str = None
 
         self.es_client: Elasticsearch = None
@@ -78,27 +82,44 @@ class ElasticsearchMetadataStore(
             "running": self.elasticsearch_running,
             "connection_established_at": self.connection_established_at,
             "number_of_dataproducts": self.number_of_dataproducts,
-            "indices": self.elasticsearch_indices,
+            "indices": self.indices,
             "cluster_info": self.cluster_info,
         }
 
         return response
 
-    def load_ca_cert(self) -> None:
-        """Loads the CA certificate from the configured path.
+    def load_ca_cert(self, config_file_path: Path, ca_cert: str) -> None:
+        """
+        Attempts to load the CA certificate from the configured path.
 
-        If no path is configured or the file cannot be accessed, sets the
-        `ca_cert` attribute to None and logs an informative message.
+        This method attempts to load the CA certificate from the file specified
+        by the `ca_cert` parameter relative to the path provided in
+        `config_file_path`.
+
+        If no path is configured, the `ca_cert` parameter is empty, or the file
+        cannot be accessed for any reason, this method sets the `ca_cert` attribute
+        to `None` and logs an informative message describing the issue.
+
+        Args:
+            config_file_path (Path): The path to the configuration file (potentially
+                                    containing the relative path to the CA cert).
+            ca_cert (str): The name or relative path to the CA certificate file
+                        within the configuration directory.
+
+        Raises:
+            FileNotFoundError: If the specified CA certificate file cannot be found.
+            PermissionError: If there are permission issues accessing the CA
+                            certificate file.
         """
 
         try:
             # Construct the path to the CA certificate file
-            if not ELASTICSEARCH_HTTP_CA:
+            if not ca_cert:
                 logging.info("No CA certificate file")
                 self.ca_cert = None
                 return
 
-            ca_cert_path: Path = CONFIGURATION_FILES_PATH / ELASTICSEARCH_HTTP_CA
+            ca_cert_path: Path = config_file_path / ca_cert
 
             # Check if the file exists and is a regular file
             if ca_cert_path.is_file():
@@ -117,7 +138,7 @@ class ElasticsearchMetadataStore(
         """Connecting to Elasticsearch host and create default schema"""
         logger.info("Connecting to Elasticsearch...")
 
-        self.load_ca_cert()
+        self.load_ca_cert(config_file_path=CONFIGURATION_FILES_PATH, ca_cert=ELASTICSEARCH_HTTP_CA)
 
         self.es_client = Elasticsearch(
             hosts=self.url,
@@ -131,7 +152,9 @@ class ElasticsearchMetadataStore(
             self.elasticsearch_running = True
             self.cluster_info = self.es_client.info()
             logger.info("Connected to Elasticsearch; creating default schema...")
-            self.create_schema_if_not_existing(index=self.elasticsearch_indices)
+            self.create_schema_if_not_existing(
+                index=self.indices, schema=ELASTICSEARCH_METADATA_SCHEMA_FILE
+            )
             self.load_metadata_from_store()
 
             return True
@@ -162,19 +185,27 @@ class ElasticsearchMetadataStore(
         logger.error("Failed to reconnect to Elasticsearch.")
         return False
 
-    def create_schema_if_not_existing(self, index: str):
-        """Method to create a Schema from schema and index if it does not yet
-        exist."""
+    def create_schema_if_not_existing(self, index: str, schema: Path) -> None:
+        """
+        Creates an Elasticsearch index with the specified schema if it doesn't exist.
+
+        Args:
+            index (str): The name of the Elasticsearch index.
+            schema (Path): The path to the JSON schema file.
+        """
         try:
-            _ = self.es_client.indices.get(index=index)
+            self.es_client.indices.get(index=index)
         except elasticsearch.NotFoundError:
-            with open(
-                ELASTICSEARCH_METADATA_SCHEMA_FILE, "r", encoding="utf-8"
-            ) as metadata_schema:
-                metadata_schema_json = json.load(metadata_schema)
-            self.es_client.indices.create(  # pylint: disable=E1123
-                index=index, ignore=400, body=metadata_schema_json
-            )
+            try:
+                with open(schema, "r", encoding="utf-8") as metadata_schema:
+                    metadata_schema_json = json.load(metadata_schema)
+                self.es_client.indices.create(  # pylint: disable=unexpected-keyword-arg
+                    index=index, ignore=400, body=metadata_schema_json
+                )
+            except (FileNotFoundError, json.JSONDecodeError) as error:
+                logger.error("Error loading or parsing schema file: %s", error)
+        except Exception as exception:  # pylint: disable=broad-exception-caught
+            logger.exception("Unexpected error creating index: %s", exception)
 
     def clear_metadata_indecise(self) -> None:
         """Deletes specific indices from the Elasticsearch instance and clear the metadata_list.
@@ -183,9 +214,7 @@ class ElasticsearchMetadataStore(
             None
         """
 
-        self.es_client.options(ignore_status=[400, 404]).indices.delete(
-            index=self.elasticsearch_indices
-        )
+        self.es_client.options(ignore_status=[400, 404]).indices.delete(index=self.indices)
         self.number_of_dataproducts = 0
 
     def insert_metadata_in_search_store(self, metadata_dict: dict) -> None:
@@ -199,7 +228,7 @@ class ElasticsearchMetadataStore(
 
         """
         try:
-            if self.index_metadata_to_elasticsearch(self.elasticsearch_indices, metadata_dict):
+            if self.index_metadata_to_elasticsearch(self.indices, metadata_dict):
                 self.number_of_dataproducts = self.number_of_dataproducts + 1
         except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error("Error inserting metadata into search store: %s", exception)
@@ -239,7 +268,7 @@ class ElasticsearchMetadataStore(
         self.check_and_reconnect()
 
         resp = self.es_client.search(  # pylint: disable=E1123
-            index=self.elasticsearch_indices, body=self.query_body
+            index=self.indices, body=self.query_body
         )
         all_hits = resp["hits"]["hits"]
         self.metadata_list = []

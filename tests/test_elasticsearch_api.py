@@ -1,23 +1,39 @@
 """Module to test ElasticsearchMetadataStore"""
 
 from datetime import datetime
-from unittest.mock import MagicMock
 
 from ska_sdp_dataproduct_api.components.search.elasticsearch.elasticsearch import (
     ElasticsearchMetadataStore,
 )
 from ska_sdp_dataproduct_api.components.store.store_factory import select_metadata_store_class
+from ska_sdp_dataproduct_api.configuration.settings import (
+    CONFIGURATION_FILES_PATH,
+    ELASTICSEARCH_HOST,
+    ELASTICSEARCH_INDICES,
+    ELASTICSEARCH_PASSWORD,
+    ELASTICSEARCH_PORT,
+    ELASTICSEARCH_USER,
+)
 from ska_sdp_dataproduct_api.utilities.helperfunctions import DPDAPIStatus
 from tests.mock_elasticsearch_api import MockElasticsearch
 
 DPD_API_Status = DPDAPIStatus()
 metadata_store = select_metadata_store_class()
 
+# pylint: disable=duplicate-code
+
 
 def test_status(mocker):
     """Tests the status method with different scenarios."""
 
-    mocked_metadata_store = ElasticsearchMetadataStore(metadata_store)
+    mocked_metadata_store = ElasticsearchMetadataStore(
+        host=ELASTICSEARCH_HOST,
+        port=ELASTICSEARCH_PORT,
+        user=ELASTICSEARCH_USER,
+        password=ELASTICSEARCH_PASSWORD,
+        indices=ELASTICSEARCH_INDICES,
+        metadata_store=metadata_store,
+    )
 
     # Mock attributes
     host = "localhost"
@@ -55,14 +71,28 @@ def test_status(mocker):
 
 def test_no_ca_cert_configured():
     """Test for when no ca cert is available"""
-    es_store = ElasticsearchMetadataStore(MagicMock())
-    es_store.load_ca_cert()
+    es_store = ElasticsearchMetadataStore(
+        host=ELASTICSEARCH_HOST,
+        port=ELASTICSEARCH_PORT,
+        user=ELASTICSEARCH_USER,
+        password=ELASTICSEARCH_PASSWORD,
+        indices=ELASTICSEARCH_INDICES,
+        metadata_store=metadata_store,
+    )
+    es_store.load_ca_cert(config_file_path=CONFIGURATION_FILES_PATH, ca_cert="")
     assert es_store.ca_cert is None
 
 
 def test_search_metadata():
     """Method to test search of metadata"""
-    search_store = ElasticsearchMetadataStore(metadata_store)
+    search_store = ElasticsearchMetadataStore(
+        host=ELASTICSEARCH_HOST,
+        port=ELASTICSEARCH_PORT,
+        user=ELASTICSEARCH_USER,
+        password=ELASTICSEARCH_PASSWORD,
+        indices=ELASTICSEARCH_INDICES,
+        metadata_store=metadata_store,
+    )
     search_store.es_client = MockElasticsearch()
     search_store.es_client.ping = lambda: True
     mui_data_grid_filter_model = {
@@ -105,7 +135,14 @@ def test_search_metadata():
 
 def test_search_metadata_default_value():
     """Method to test search of metadata if metadata_key_value_pair is None"""
-    search_store = ElasticsearchMetadataStore(metadata_store)
+    search_store = ElasticsearchMetadataStore(
+        host=ELASTICSEARCH_HOST,
+        port=ELASTICSEARCH_PORT,
+        user=ELASTICSEARCH_USER,
+        password=ELASTICSEARCH_PASSWORD,
+        indices=ELASTICSEARCH_INDICES,
+        metadata_store=metadata_store,
+    )
     search_store.es_client = MockElasticsearch()
     search_store.es_client.ping = lambda: True
     mui_data_grid_filter_model = {}
