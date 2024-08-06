@@ -218,6 +218,14 @@ Ingest new data product
 
 Sending a POST request to the ingestnewdataproduct endpoint will load and parse a file at the supplied filename, and add the data product to the metadata store.
 
+*Request*
+
+.. code-block:: bash
+
+    POST /ingestnewdataproduct
+
+*Body*
+
 .. code-block:: bash
 
     {
@@ -235,11 +243,19 @@ Sending a POST request to the ingestnewmetadata endpoint will parse the supplied
 
 For example, the POST request body:
 
+*Request*
+
+.. code-block:: bash
+
+    POST /ingestnewmetadata
+
+*Body*
+
 .. code-block:: bash
 
     {
         "interface": "http://schema.skao.int/ska-data-product-meta/0.1",
-        "execution_block": "eb-rest-00000000-99999",
+        "execution_block": "eb-rest-20240806-99999",
         "context": {
             "observer": "REST ingest",
             "intent": "",
@@ -251,7 +267,7 @@ For example, the POST request body:
             "image": "",
             "version": "",
             "commit": "",
-            "cmdline": "",
+            "cmdline": ""
         },
         "files": [],
         "obscore": {
@@ -274,7 +290,7 @@ For example, the POST request body:
             "t_max": 57196.962848574476,
             "t_min": 57196.96279070411,
             "t_resolution": 0.9,
-            "target_name": "",
+            "target_name": ""
         }
     }
 

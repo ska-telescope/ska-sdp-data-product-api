@@ -19,7 +19,6 @@ from ska_sdp_dataproduct_api.configuration.settings import (
     app,
 )
 from ska_sdp_dataproduct_api.utilities.helperfunctions import (
-    DataProductMetaData,
     DPDAPIStatus,
     ExecutionBlock,
     FilePaths,
@@ -168,12 +167,13 @@ async def ingest_new_data_product(
 
 @app.post("/ingestnewmetadata")
 async def ingest_new_metadata(
-    metadata: DataProductMetaData,
+    metadata: dict,
 ):
     """This API endpoint takes JSON data product metadata and ingests into
     the appropriate search_store."""
     metadata_store.update_data_store_date_modified()
     metadata_store.ingest_metadata(metadata)
+    search_store.insert_metadata_in_search_store(metadata)
     logger.info("New data product metadata received and search_store index updated")
     return "New data product metadata received and search store index updated"
 

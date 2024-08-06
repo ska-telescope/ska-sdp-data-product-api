@@ -89,7 +89,7 @@ class DataProductMetadata:
         Returns:
             A dictionary containing the loaded metadata.
         """
-        self.metadata_dict = metadata.dict()
+        self.metadata_dict = metadata
         self.append_metadata()
         return self.metadata_dict
 
