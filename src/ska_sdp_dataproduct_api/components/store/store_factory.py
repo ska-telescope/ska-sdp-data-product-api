@@ -26,15 +26,16 @@ logger = logging.getLogger(__name__)
 
 def select_metadata_store_class() -> Union[PostgresConnector, InMemoryVolumeIndexMetadataStore]:
     """
-    Selects the appropriate dataproduct search store class based on Elasticsearch availability.
+    Selects the appropriate dataproduct metadata store class based on PostgreSQL availability.
 
-    This function attempts to connect to Elasticsearch. If the connection is successful,
-    an instance of `ElasticsearchMetadataStore` is returned. Otherwise, a warning message
-    is logged and an instance of `InMemoryDataproductSearch` is returned for in-memory storage.
+    This function attempts to connect to PostgreSQL. If the connection is successful,
+    an instance of `PostgresConnector` is returned. Otherwise, a warning message
+    is logged and an instance of `InMemoryVolumeIndexMetadataStore` is returned for in-memory
+    storage.
 
     Returns:
-        Union[ElasticsearchMetadataStore, InMemoryDataproductSearch]: An instance of either
-            `ElasticsearchMetadataStore` or `InMemoryDataproductSearch` depending on Elasticsearch
+        Union[PostgresConnector, InMemoryVolumeIndexMetadataStore]: An instance of either
+            `PostgresConnector` or `InMemoryVolumeIndexMetadataStore` depending on PostgreSQL
             availability.
     """
 
@@ -59,8 +60,8 @@ def select_metadata_store_class() -> Union[PostgresConnector, InMemoryVolumeInde
         )
         return InMemoryVolumeIndexMetadataStore()
     except Exception as exception:  # pylint: disable=broad-exception-caught
-        logger.error("Failed to connect to Elasticsearch with exception: %s", exception)
-        logger.warning("Using in-memory store.")
+        logger.error("Failed to connect to PostgreSQL with exception: %s", exception)
+        logger.warning("Using InMemoryVolumeIndexMetadataStore store.")
         return InMemoryVolumeIndexMetadataStore()
 
 
@@ -89,8 +90,11 @@ def select_search_store_class(
             return elastic_store_instance
     except Exception as exception:  # pylint: disable=broad-exception-caught
         logger.error("Failed to connect to Elasticsearch with exception: %s", exception)
-        logger.warning("Using in-memory search.")
+        logger.warning("Using InMemoryDataproductSearch search.")
         return InMemoryDataproductSearch(metadata_store)
 
-    logger.warning("Elasticsearch not available, setting search store to in-memory store.")
+    logger.warning(
+        "Elasticsearch not available, setting search store to InMemoryDataproductSearch\
+                    store."
+    )
     return InMemoryDataproductSearch(metadata_store)

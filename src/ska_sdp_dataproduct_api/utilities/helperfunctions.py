@@ -206,33 +206,6 @@ def find_metadata(metadata, query_key):
     return {"key": query_key, "value": subsection}
 
 
-# def find_metadata(metadata, query_key):
-#     """
-#     This function retrieves a nested item from a dictionary.
-
-#     Args:
-#         metadata: The dictionary to search.
-#         key: The key to search for (can be a string with nested keys separated by dots)
-
-#     Returns:
-#         A tuple containing the key and its corresponding value, or None if not found.
-#     """
-#     if isinstance(metadata, dict):
-#         # Split the key into a list of subkeys
-#         subkeys = query_key.split('.')
-#         current_key = subkeys[0]
-#         # Check if the current key exists in the dictionary
-#         if current_key in metadata.keys():
-#             # If it's a nested key, recursively call the function on the value
-#             if len(subkeys) > 1:
-#                 return find_metadata(metadata[current_key], '.'.join(subkeys[1:]))
-#             # If it's the last key, return the key-value pair
-#             else:
-#                 return {"key": current_key, "value": metadata[current_key]}
-#     # If not a dictionary or key not found, return None
-#     return None
-
-
 def compare_integer(operand: int, operator: str, comparator: int | list[int]) -> bool:
     """
     Compares an integer operand with a comparator value(s) based on a specified operator.

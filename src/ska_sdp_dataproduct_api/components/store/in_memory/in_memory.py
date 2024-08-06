@@ -90,9 +90,7 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
             full_path_name (pathlib.Path): The path to the directory containing data products.
 
         Returns:
-            list[pathlib.Path]: A list of `pathlib.Path` objects representing the identified
-                                data product files within the directory and its subdirectories.
-                                If no data product files are found, an empty list is returned.
+            None
 
         Raises:
             ValueError: If `full_path_name` does not represent a valid directory or is a symbolic
@@ -130,6 +128,9 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
 
         Args:
             data_product_metadata_file_path (pathlib.Path): The path to the data file.
+
+        Returns:
+            None
         """
         try:
             data_product_metadata_instance: DataProductMetadata = DataProductMetadata()
@@ -156,6 +157,9 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
 
         Args:
             data_product_metadata_file_path (pathlib.Path): The path to the data file.
+
+        Returns:
+            None
         """
         try:
             data_product_metadata_instance: DataProductMetadata = DataProductMetadata()

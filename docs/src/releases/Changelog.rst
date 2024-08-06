@@ -10,6 +10,7 @@ Current Development
   - [Changed] Updated project structure to align with the component functions, separating metadata stores and search stores.
   - **BREAKING** [Changed] Changed the body or API request to specify the *execution_block* ID instead of *fileName* and *relativePathName*.
   - [Added] Added DataProductMetadata class that contains methods related to handling of metadata in the application.
+  - **[Deprecated]** The in-memory store is deprecated and will be removed after all users have access to persistent PostgreSQL deployments. The functionality to load metadata into memory will be maintained to allow all users to configure and migrate to a persistent PostgreSQL DB for metadata storage.
 
 * `NAL-1128 <https://jira.skatelescope.org/browse/NAL-1128>`_ 
 
