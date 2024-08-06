@@ -305,8 +305,17 @@ class ElasticsearchMetadataStore(
         self.add_search_panel_options_to_es_query(search_panel_options)
         self.add_mui_data_grid_filter_model_to_es_query(mui_data_grid_filter_model)
         self.search_metadata()
-        muiDataGridInstance.load_metadata_from_list(self.metadata_list)
-        return muiDataGridInstance.rows.copy()
+        muiDataGridInstance.rows.clear()
+        muiDataGridInstance.flattened_list_of_dataproducts_metadata.clear()
+        for dataproduct in self.metadata_list:
+            muiDataGridInstance.update_flattened_list_of_keys(dataproduct)
+            muiDataGridInstance.update_flattened_list_of_dataproducts_metadata(
+                muiDataGridInstance.flatten_dict(dataproduct)
+            )
+        muiDataGridInstance.load_metadata_from_list(
+            muiDataGridInstance.flattened_list_of_dataproducts_metadata
+        )
+        return muiDataGridInstance.rows
 
     def add_search_panel_options_to_es_query(self, search_panel_options):
         """

@@ -130,7 +130,7 @@ class MuiDataGrid:
         metadata file.
 
         Args:
-            metadata_file (str): The path to the metadata file containing keys to be added.
+            metadata_file (dict): The path to the metadata file containing keys to be added.
 
         Raises:
             TypeError: If `metadata_file` is not a string.

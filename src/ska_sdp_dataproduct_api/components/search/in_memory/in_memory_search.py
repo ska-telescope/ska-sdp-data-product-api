@@ -45,6 +45,12 @@ class InMemoryDataproductSearch(MetadataSearchStore):
         muiDataGridInstance.update_flattened_list_of_dataproducts_metadata(
             muiDataGridInstance.flatten_dict(metadata_dict)
         )
+
+        print("metadata_dict:")
+        print(metadata_dict)
+        print("muiDataGridInstance.rows.copy():")
+        print(muiDataGridInstance.rows.copy())
+
         self.number_of_dataproducts = self.number_of_dataproducts + 1
 
     def status(self) -> dict:
