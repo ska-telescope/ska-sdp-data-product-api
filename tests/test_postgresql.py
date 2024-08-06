@@ -7,6 +7,7 @@ from ska_sdp_dataproduct_api.configuration.settings import (
     POSTGRESQL_HOST,
     POSTGRESQL_PASSWORD,
     POSTGRESQL_PORT,
+    POSTGRESQL_SCHEMA,
     POSTGRESQL_TABLE_NAME,
     POSTGRESQL_USER,
 )
@@ -22,6 +23,7 @@ def clean_database(mocker):
         port=POSTGRESQL_PORT,
         user=POSTGRESQL_USER,
         password=POSTGRESQL_PASSWORD,
+        schema=POSTGRESQL_SCHEMA,
         table_name=POSTGRESQL_TABLE_NAME,
     )
     mocker.patch.object(inmemory_store_mocked, "_connect")
@@ -37,6 +39,7 @@ def test_create_metadata_table(mocker):
         port=POSTGRESQL_PORT,
         user=POSTGRESQL_USER,
         password=POSTGRESQL_PASSWORD,
+        schema=POSTGRESQL_SCHEMA,
         table_name=POSTGRESQL_TABLE_NAME,
     )
 
@@ -67,6 +70,7 @@ def test_delete_postgres_table(mocker):
         port=POSTGRESQL_PORT,
         user=POSTGRESQL_USER,
         password=POSTGRESQL_PASSWORD,
+        schema=POSTGRESQL_SCHEMA,
         table_name=POSTGRESQL_TABLE_NAME,
     )
 

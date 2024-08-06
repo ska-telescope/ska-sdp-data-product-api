@@ -5,6 +5,10 @@ Changelog
 Current Development
 -------------------
 
+* `NAL-1145 <https://jira.skatelescope.org/browse/NAL-1145>`_ 
+
+  - [Changed] Updated the configuration of the PostgreSQL metadata store to allow specification of a schema.
+
 * `NAL-1132 <https://jira.skatelescope.org/browse/NAL-1132>`_ 
 
   - [Changed] Updated project structure to align with the component functions, separating metadata stores and search stores.

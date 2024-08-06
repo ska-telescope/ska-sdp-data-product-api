@@ -125,6 +125,11 @@ POSTGRESQL_PASSWORD: str = config(
     default="",
 )
 
+POSTGRESQL_SCHEMA: str = config(
+    "SDP_DATAPRODUCT_API_POSTGRESQL_SCHEMA",
+    default=("public"),
+)
+
 POSTGRESQL_TABLE_NAME: str = config(
     "SDP_DATAPRODUCT_API_POSTGRESQL_TABLE_NAME",
     default=("localhost_sdp_dataproduct_dashboard_dev_v1"),

@@ -35,14 +35,15 @@ Verify the API's status by sending a GET request to the /status endpoint. The re
     {
         "api_running": true,
         "api_version": "0.8.0",
-        "startup_time": "2024-08-06T09:01:23.768773",
-        "last_metadata_update_time": "2024-08-06T09:01:23.768757",
+        "startup_time": "2024-08-06T21:59:18.333369",
+        "last_metadata_update_time": "2024-08-06T21:59:18.333359",
         "metadata_store_status": {
             "store_type": "Persistent PosgreSQL metadata store",
             "host": "localhost",
             "port": 5432,
             "user": "postgres",
             "running": true,
+            "schema": "sdp_sdp_dataproduct_dashboard_dev",
             "table_name": "localhost_sdp_dataproduct_dashboard_dev_v1",
             "number_of_dataproducts": 10,
             "postgresql_version": "PostgreSQL 16.3 on x86_64-pc-linux-musl, compiled by gcc (Alpine 13.2.1_git20240309) 13.2.1 20240309, 64-bit"
@@ -52,7 +53,7 @@ Verify the API's status by sending a GET request to the /status endpoint. The re
             "url": "https://localhost:9200",
             "user": "elastic",
             "running": true,
-            "connection_established_at": "2024-08-06T09:01:23.555295",
+            "connection_established_at": "2024-08-06T21:59:18.210017",
             "number_of_dataproducts": 10,
             "indices": "localhost-sdp-dataproduct-dashboard-dev-v1",
             "cluster_info": {
