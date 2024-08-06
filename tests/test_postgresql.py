@@ -52,12 +52,12 @@ def test_create_metadata_table(mocker):
     # Assert the expected query was executed on the mock cursor
     mock_cursor.execute.assert_called_once_with(
         f"""
-                CREATE TABLE IF NOT EXISTS {POSTGRESQL_TABLE_NAME} (
-                    id SERIAL PRIMARY KEY,
-                    data JSONB NOT NULL,
-                    execution_block VARCHAR(255) DEFAULT NULL UNIQUE,
-                    json_hash CHAR(64) UNIQUE
-                );
+            CREATE TABLE IF NOT EXISTS {POSTGRESQL_SCHEMA}.{POSTGRESQL_TABLE_NAME} (
+                id SERIAL PRIMARY KEY,
+                data JSONB NOT NULL,
+                execution_block VARCHAR(255) DEFAULT NULL UNIQUE,
+                json_hash CHAR(64) UNIQUE
+            );
             """
     )
 
@@ -81,4 +81,6 @@ def test_delete_postgres_table(mocker):
     inmemory_store_mocked.delete_postgres_table()
 
     # Assert the expected query was executed on the mock cursor
-    mock_cursor.execute.assert_called_once_with(f"DROP TABLE IF EXISTS {POSTGRESQL_TABLE_NAME}")
+    mock_cursor.execute.assert_called_once_with(
+        f"DROP TABLE IF EXISTS {POSTGRESQL_SCHEMA}.{POSTGRESQL_TABLE_NAME}"
+    )
