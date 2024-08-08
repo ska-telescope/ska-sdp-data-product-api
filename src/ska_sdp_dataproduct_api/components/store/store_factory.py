@@ -19,6 +19,7 @@ from ska_sdp_dataproduct_api.configuration.settings import (
     ELASTICSEARCH_PASSWORD,
     ELASTICSEARCH_PORT,
     ELASTICSEARCH_USER,
+    POSTGRESQL_DBNAME,
     POSTGRESQL_HOST,
     POSTGRESQL_PASSWORD,
     POSTGRESQL_PORT,
@@ -53,6 +54,7 @@ def select_metadata_store_class() -> Union[PostgresConnector, InMemoryVolumeInde
             user=POSTGRESQL_USER,
             schema=POSTGRESQL_SCHEMA,
             password=POSTGRESQL_PASSWORD,
+            dbname=POSTGRESQL_DBNAME,
             table_name=POSTGRESQL_TABLE_NAME,
         )
 

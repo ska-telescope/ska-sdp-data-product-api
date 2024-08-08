@@ -16,6 +16,16 @@ configure_logging(level=uvicorn.config.LOGGING_CONFIG["loggers"]["uvicorn.error"
 logger = logging.getLogger(__name__)
 
 config = Config(".env")
+
+SECRETS_FILE_PATH: pathlib.Path = pathlib.Path(
+    config("SDP_DATAPRODUCT_SECRETS_FILE_PATH", default=".secrets")
+)
+
+if not SECRETS_FILE_PATH.exists():
+    SECRETS_FILE_PATH = None
+
+secrets = Config(SECRETS_FILE_PATH)
+
 REINDEXING_DELAY = 300  # Only allow reindexing after 5 minutes
 
 PERSISTENT_STORAGE_PATH: pathlib.Path = pathlib.Path(
@@ -82,7 +92,7 @@ ELASTICSEARCH_USER: str = config(
     default="elastic",
 )
 
-ELASTICSEARCH_PASSWORD: str = config(
+ELASTICSEARCH_PASSWORD: str = secrets(
     "SDP_DATAPRODUCT_API_ELASTIC_PASSWORD",
     default="",
 )
@@ -120,9 +130,14 @@ POSTGRESQL_USER: str = config(
     default="postgres",
 )
 
-POSTGRESQL_PASSWORD: str = config(
+POSTGRESQL_PASSWORD: str = secrets(
     "SDP_DATAPRODUCT_API_POSTGRESQL_PASSWORD",
     default="",
+)
+
+POSTGRESQL_DBNAME: str = config(
+    "SDP_DATAPRODUCT_API_POSTGRESQL_DATABASE",
+    default=("postgres"),
 )
 
 POSTGRESQL_SCHEMA: str = config(
@@ -132,7 +147,7 @@ POSTGRESQL_SCHEMA: str = config(
 
 POSTGRESQL_TABLE_NAME: str = config(
     "SDP_DATAPRODUCT_API_POSTGRESQL_TABLE_NAME",
-    default=("localhost_sdp_dataproduct_dashboard_dev_v1"),
+    default=("data_products_metadata_v1"),
 )
 # ----
 

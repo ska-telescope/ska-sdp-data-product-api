@@ -29,13 +29,21 @@ class PostgresConnector(MetadataStore):
     """
 
     def __init__(
-        self, host: str, port: int, user: str, password: str, schema: str, table_name: str
+        self,
+        host: str,
+        port: int,
+        user: str,
+        password: str,
+        dbname: str,
+        schema: str,
+        table_name: str,
     ):
         super().__init__()
         self.host = host
         self.port = port
         self.user = user
         self.password = password
+        self.dbname = dbname
         self.schema = schema
         self.table_name = table_name
         self.conn = None
@@ -82,6 +90,7 @@ class PostgresConnector(MetadataStore):
             "port": self.port,
             "user": self.user,
             "running": self.postgresql_running,
+            "dbname": self.dbname,
             "schema": self.schema,
             "table_name": self.table_name,
             "number_of_dataproducts": self.number_of_dataproducts,
@@ -97,7 +106,11 @@ class PostgresConnector(MetadataStore):
         """
         try:
             self.conn = psycopg.connect(
-                host=self.host, port=self.port, user=self.user, password=self.password
+                host=self.host,
+                port=self.port,
+                user=self.user,
+                password=self.password,
+                dbname=self.dbname,
             )
             if self._check_if_schema_exists(self.schema):
                 self.postgresql_running = True

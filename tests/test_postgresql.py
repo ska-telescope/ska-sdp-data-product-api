@@ -4,6 +4,7 @@ import pytest
 
 from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
 from ska_sdp_dataproduct_api.configuration.settings import (
+    POSTGRESQL_DBNAME,
     POSTGRESQL_HOST,
     POSTGRESQL_PASSWORD,
     POSTGRESQL_PORT,
@@ -23,6 +24,7 @@ def clean_database(mocker):
         port=POSTGRESQL_PORT,
         user=POSTGRESQL_USER,
         password=POSTGRESQL_PASSWORD,
+        dbname=POSTGRESQL_DBNAME,
         schema=POSTGRESQL_SCHEMA,
         table_name=POSTGRESQL_TABLE_NAME,
     )
@@ -39,6 +41,7 @@ def test_create_metadata_table(mocker):
         port=POSTGRESQL_PORT,
         user=POSTGRESQL_USER,
         password=POSTGRESQL_PASSWORD,
+        dbname=POSTGRESQL_DBNAME,
         schema=POSTGRESQL_SCHEMA,
         table_name=POSTGRESQL_TABLE_NAME,
     )
@@ -70,6 +73,7 @@ def test_delete_postgres_table(mocker):
         port=POSTGRESQL_PORT,
         user=POSTGRESQL_USER,
         password=POSTGRESQL_PASSWORD,
+        dbname=POSTGRESQL_DBNAME,
         schema=POSTGRESQL_SCHEMA,
         table_name=POSTGRESQL_TABLE_NAME,
     )
