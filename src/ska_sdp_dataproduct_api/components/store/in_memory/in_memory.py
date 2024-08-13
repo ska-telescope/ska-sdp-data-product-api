@@ -73,7 +73,7 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
             self.ingest_list_of_data_product_paths()
             self.update_data_store_date_modified()
             self.indexing = False
-            logger.info("Metadata store cleared and re-indexed")
+            logger.info("Metadata store re-indexed")
         except Exception as exception:
             self.indexing = False
             raise exception

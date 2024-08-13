@@ -131,7 +131,7 @@ The data product metadata store can be re-indexed but making a get request to th
 
 .. code-block:: bash
 
-    "Metadata is set to be cleared and re-indexed"
+    "Metadata is set to be re-indexed"
 
 Download data product endpoint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

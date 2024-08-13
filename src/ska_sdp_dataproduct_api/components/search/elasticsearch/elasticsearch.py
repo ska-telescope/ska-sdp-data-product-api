@@ -195,6 +195,7 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
         """
         try:
             self.es_client.indices.get(index=index)
+            logger.info("Index %s already exists.", index)
         except elasticsearch.NotFoundError:
             try:
                 with open(schema, "r", encoding="utf-8") as metadata_schema:
@@ -202,20 +203,12 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
                 self.es_client.indices.create(  # pylint: disable=unexpected-keyword-arg
                     index=index, ignore=400, body=metadata_schema_json
                 )
+                logger.info(f"Index '{index}' created successfully.")
             except (FileNotFoundError, json.JSONDecodeError) as error:
                 logger.error("Error loading or parsing schema file: %s", error)
         except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.exception("Unexpected error creating index: %s", exception)
 
-    def clear_metadata_indecise(self) -> None:
-        """Deletes specific indices from the Elasticsearch instance and clear the metadata_list.
-
-        Args:
-            None
-        """
-
-        self.es_client.options(ignore_status=[400, 404]).indices.delete(index=self.indices)
-        self.number_of_dataproducts = 0
 
     def insert_metadata_in_search_store(self, metadata_dict: dict) -> None:
         """Inserts metadata from a JSON file into the Elasticsearch index.
