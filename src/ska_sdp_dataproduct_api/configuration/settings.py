@@ -136,7 +136,7 @@ POSTGRESQL_PASSWORD: str = secrets(
 )
 
 POSTGRESQL_DBNAME: str = config(
-    "SDP_DATAPRODUCT_API_POSTGRESQL_DATABASE",
+    "SDP_DATAPRODUCT_API_POSTGRESQL_DBNAME",
     default=("postgres"),
 )
 

@@ -54,7 +54,6 @@ class PostgresConnector(MetadataStore):
         self._connect()
         if self.postgresql_running:
             self.postgresql_version = self._get_postgresql_version()
-            self.list_and_log_schemas()
             self.create_metadata_table()
             self.count_jsonb_objects()
 
@@ -163,14 +162,6 @@ options='-c search_path=\"{self.schema}\"'"
         except psycopg.Error as error:
             logger.error("Error creating metadata table: %s", error)
             raise
-
-    def list_and_log_schemas(self) -> None:
-        """Lists all schemas accessible to the user and logs them."""
-        with self.conn.cursor() as cursor:
-            cursor.execute("SELECT schema_name FROM information_schema.schemata")
-            schemas = cursor.fetchall()
-            for schema in schemas:
-                logger.info("Schema: %s", schema[0])
 
     def reindex_persistent_volume(self) -> None:
         """
