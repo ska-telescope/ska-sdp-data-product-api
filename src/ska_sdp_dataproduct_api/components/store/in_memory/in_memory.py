@@ -31,7 +31,7 @@ from ska_sdp_dataproduct_api.configuration.settings import (
     PERSISTENT_STORAGE_PATH,
 )
 from ska_sdp_dataproduct_api.utilities.helperfunctions import (
-    DataProductMetaData,
+    PydanticDataProductMetadataModel,
     verify_persistent_storage_file_path,
 )
 
@@ -150,7 +150,7 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
                 error,
             )
 
-    def ingest_metadata(self, metadata: DataProductMetaData) -> None:
+    def ingest_metadata(self, metadata: PydanticDataProductMetadataModel) -> None:
         """
         Ingests a data product,structuring the information,
         and inserting it into the metadata store.

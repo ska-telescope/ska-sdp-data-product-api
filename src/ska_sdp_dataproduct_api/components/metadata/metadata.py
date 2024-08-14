@@ -18,8 +18,6 @@ import pathlib
 
 import yaml
 
-from ska_sdp_dataproduct_api.utilities.helperfunctions import DataProductMetaData
-
 logger = logging.getLogger(__name__)
 
 
@@ -80,12 +78,12 @@ class DataProductMetadata:
         self.append_metadata()
         return self.metadata_dict
 
-    def load_metadata_from_class(self, metadata: DataProductMetaData) -> dict[str, any]:
+    def load_metadata_from_class(self, metadata: dict) -> dict[str, any]:
         """
-        Loads metadata from a DataProductMetaData class.
+        Loads metadata from a dict.
 
         Args:
-            metadata: The DataProductMetaData instance containing the metadata.
+            metadata: The dict instance containing the metadata.
 
         Returns:
             A dictionary containing the loaded metadata.
@@ -162,16 +160,14 @@ class DataProductMetadata:
             >>> get_date_from_name("type-generatorID-20230411-localSeq")
             '2023-04-11'
         """
-        metadata_date_str = execution_block.split("-")[2]
-        year = metadata_date_str[0:4]
-        month = metadata_date_str[4:6]
-        day = metadata_date_str[6:8]
         try:
-            date_obj = datetime.datetime(int(year), int(month), int(day))
+            metadata_date_str = execution_block.split("-")[2]
+            date_obj = datetime.datetime.strptime(metadata_date_str, "%Y%m%d")
             return date_obj.strftime("%Y-%m-%d")
         except ValueError as error:
-            logger.warning(
-                "Date retrieved from execution_block '%s' caused and error: %s",
+            logger.error(
+                "The execution_block: %s is missing or not in the following format: "
+                "type-generatorID-datetime-localSeq. Error: %s",
                 execution_block,
                 error,
             )

@@ -267,7 +267,7 @@ class ElasticsearchMetadataStore(
                 metadata_file[key] = metadata_file[key]
 
         # Add additional keys based on query (assuming find_metadata is defined)
-        for query_key in muiDataGridInstance.flattened_list_of_keys:
+        for query_key in muiDataGridInstance.flattened_set_of_keys:
             query_metadata = find_metadata(metadata_file, query_key)
             if query_metadata:
                 data_product_details[query_metadata["key"]] = query_metadata["value"]

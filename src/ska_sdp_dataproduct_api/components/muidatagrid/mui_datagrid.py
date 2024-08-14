@@ -99,7 +99,7 @@ class MuiDataGrid:
         self.table_config: dict = {}
         self.table_config["columns"] = self.columns
 
-        self.flattened_list_of_keys = []
+        self.flattened_set_of_keys = set()
         self.flattened_list_of_dataproducts_metadata: list[dict] = []
         self.rows: list[dict] = []
 
@@ -126,7 +126,7 @@ class MuiDataGrid:
 
     def update_flattened_list_of_keys(self, metadata_file: dict) -> None:
         """
-        Updates the `flattened_list_of_keys` attribute with new keys extracted from the specified
+        Updates the `flattened_set_of_keys` attribute with new keys extracted from the specified
         metadata file.
 
         Args:
@@ -136,8 +136,7 @@ class MuiDataGrid:
             TypeError: If `metadata_file` is not a string.
         """
         for key in self.generate_metadata_keys_list(metadata_file, [], "", "."):
-            if key not in self.flattened_list_of_keys:
-                self.flattened_list_of_keys.append(key)
+            self.flattened_set_of_keys.add(key)
 
     def generate_metadata_keys_list(self, metadata: dict, ignore_keys, parent_key="", sep="."):
         """Given a nested dict, return the flattened list of keys"""

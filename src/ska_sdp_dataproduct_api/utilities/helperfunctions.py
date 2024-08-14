@@ -96,7 +96,7 @@ class SearchParametersClass(BaseModel):
     key_value_pairs: list[str] = None
 
 
-class DataProductMetaData(BaseModel):
+class PydanticDataProductMetadataModel(BaseModel):
     """
     Class containing all information from a MetaData object
     """
@@ -109,6 +109,10 @@ class DataProductMetaData(BaseModel):
     config: dict
     files: list
     obscore: dict | None = None
+
+    def to_dict(self) -> dict:
+        """Converts the PydanticDataProductMetadataModel instance to a dictionary."""
+        return self.dict(by_alias=False)
 
 
 def generate_data_stream(file_path: pathlib.Path) -> Generator[bytes, None, None]:

@@ -108,7 +108,7 @@ class InMemoryDataproductSearch(MetadataSearchStore):
             end_date = parse_valid_date(end_date, DATE_FORMAT)
         except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error(
-                "Error, invalid time range start_date=%s, end_date %s with error: %s. \
+                "Error, invalid time range start_date=%s, end_date=%s with error: %s. \
                     Using defaults: start_date=1970-01-01, end_date 2100-01-01",
                 start_date,
                 end_date,
