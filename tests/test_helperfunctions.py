@@ -9,7 +9,6 @@ from ska_sdp_dataproduct_api.configuration.settings import PERSISTENT_STORAGE_PA
 from ska_sdp_dataproduct_api.utilities.helperfunctions import (
     filter_by_item,
     filter_by_key_value_pair,
-    get_date_from_name,
     get_relative_path,
     parse_valid_date,
 )
@@ -18,19 +17,6 @@ from ska_sdp_dataproduct_api.utilities.helperfunctions import (
 # Assuming you have a logger instance in your class
 class TestHelperfunctions:  # pylint: disable=R0903
     """Unit tests for the helper functions"""
-
-    def test_get_date_from_name(self):
-        """Test the get_date_from_name function."""
-        # Test valid input
-        assert get_date_from_name("type-generatorID-20230411-localSeq") == "2023-04-11"
-
-        # Test invalid input (non-existent date)
-        with pytest.raises(ValueError):
-            get_date_from_name("type-generatorID-20231345-localSeq")
-
-        # Test invalid input (malformed execution_block)
-        with pytest.raises(IndexError):
-            get_date_from_name("invalid-format")
 
     def test_get_relative_path(self):
         """Test the get_relative_path function."""

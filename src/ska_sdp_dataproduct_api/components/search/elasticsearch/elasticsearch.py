@@ -3,12 +3,17 @@ import datetime
 import json
 import logging
 from pathlib import Path
+from typing import Union
 
 import elasticsearch
 from elasticsearch import Elasticsearch
 
-from ska_sdp_dataproduct_api.components.metadatastore.datastore import SearchStoreSuperClass
 from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
+from ska_sdp_dataproduct_api.components.search.search_store_base_class import MetadataSearchStore
+from ska_sdp_dataproduct_api.components.store.in_memory.in_memory import (
+    InMemoryVolumeIndexMetadataStore,
+)
+from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
 from ska_sdp_dataproduct_api.configuration.settings import (
     CONFIGURATION_FILES_PATH,
     ELASTICSEARCH_HOST,
@@ -19,17 +24,18 @@ from ska_sdp_dataproduct_api.configuration.settings import (
     ELASTICSEARCH_PORT,
     ELASTICSEARCH_USER,
 )
+from ska_sdp_dataproduct_api.utilities.helperfunctions import find_metadata
 
 logger = logging.getLogger(__name__)
 
 
 class ElasticsearchMetadataStore(
-    SearchStoreSuperClass
+    MetadataSearchStore
 ):  # pylint: disable=too-many-instance-attributes
     """Class to insert data into Elasticsearch instance."""
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, metadata_store: Union[PostgresConnector, InMemoryVolumeIndexMetadataStore]):
+        super().__init__(metadata_store)
         self.elasticsearch_indices = ELASTICSEARCH_INDICES
 
         self.host: str = ELASTICSEARCH_HOST
@@ -45,7 +51,9 @@ class ElasticsearchMetadataStore(
         self.connection_established_at: datetime = ""
         self.cluster_info: dict = {}
 
+        self.metadata_list = []
         self.query_body = {"query": {"bool": {"should": [], "filter": []}}}
+        self.number_of_dataproducts: int = 0
 
     def status(self) -> dict:
         """
@@ -124,7 +132,7 @@ class ElasticsearchMetadataStore(
             self.cluster_info = self.es_client.info()
             logger.info("Connected to Elasticsearch; creating default schema...")
             self.create_schema_if_not_existing(index=self.elasticsearch_indices)
-            self.reindex()
+            self.load_metadata_from_store()
 
             return True
         return False
@@ -178,10 +186,9 @@ class ElasticsearchMetadataStore(
         self.es_client.options(ignore_status=[400, 404]).indices.delete(
             index=self.elasticsearch_indices
         )
-        self.metadata_list = []
         self.number_of_dataproducts = 0
 
-    def insert_metadata_in_search_store(self, metadata_file_json: dict) -> dict:
+    def insert_metadata_in_search_store(self, metadata_dict: dict) -> None:
         """Inserts metadata from a JSON file into the Elasticsearch index.
 
         Args:
@@ -190,25 +197,37 @@ class ElasticsearchMetadataStore(
                 schema, but it should generally represent the document you want to store
                 in the index.
 
-        Returns:
-            dict: The response dictionary from the Elasticsearch client's `index` method,
-                containing information about the successful or failed indexing operation.
-                The structure of this dictionary will vary depending on your Elasticsearch
-                version and configuration. Consult the Elasticsearch documentation for
-                details.
-
         """
         try:
-            response = self.es_client.index(
-                index=self.elasticsearch_indices, document=metadata_file_json
-            )
-            if response["result"] == "created":
+            if self.index_metadata_to_elasticsearch(self.elasticsearch_indices, metadata_dict):
                 self.number_of_dataproducts = self.number_of_dataproducts + 1
+        except Exception as exception:  # pylint: disable=broad-exception-caught
+            logger.error("Error inserting metadata into search store: %s", exception)
+
+    def index_metadata_to_elasticsearch(self, index: str, metadata_dict: dict) -> bool:
+        """Indexes metadata into Elasticsearch.
+
+        Args:
+            index: The Elasticsearch index name.
+            metadata_dict: The metadata to be indexed as a dictionary.
+
+        Raises:
+            ValueError: If the metadata is invalid or missing 'execution_block'.
+            elasticsearch.exceptions.ElasticsearchException: For Elasticsearch-specific errors.
+        """
+
+        try:
+            execution_block = metadata_dict.get("execution_block")
+            if not execution_block:
+                raise ValueError("Missing 'execution_block' in metadata")
+
+            response = self.es_client.index(index=index, id=execution_block, body=metadata_dict)
+            if response["result"] == "created" or response["result"] == "updated":
                 return True
             logger.warning("Error inserting metadata into Elasticsearch: %s", str(response))
             return False
         except Exception as exception:  # pylint: disable=broad-exception-caught
-            logger.error("Error inserting metadata into Elasticsearch: %s", exception)
+            logger.error("Error inserting metadata into search store: %s", exception)
             return False
 
     def sort_metadata_list(self) -> None:
@@ -227,8 +246,58 @@ class ElasticsearchMetadataStore(
         for _num, doc in enumerate(all_hits):
             for key, value in doc.items():
                 if key == "_source":
-                    self.update_flattened_list_of_keys(value)
                     self.add_dataproduct(metadata_file=value)
+
+    def add_dataproduct(self, metadata_file: dict):
+        """
+        Populates a list of data products with their associated metadata.
+
+        Args:
+            metadata_file: A dictionary containing the metadata for a data product.
+
+        Raises:
+            ValueError: If the provided metadata_file is not a dictionary.
+        """
+        required_keys = {"execution_block", "date_created", "dataproduct_file", "metadata_file"}
+        data_product_details = {}
+
+        # Handle top-level required keys
+        for key in required_keys:
+            if key in metadata_file:
+                metadata_file[key] = metadata_file[key]
+
+        # Add additional keys based on query (assuming find_metadata is defined)
+        for query_key in muiDataGridInstance.flattened_set_of_keys:
+            query_metadata = find_metadata(metadata_file, query_key)
+            if query_metadata:
+                data_product_details[query_metadata["key"]] = query_metadata["value"]
+
+        self.update_dataproduct_list(metadata_file)
+
+    def update_dataproduct_list(self, data_product_details):
+        """
+        Updates the internal list of data products with the provided metadata.
+
+        This method adds the provided `data_product_details` dictionary to the internal
+        `metadata_list` attribute. If the list is empty, it assigns an "id" of 1 to the
+        first data product. Otherwise, it assigns an "id" based on the current length
+        of the list + 1.
+
+        Args:
+            data_product_details: A dictionary containing the metadata for a data product.
+
+        Returns:
+            None
+        """
+        # Adds the first dictionary to the list
+        if len(self.metadata_list) == 0:
+            data_product_details["id"] = 1
+            self.metadata_list.append(data_product_details)
+            return
+
+        data_product_details["id"] = len(self.metadata_list) + 1
+        self.metadata_list.append(data_product_details)
+        return
 
     def filter_data(self, mui_data_grid_filter_model, search_panel_options):
         """This is implemented in subclasses."""
@@ -236,8 +305,17 @@ class ElasticsearchMetadataStore(
         self.add_search_panel_options_to_es_query(search_panel_options)
         self.add_mui_data_grid_filter_model_to_es_query(mui_data_grid_filter_model)
         self.search_metadata()
-        muiDataGridInstance.load_inmemory_store_data(self)
-        return muiDataGridInstance.rows.copy()
+        muiDataGridInstance.rows.clear()
+        muiDataGridInstance.flattened_list_of_dataproducts_metadata.clear()
+        for dataproduct in self.metadata_list:
+            muiDataGridInstance.update_flattened_list_of_keys(dataproduct)
+            muiDataGridInstance.update_flattened_list_of_dataproducts_metadata(
+                muiDataGridInstance.flatten_dict(dataproduct)
+            )
+        muiDataGridInstance.load_metadata_from_list(
+            muiDataGridInstance.flattened_list_of_dataproducts_metadata
+        )
+        return muiDataGridInstance.rows
 
     def add_search_panel_options_to_es_query(self, search_panel_options):
         """

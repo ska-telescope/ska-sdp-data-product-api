@@ -3,10 +3,9 @@ import datetime
 import logging
 import pathlib
 import subprocess
-from typing import Any, Dict, List, Optional
+from typing import Any, Generator, Optional
 
 # pylint: disable=no-name-in-module
-import pydantic
 from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -28,14 +27,12 @@ class DPDAPIStatus:  # pylint: disable=too-many-instance-attributes
     """This class contains the status and methods related to the Data Product
     dashboard's API"""
 
-    def __init__(
-        self, search_store_status: object = None, persistent_metadata_store_status: object = None
-    ):
+    def __init__(self, search_store_status: object = None, metadata_store_status: object = None):
         self.api_running = True
 
         self.date_modified: datetime = datetime.datetime.now()
         self.version: str = VERSION
-        self.persistent_metadata_store_status: object = persistent_metadata_store_status
+        self.metadata_store_status: object = metadata_store_status
         self.search_store_status: object = search_store_status
         self.startup_time: datetime = datetime.datetime.now()  # Added: Time API started
         self.request_count: int = 0  # Added: Request count
@@ -47,11 +44,9 @@ class DPDAPIStatus:  # pylint: disable=too-many-instance-attributes
             "api_running": True,
             "api_version": self.version,
             "startup_time": self.startup_time.isoformat(),
-            "request_count": self.request_count,  # Added: Request count
-            "error_rate": self.get_error_rate(),  # Added: Error rate
             "last_metadata_update_time": self.date_modified,
-            "search_metadata_store_status": self.search_store_status(),
-            "persistent_metadata_store_status": self.persistent_metadata_store_status(),
+            "metadata_store_status": self.metadata_store_status(),
+            "search_store_status": self.search_store_status(),
         }
 
     def increment_request_count(self):
@@ -74,69 +69,23 @@ class FilePaths(BaseModel):
     A class that represents a file URL.
 
     Attributes:
-        fileName (str): The name of the file.
+        execution_block (str): The name of the file.
         relativePathName (pathlib.Path): The relative path name of the file.
         fullPathName (pathlib.Path): The full path name of the file.
         metaDataFile (pathlib.Path): The metadata file of the file.
 
     """
 
-    fileName: str
+    execution_block: str
     relativePathName: pathlib.Path = None
     fullPathName: Optional[pathlib.Path] = None
     metaDataFile: Optional[pathlib.Path] = None
 
-    class Config:
-        """Config the behaviour of pydantic"""
 
-        arbitrary_types_allowed = True
-        validate_assignment = True
-        validate_default = True
-        extra = "forbid"
+class ExecutionBlock(BaseModel):
+    """Class for defining search parameters"""
 
-    @pydantic.validator("relativePathName")
-    @classmethod
-    def relative_path_name_validator(cls, relative_path: pathlib.Path):
-        """
-        A validator that validates the relative path name.
-
-        Args:
-            relative_path (pathlib.Path): The relative path name.
-
-        Returns:
-            pathlib.Path: The validated relative path name.
-
-        Raises:
-            HTTPException: If the path is invalid.
-
-        """
-        path = PERSISTENT_STORAGE_PATH.joinpath(relative_path)
-        verify_file_path(path)
-        return relative_path
-
-    @pydantic.validator("fullPathName", pre=True)
-    @classmethod
-    def full_path_name_validator(cls, full_path_name: pathlib.Path, values):
-        """
-        A validator that validates the full path name.
-
-        Args:
-            full_path_name (pathlib.Path): The full path name.
-            values (dict): The values of the attributes.
-
-        Returns:
-            pathlib.Path: The validated full path name.
-
-        Raises:
-            HTTPException: If the path is invalid.
-
-        """
-        if full_path_name is None:
-            derived_full_path_name = PERSISTENT_STORAGE_PATH.joinpath(values["relativePathName"])
-            verify_file_path(derived_full_path_name)
-        else:
-            verify_file_path(full_path_name)
-        return derived_full_path_name or full_path_name
+    execution_block: str = None
 
 
 class SearchParametersClass(BaseModel):
@@ -147,7 +96,7 @@ class SearchParametersClass(BaseModel):
     key_value_pairs: list[str] = None
 
 
-class DataProductMetaData(BaseModel):
+class PydanticDataProductMetadataModel(BaseModel):
     """
     Class containing all information from a MetaData object
     """
@@ -162,9 +111,18 @@ class DataProductMetaData(BaseModel):
     obscore: dict | None = None
 
 
-def generate_data_stream(file_path: pathlib.Path):
-    """This function creates a subprocess that stream a specified file in
-    chunks"""
+def generate_data_stream(file_path: pathlib.Path) -> Generator[bytes, None, None]:
+    """
+    This function creates a subprocess that generates data chunks from the specified file for
+    streaming.
+
+    Args:
+        file_path (pathlib.Path): The path to the file to read.
+
+    Yields:
+        bytes: Chunks of data read from the file.
+    """
+    verify_file_path(file_path.parent)
     # create a subprocess to run the tar command
     with subprocess.Popen(
         ["tar", "-C", str(file_path.parent), "-c", str(file_path.name)],
@@ -177,11 +135,18 @@ def generate_data_stream(file_path: pathlib.Path):
             chunk = process.stdout.read(STREAM_CHUNK_SIZE)
 
 
-def download_file(file_object: FilePaths):
-    """This function returns a response that can be used to download a file
-    pointed to by the file_object"""
+def download_file(data_product_file_path: pathlib.Path):
+    """
+    Streams the contents of the specified file as a download response.
+
+    Args:
+        data_product_file_path (pathlib.Path): The path to the file to be downloaded.
+
+    Returns:
+        fastapi.StreamingResponse: A streaming response object representing the file content.
+    """
     return StreamingResponse(
-        generate_data_stream(file_object.fullPathName),
+        generate_data_stream(data_product_file_path),
         media_type="application/x-tar",
     )
 
@@ -225,41 +190,6 @@ def get_relative_path(absolute_path: pathlib.Path) -> pathlib.Path:
     return absolute_path
 
 
-def get_date_from_name(execution_block: str) -> str:
-    """
-    Extracts a date string from an execution block (type-generatorID-datetime-localSeq from
-    https://confluence.skatelescope.org/display/SWSI/SKA+Unique+Identifiers) and converts it
-    to the format 'YYYY-MM-DD'.
-
-    Args:
-        execution_block (str): A string containing metadata information.
-
-    Returns:
-        str: The formatted date string in 'YYYY-MM-DD' format.
-
-    Raises:
-        ValueError: If the date cannot be parsed from the execution block.
-
-    Example:
-        >>> get_date_from_name("type-generatorID-20230411-localSeq")
-        '2023-04-11'
-    """
-    metadata_date_str = execution_block.split("-")[2]
-    year = metadata_date_str[0:4]
-    month = metadata_date_str[4:6]
-    day = metadata_date_str[6:8]
-    try:
-        date_obj = datetime.datetime(int(year), int(month), int(day))
-        return date_obj.strftime("%Y-%m-%d")
-    except ValueError as error:
-        logger.warning(
-            "Date retrieved from execution_block '%s' caused and error: %s",
-            execution_block,
-            error,
-        )
-        raise
-
-
 def find_metadata(metadata, query_key):
     """Given a dict of metadata, and a period-separated hierarchy of keys,
     return the key and the value found within the dict.
@@ -273,7 +203,6 @@ def find_metadata(metadata, query_key):
             subsection = subsection[key]
         else:
             return None
-
     return {"key": query_key, "value": subsection}
 
 
@@ -355,7 +284,7 @@ def filter_strings(operand: str, operator: str, comparator: str) -> bool:
 
 def filter_datetimes(
     operand: datetime.datetime, operator: str, comparator: datetime.datetime
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     This function filters datetime objects based on a provided operator and comparator datetime
     object.
@@ -397,8 +326,8 @@ def filter_datetimes(
 
 
 def filter_by_item(
-    data: List[Dict[str, Any]], field: str, operator: str, comparator: Any
-) -> List[Dict[str, Any]]:
+    data: list[dict[str, Any]], field: str, operator: str, comparator: Any
+) -> list[dict[str, Any]]:
     """
     Filters a list of dictionaries based on a single field, operator, and value.
 
@@ -416,7 +345,7 @@ def filter_by_item(
         A new list containing only the dictionaries that match the filter criteria.
     """
 
-    filtered_data: List[Dict[str, Any]] = []
+    filtered_data: list[dict[str, Any]] = []
 
     for item in data:
         try:
@@ -426,7 +355,11 @@ def filter_by_item(
                 if compare_integer(operand, operator, comparator):
                     filtered_data.append(item)
             elif isinstance(comparator, datetime.datetime):
-                date_value = parse_valid_date(operand, "%Y-%m-%d")
+                try:
+                    date_value = parse_valid_date(operand, "%Y-%m-%d")
+                except Exception as exception:  # pylint: disable=broad-exception-caught
+                    logger.error("Error, invalid date=%s", exception)
+                    continue
                 if filter_datetimes(date_value, operator, comparator):
                     filtered_data.append(item)
             else:
@@ -471,8 +404,8 @@ def has_nested_status(operand: dict | list, searched_key: str, comparator: str) 
 
 
 def filter_by_key_value_pair(
-    data: List[Dict[str, Any]], key_value_pairs: List[Dict[str, Any]]
-) -> List[Dict[str, Any]]:
+    data: list[dict[str, Any]], key_value_pairs: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
     """
     Filters a list of dictionaries based on key-value pairs.
 
@@ -522,3 +455,33 @@ def parse_valid_date(date_string: str, expected_format: str) -> datetime.datetim
     except ValueError as error:
         logging.error("Invalid date format: %s. Expected format: %s", date_string, expected_format)
         raise error
+    except TypeError as error:
+        logging.error("Invalid date_string: %s", date_string)
+        raise error
+
+
+def verify_persistent_storage_file_path(path: pathlib.Path) -> bool:
+    """Verifies if the given path is a valid directory for persistent storage.
+
+    Checks if the path is an existing directory and not a symbolic link.
+
+    Args:
+        path: The full path to the directory to be verified.
+
+    Returns:
+        True if the path is valid, False otherwise.
+    """
+
+    if not path.exists():
+        logger.warning("Directory does not exist: %s", path)
+        return False
+
+    if not path.is_dir():
+        logger.warning("Invalid directory path: %s", path)
+        return False
+
+    if path.is_symlink():
+        logger.warning("Symbolic links are not supported: %s", path)
+        return False
+
+    return True

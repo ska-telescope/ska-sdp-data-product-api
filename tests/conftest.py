@@ -10,4 +10,4 @@ from ska_sdp_dataproduct_api.api.main import app
 def test_app():
     """Helper fixture for the client."""
     client = TestClient(app)
-    yield client  # testing happens here
+    yield client

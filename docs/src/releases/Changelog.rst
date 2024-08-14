@@ -5,6 +5,14 @@ Changelog
 Current Development
 -------------------
 
+* `NAL-1132 <https://jira.skatelescope.org/browse/NAL-1132>`_ 
+
+  - [Changed] Updated project structure to align with the component functions, separating metadata stores and search stores.
+  - [Changed] The application now loads metadata either from a specified volume or when submitted to the API endpoints then saves it into either a persistent store using PostgreSQL or in memory if the database is not available. The search store then loads the metadata from either of these metadata stores into an Elasticsearch instance or an in-memory search store instance if Elasticsearch is not available.
+  - **BREAKING** [Changed] Changed the body or API request to specify the *execution_block* ID instead of *fileName* and *relativePathName*.
+  - [Added] Added DataProductMetadata class that contains methods related to handling of metadata in the application.
+  - **[Deprecated]** The in-memory store is deprecated and will be removed after all users have access to persistent PostgreSQL deployments. The functionality to load metadata into memory will be maintained to allow all users to configure and migrate to a persistent PostgreSQL DB for metadata storage.
+
 * `NAL-1128 <https://jira.skatelescope.org/browse/NAL-1128>`_ 
 
   - [Added] Updated the PostgreSQL persistent metadata store to ingest all the metadata into the database when the application loads or new data products are added with the /ingestnewmetadata endpoint.

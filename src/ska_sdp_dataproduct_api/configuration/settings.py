@@ -21,6 +21,14 @@ REINDEXING_DELAY = 300  # Only allow reindexing after 5 minutes
 PERSISTENT_STORAGE_PATH: pathlib.Path = pathlib.Path(
     config("PERSISTENT_STORAGE_PATH", default="./tests/test_files/product"),
 )
+try:
+    ABSOLUTE_PERSISTENT_STORAGE_PATH = PERSISTENT_STORAGE_PATH.resolve()
+except Exception as exception:  # pylint: disable=broad-exception-caught
+    logger.exception(
+        "Could not resolve PERSISTENT_STORAGE_PATH: %s, %s", PERSISTENT_STORAGE_PATH, exception
+    )
+    ABSOLUTE_PERSISTENT_STORAGE_PATH = PERSISTENT_STORAGE_PATH
+
 
 CONFIGURATION_FILES_PATH: pathlib.Path = pathlib.Path(__file__).parent
 
@@ -79,13 +87,15 @@ ELASTICSEARCH_PASSWORD: str = config(
     default="",
 )
 
-ELASTICSEARCH_METADATA_SCHEMA_FILE: str = config(
-    "SDP_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE",
-    default=(
-        "./src/ska_sdp_dataproduct_api/components/elasticsearch/"
-        "data_product_metadata_schema.json"
-    ),
-)
+ELASTICSEARCH_METADATA_SCHEMA_FILE: pathlib.Path = pathlib.Path(
+    config(
+        "SDP_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE",
+        default=(
+            "./src/ska_sdp_dataproduct_api/components/search/elasticsearch/"
+            "data_product_metadata_schema.json"
+        ),
+    )
+).resolve()
 
 ELASTICSEARCH_INDICES: str = config(
     "SDP_DATAPRODUCT_API_ELASTIC_INDICES",
@@ -129,18 +139,29 @@ app = FastAPI()
 
 app = FastAPI(root_path=API_ROOT_PATH)
 
-origins = [
-    "http://localhost",
-    "http://localhost" + ":" + REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_PORT,
-    REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL,
-    REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL
-    + ":"
-    + REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_PORT,
-]
+
+def origins() -> list:
+    """Returns a list of unique origins.
+
+    Leverages the built-in `set` data structure for efficient removal of duplicates.
+    """
+
+    known_origins = [
+        "http://localhost",
+        "http://localhost:8000",
+        "http://localhost:" + REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_PORT,
+        REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL,
+        REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL
+        + ":"
+        + REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_PORT,
+    ]
+
+    return list(set(known_origins))
+
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

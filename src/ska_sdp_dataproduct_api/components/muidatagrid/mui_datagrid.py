@@ -1,5 +1,8 @@
 """This module contains the class object used with the MUI DataGrid component in front end
 applications"""
+from collections.abc import MutableMapping
+
+# pylint: disable=too-many-instance-attributes
 
 
 class MuiDataGrid:
@@ -96,6 +99,8 @@ class MuiDataGrid:
         self.table_config: dict = {}
         self.table_config["columns"] = self.columns
 
+        self.flattened_set_of_keys = set()
+        self.flattened_list_of_dataproducts_metadata: list[dict] = []
         self.rows: list[dict] = []
 
     def add_datagrid_row(self, row: dict) -> None:
@@ -107,7 +112,7 @@ class MuiDataGrid:
         """
         self.rows.append(row)
 
-    def load_inmemory_store_data(self, inmemorystore) -> None:
+    def load_metadata_from_list(self, metadata_list: list[dict]) -> None:
         """
         Loads data from the metadata list into the in-memory store of the MUI DataGrid instance.
 
@@ -116,8 +121,81 @@ class MuiDataGrid:
 
         """
         self.rows.clear()
-        for item in inmemorystore.metadata_list:
+        for item in metadata_list:
             self.add_datagrid_row(item)
+
+    def update_flattened_list_of_keys(self, metadata_file: dict) -> None:
+        """
+        Updates the `flattened_set_of_keys` attribute with new keys extracted from the specified
+        metadata file.
+
+        Args:
+            metadata_file (dict): The path to the metadata file containing keys to be added.
+
+        Raises:
+            TypeError: If `metadata_file` is not a string.
+        """
+        for key in self.generate_metadata_keys_list(metadata_file, [], "", "."):
+            self.flattened_set_of_keys.add(key)
+
+    def generate_metadata_keys_list(self, metadata: dict, ignore_keys, parent_key="", sep="."):
+        """Given a nested dict, return the flattened list of keys"""
+        flattened_list_of_keys = []  # Create an empty list to store flattened keys
+        for key, value in metadata.items():
+            new_key = parent_key + sep + key if parent_key else key
+            if isinstance(value, MutableMapping):
+                flattened_list_of_keys.extend(
+                    self.generate_metadata_keys_list(value, ignore_keys, new_key, sep=sep)
+                )
+            else:
+                if new_key not in ignore_keys and new_key not in flattened_list_of_keys:
+                    flattened_list_of_keys.append(new_key)
+        return flattened_list_of_keys  # Return the flattened list at the end
+
+    def flatten_dict(self, data, prefix=""):
+        """
+        Flattens a nested dictionary, combining nested keys with a "." separator.
+
+        Args:
+            data: The dictionary to flatten.
+            prefix: An optional prefix to prepend to flattened keys (default "").
+
+        Returns:
+            A new dictionary with flattened keys.
+        """
+        result = {}
+        for key, value in data.items():
+            new_key = prefix + key if prefix else key
+            if isinstance(value, dict):
+                result.update(self.flatten_dict(value, new_key + "."))
+            elif value is not None:  # Check if value is not None
+                result[new_key] = value
+        return result
+
+    def update_flattened_list_of_dataproducts_metadata(self, data_product_details):
+        """
+        Updates the internal list of data products with the provided metadata.
+
+        This method adds the provided `data_product_details` dictionary to the internal
+        `metadata_list` attribute. If the list is empty, it assigns an "id" of 1 to the
+        first data product. Otherwise, it assigns an "id" based on the current length
+        of the list + 1.
+
+        Args:
+            data_product_details: A dictionary containing the metadata for a data product.
+
+        Returns:
+            None
+        """
+        # Adds the first dictionary to the list
+        if len(muiDataGridInstance.flattened_list_of_dataproducts_metadata) == 0:
+            data_product_details["id"] = 1
+        else:
+            data_product_details["id"] = (
+                len(muiDataGridInstance.flattened_list_of_dataproducts_metadata) + 1
+            )
+
+        muiDataGridInstance.flattened_list_of_dataproducts_metadata.append(data_product_details)
 
 
 muiDataGridInstance = MuiDataGrid()
