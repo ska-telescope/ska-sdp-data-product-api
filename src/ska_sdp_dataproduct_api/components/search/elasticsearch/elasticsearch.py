@@ -203,12 +203,11 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
                 self.es_client.indices.create(  # pylint: disable=unexpected-keyword-arg
                     index=index, ignore=400, body=metadata_schema_json
                 )
-                logger.info(f"Index '{index}' created successfully.")
+                logger.info("Index %s created successfully.", index)
             except (FileNotFoundError, json.JSONDecodeError) as error:
                 logger.error("Error loading or parsing schema file: %s", error)
         except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.exception("Unexpected error creating index: %s", exception)
-
 
     def insert_metadata_in_search_store(self, metadata_dict: dict) -> None:
         """Inserts metadata from a JSON file into the Elasticsearch index.
@@ -289,7 +288,7 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
                 metadata_file[key] = metadata_file[key]
 
         # Add additional keys based on query (assuming find_metadata is defined)
-        for query_key in muiDataGridInstance.flattened_list_of_keys:
+        for query_key in muiDataGridInstance.flattened_set_of_keys:
             query_metadata = find_metadata(metadata_file, query_key)
             if query_metadata:
                 data_product_details[query_metadata["key"]] = query_metadata["value"]

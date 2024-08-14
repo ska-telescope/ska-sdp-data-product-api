@@ -96,7 +96,7 @@ class SearchParametersClass(BaseModel):
     key_value_pairs: list[str] = None
 
 
-class DataProductMetaData(BaseModel):
+class PydanticDataProductMetadataModel(BaseModel):
     """
     Class containing all information from a MetaData object
     """

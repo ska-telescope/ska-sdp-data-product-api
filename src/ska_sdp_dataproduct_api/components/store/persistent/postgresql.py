@@ -151,13 +151,14 @@ options='-c search_path=\"{self.schema}\"'"
                 "schema_name": self.schema,
                 "table_name": self.table_name,
             }
-            cursor = self.conn.cursor()
-            cursor.execute(create_table_query)
-            self.conn.commit()
-            cursor.close()
-            logger.info(
-                "PostgreSQL metadata table %s created in schema: %s.", self.table_name, self.schema
-            )
+            with self.conn.cursor() as cursor:
+                cursor.execute(create_table_query)
+                self.conn.commit()
+                logger.info(
+                    "PostgreSQL metadata table %s created in schema: %s.",
+                    self.table_name,
+                    self.schema,
+                )
 
         except psycopg.Error as error:
             logger.error("Error creating metadata table: %s", error)
@@ -245,46 +246,42 @@ options='-c search_path=\"{self.schema}\"'"
 
     def check_metadata_exists_by_hash(self, json_hash: str) -> bool:
         """Checks if metadata exists based on the given hash."""
-        cursor = self.conn.cursor()
-        check_query = (
-            f"SELECT EXISTS(SELECT 1 FROM {self.schema}.{self.table_name} WHERE json_hash = %s)"
-        )
-        cursor.execute(check_query, (json_hash,))
-        exists = cursor.fetchone()[0]
-        cursor.close()
-        return exists
+        with self.conn.cursor() as cursor:
+            check_query = f"SELECT EXISTS(SELECT 1 FROM {self.schema}.{self.table_name} WHERE \
+json_hash = %s)"
+            cursor.execute(check_query, (json_hash,))
+            exists = cursor.fetchone()[0]
+            return exists
 
     def check_metadata_exists_by_execution_block(self, execution_block: str) -> int:
         """Checks if metadata exists based on the given execution block."""
-        cursor = self.conn.cursor()
-        check_query = f"SELECT id FROM {self.schema}.{self.table_name} WHERE execution_block = %s"
-        cursor.execute(check_query, (execution_block,))
-        result = cursor.fetchone()
-        cursor.close()
-        return result[0] if result else None
+        with self.conn.cursor() as cursor:
+            check_query = (
+                f"SELECT id FROM {self.schema}.{self.table_name} WHERE execution_block = %s"
+            )
+            cursor.execute(check_query, (execution_block,))
+            result = cursor.fetchone()
+            return result[0] if result else None
 
     def update_metadata(self, metadata_file_json: str, id_field: int) -> None:
         """Updates existing metadata with the given data and hash."""
         json_hash = self.calculate_metadata_hash(metadata_file_json)
-        cursor = self.conn.cursor()
-        update_query = (
-            f"UPDATE {self.schema}.{self.table_name} SET data = %s, json_hash = %s WHERE id = %s"
-        )
-        cursor.execute(update_query, (metadata_file_json, json_hash, id_field))
-        self.conn.commit()
-        cursor.close()
+        with self.conn.cursor() as cursor:
+            update_query = f"UPDATE {self.schema}.{self.table_name} SET data = %s, json_hash = %s \
+WHERE id = %s"
+            cursor.execute(update_query, (metadata_file_json, json_hash, id_field))
+            self.conn.commit()
 
     def insert_metadata(self, metadata_file_json: str, execution_block: str) -> None:
         """Inserts new metadata into the database."""
         json_hash = self.calculate_metadata_hash(metadata_file_json)
-        cursor = self.conn.cursor()
-        table: str = self.schema + "." + self.table_name
-        insert_query = (
-            f"INSERT INTO {table} (data, json_hash, execution_block) VALUES (%s, %s, %s)"
-        )
-        cursor.execute(insert_query, (metadata_file_json, json_hash, execution_block))
-        self.conn.commit()
-        cursor.close()
+        with self.conn.cursor() as cursor:
+            table: str = self.schema + "." + self.table_name
+            insert_query = (
+                f"INSERT INTO {table} (data, json_hash, execution_block) VALUES (%s, %s, %s)"
+            )
+            cursor.execute(insert_query, (metadata_file_json, json_hash, execution_block))
+            self.conn.commit()
 
     def save_metadata_to_postgresql(self, metadata_file_dict: dict) -> None:
         """Saves metadata to PostgreSQL."""
@@ -324,12 +321,11 @@ options='-c search_path=\"{self.schema}\"'"
             The total count of JSON objects.
         """
 
-        cursor = self.conn.cursor()
-        cursor.execute(f"SELECT COUNT(*) FROM {self.schema}.{self.table_name}")
-        result = cursor.fetchone()[0]
-        cursor.close()
-        self.number_of_dataproducts = int(result)
-        return result
+        with self.conn.cursor() as cursor:
+            cursor.execute(f"SELECT COUNT(*) FROM {self.schema}.{self.table_name}")
+            result = cursor.fetchone()[0]
+            self.number_of_dataproducts = int(result)
+            return result
 
     def delete_postgres_table(self) -> bool:
         """Deletes a table from a PostgreSQL database.
@@ -343,12 +339,11 @@ options='-c search_path=\"{self.schema}\"'"
 
         try:
             logger.info("PostgreSQL deleting database table %s", self.table_name)
-            cursor = self.conn.cursor()
-            cursor.execute(f"DROP TABLE IF EXISTS {self.schema}.{self.table_name}")
-            self.conn.commit()
-            cursor.close()
-            logger.info("PostgreSQL database table %s deleted.", self.table_name)
-            return True
+            with self.conn.cursor() as cursor:
+                cursor.execute(f"DROP TABLE IF EXISTS {self.schema}.{self.table_name}")
+                self.conn.commit()
+                logger.info("PostgreSQL database table %s deleted.", self.table_name)
+                return True
 
         except psycopg.OperationalError as error:
             logger.error(
@@ -368,11 +363,10 @@ options='-c search_path=\"{self.schema}\"'"
         Returns:
             list[dict]: list of JSON objects.
         """
-        cursor = self.conn.cursor()
-        cursor.execute(f"SELECT id, data FROM {self.schema}.{table_name}")
-        data = cursor.fetchall()
-        cursor.close()
-        return [{"id": row[0], "data": row[1]} for row in data]
+        with self.conn.cursor() as cursor:
+            cursor.execute(f"SELECT id, data FROM {self.schema}.{table_name}")
+            data = cursor.fetchall()
+            return [{"id": row[0], "data": row[1]} for row in data]
 
     def load_data_products_from_persistent_metadata_store(self) -> list[dict[str, any]]:
         """Loads data products metadata from the persistent metadata store.
@@ -398,7 +392,7 @@ options='-c search_path=\"{self.schema}\"'"
             return {}
 
         except KeyError:
-            logger.warning("Metadata not found for execution block: %s", execution_block)
+            logger.warning("Metadata not found for execution block ID: %s", execution_block)
             return {}
 
     def get_data_by_execution_block(self, execution_block: str) -> dict[str, Any] | None:
@@ -411,22 +405,25 @@ options='-c search_path=\"{self.schema}\"'"
             The data (JSONB) associated with the execution block, or None if not found.
         """
         try:
-            cursor = self.conn.cursor()
-            check_query = (
-                f"SELECT data FROM {self.schema}.{self.table_name} WHERE execution_block = %s"
-            )
-            cursor.execute(check_query, (execution_block,))
-            result = cursor.fetchone()
-            cursor.close()
+            with self.conn.cursor() as cursor:
+                check_query = (
+                    f"SELECT data FROM {self.schema}.{self.table_name} WHERE execution_block = %s"
+                )
+                cursor.execute(check_query, (execution_block,))
+                result = cursor.fetchone()
 
-            if result:
-                return result[0]
-            return None
-        except Exception as exception:
-            logger.exception(
-                "Error fetching data for execution_block %s: %s", execution_block, exception
+                if result[0]:
+                    return result[0]
+                return {}
+
+        except (psycopg.OperationalError, psycopg.DatabaseError) as error:
+            logger.error("Database error: %s", error)
+            return {}
+        except (IndexError, TypeError) as error:
+            logger.warning(
+                "Metadata not found for execution block ID: %s, error: %s", execution_block, error
             )
-            raise exception
+            return {}
 
     def get_data_product_file_path(self, execution_block: str) -> pathlib.Path:
         """Retrieves the file path to the data product for the given execution block.
