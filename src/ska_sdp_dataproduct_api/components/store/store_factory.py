@@ -16,6 +16,7 @@ from ska_sdp_dataproduct_api.components.store.persistent.postgresql import Postg
 from ska_sdp_dataproduct_api.configuration.settings import (
     ELASTICSEARCH_HOST,
     ELASTICSEARCH_INDICES,
+    ELASTICSEARCH_METADATA_SCHEMA_FILE,
     ELASTICSEARCH_PASSWORD,
     ELASTICSEARCH_PORT,
     ELASTICSEARCH_USER,
@@ -95,6 +96,7 @@ def select_search_store_class(
         user=ELASTICSEARCH_USER,
         password=ELASTICSEARCH_PASSWORD,
         indices=ELASTICSEARCH_INDICES,
+        schema=ELASTICSEARCH_METADATA_SCHEMA_FILE,
         metadata_store=metadata_store,
     )
     elastic_store_instance.check_and_reconnect()
@@ -106,6 +108,7 @@ def select_search_store_class(
             user=ELASTICSEARCH_USER,
             password=ELASTICSEARCH_PASSWORD,
             indices=ELASTICSEARCH_INDICES,
+            schema=ELASTICSEARCH_METADATA_SCHEMA_FILE,
             metadata_store=metadata_store,
         )
         if elastic_store_instance.host and elastic_store_instance.check_and_reconnect():

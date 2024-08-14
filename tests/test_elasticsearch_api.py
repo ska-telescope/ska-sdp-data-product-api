@@ -10,6 +10,7 @@ from ska_sdp_dataproduct_api.configuration.settings import (
     CONFIGURATION_FILES_PATH,
     ELASTICSEARCH_HOST,
     ELASTICSEARCH_INDICES,
+    ELASTICSEARCH_METADATA_SCHEMA_FILE,
     ELASTICSEARCH_PASSWORD,
     ELASTICSEARCH_PORT,
     ELASTICSEARCH_USER,
@@ -32,6 +33,7 @@ def test_status(mocker):
         user=ELASTICSEARCH_USER,
         password=ELASTICSEARCH_PASSWORD,
         indices=ELASTICSEARCH_INDICES,
+        schema=ELASTICSEARCH_METADATA_SCHEMA_FILE,
         metadata_store=metadata_store,
     )
 
@@ -77,6 +79,7 @@ def test_no_ca_cert_configured():
         user=ELASTICSEARCH_USER,
         password=ELASTICSEARCH_PASSWORD,
         indices=ELASTICSEARCH_INDICES,
+        schema=ELASTICSEARCH_METADATA_SCHEMA_FILE,
         metadata_store=metadata_store,
     )
     es_store.load_ca_cert(config_file_path=CONFIGURATION_FILES_PATH, ca_cert="")
@@ -91,6 +94,7 @@ def test_search_metadata():
         user=ELASTICSEARCH_USER,
         password=ELASTICSEARCH_PASSWORD,
         indices=ELASTICSEARCH_INDICES,
+        schema=ELASTICSEARCH_METADATA_SCHEMA_FILE,
         metadata_store=metadata_store,
     )
     search_store.es_client = MockElasticsearch()
@@ -141,6 +145,7 @@ def test_search_metadata_default_value():
         user=ELASTICSEARCH_USER,
         password=ELASTICSEARCH_PASSWORD,
         indices=ELASTICSEARCH_INDICES,
+        schema=ELASTICSEARCH_METADATA_SCHEMA_FILE,
         metadata_store=metadata_store,
     )
     search_store.es_client = MockElasticsearch()

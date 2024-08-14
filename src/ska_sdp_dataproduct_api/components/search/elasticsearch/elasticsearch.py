@@ -17,7 +17,6 @@ from ska_sdp_dataproduct_api.components.store.persistent.postgresql import Postg
 from ska_sdp_dataproduct_api.configuration.settings import (
     CONFIGURATION_FILES_PATH,
     ELASTICSEARCH_HTTP_CA,
-    ELASTICSEARCH_METADATA_SCHEMA_FILE,
 )
 from ska_sdp_dataproduct_api.utilities.helperfunctions import find_metadata
 
@@ -37,10 +36,12 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
         user,
         password,
         indices,
+        schema,
         metadata_store: Union[PostgresConnector, InMemoryVolumeIndexMetadataStore],
     ):
         super().__init__(metadata_store)
         self.indices = indices
+        self.schema = schema
 
         self.host: str = host
         self.port: int = port
@@ -152,9 +153,7 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
             self.elasticsearch_running = True
             self.cluster_info = self.es_client.info()
             logger.info("Connected to Elasticsearch; creating default schema...")
-            self.create_schema_if_not_existing(
-                index=self.indices, schema=ELASTICSEARCH_METADATA_SCHEMA_FILE
-            )
+            self.create_schema_if_not_existing(index=self.indices, schema=self.schema)
             self.load_metadata_from_store()
 
             return True
