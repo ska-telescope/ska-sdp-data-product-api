@@ -57,26 +57,6 @@ class PostgresConnector(MetadataStore):
             self.create_metadata_table()
             self.count_jsonb_objects()
 
-    def _check_if_schema_exists(self, schema_name: str) -> bool:
-        """
-        Checks if the specified schema exists in the database.
-
-        Args:
-            schema_name: The name of the schema to check.
-
-        Returns:
-            True if the schema exists, False otherwise.
-        """
-        query = """
-            SELECT count(*)
-            FROM information_schema.schemata
-            WHERE schema_name = %s
-        """
-
-        with self.conn.cursor() as cursor:
-            cursor.execute(query, (schema_name,))
-            return cursor.fetchone()[0] > 0
-
     def status(self) -> dict:
         """
         Retrieves the current status of the PostgreSQL connection.
