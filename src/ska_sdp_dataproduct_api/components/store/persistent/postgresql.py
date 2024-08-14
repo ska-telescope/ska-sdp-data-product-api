@@ -227,6 +227,22 @@ class PostgresConnector(MetadataStore):
             cursor.execute(insert_query, (metadata_file_json, json_hash, execution_block))
             self.conn.commit()
 
+    def ingest_metadata(self, metadata: dict) -> None:
+        """
+        Ingests a data product metadata into the metadata store.
+
+        Args:
+            data_product_metadata_file_path (pathlib.Path): The path to the data file.
+
+        Returns:
+            None
+        """
+        try:
+            self.save_metadata_to_postgresql(metadata)
+        except Exception as error:
+            logger.error("Failed to ingest ingest_metadata, error: %s", error)
+            raise
+
     def save_metadata_to_postgresql(self, metadata_file_dict: dict) -> None:
         """Saves metadata to PostgreSQL."""
         try:

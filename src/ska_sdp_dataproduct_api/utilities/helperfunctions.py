@@ -110,10 +110,6 @@ class PydanticDataProductMetadataModel(BaseModel):
     files: list
     obscore: dict | None = None
 
-    def to_dict(self) -> dict:
-        """Converts the PydanticDataProductMetadataModel instance to a dictionary."""
-        return self.dict(by_alias=False)
-
 
 def generate_data_stream(file_path: pathlib.Path) -> Generator[bytes, None, None]:
     """
