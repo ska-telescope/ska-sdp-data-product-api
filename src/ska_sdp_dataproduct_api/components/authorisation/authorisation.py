@@ -4,7 +4,7 @@ application.
 """
 
 import logging
-from typing import Any, Awaitable, Callable
+from typing import Any, Awaitable, Callable, Optional
 
 import httpx
 from fastapi import Depends, HTTPException, Request
@@ -18,32 +18,34 @@ from ska_sdp_dataproduct_api.utilities.exceptions import AuthError
 logger = logging.getLogger(__name__)
 
 
-async def get_token_auth_header(request: Request):
-    """Obtains the Access Token from the Authorization Header"""
-    auth = request.headers.get("Authorization", None)
-    if not auth:
+async def get_token_auth_header(request: Request) -> Optional[str]:
+    """
+    Obtains the Access Token from the Authorization Header.
+
+    Raises:
+        AuthError: If the Authorization header is missing, invalid, or malformed.
+    """
+
+    auth_header = request.headers.get("Authorization")
+
+    if not auth_header:
         raise AuthError("authorization_header_missing: Authorization header is expected.", 401)
 
-    parts = auth.split()
+    parts = auth_header.split()
 
-    if parts[0].lower() != "bearer":
-        raise AuthError("invalid_header: Authorization header must start with Bearer.", 401)
+    if len(parts) != 2 or parts[0].lower() != "bearer":
+        raise AuthError(
+            "invalid_header: Authorization header must be in the format Bearer token.", 401
+        )
 
-    if len(parts) == 1:
-        raise AuthError("invalid_header: Token not found.", 401)
-
-    if len(parts) > 2:
-        raise AuthError("invalid_header: Authorization header must be Bearer token.", 401)
-
-    token = parts[1]
-    return token
+    return parts[1]
 
 
 def extract_token(function: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
-    """Decorator to require authentication for a function.
+    """Extract a token for a decorated function.
 
     Args:
-        f: The function to decorate.
+        function: The function to decorate.
 
     Returns:
         The decorated function.
@@ -53,8 +55,8 @@ def extract_token(function: Callable[..., Awaitable[Any]]) -> Callable[..., Awai
         """Decorated function that handles token validation.
 
         Args:
+            request: The FastAPI request object.
             token: The validated access token.
-            **kwargs: Additional arguments passed to the decorated function.
 
         Returns:
             The result of the decorated function.
