@@ -39,7 +39,7 @@ async def get_token_auth_header(request: Request):
     return token
 
 
-def requires_auth(function: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
+def extract_token(function: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
     """Decorator to require authentication for a function.
 
     Args:
@@ -79,15 +79,12 @@ async def get_token_from_request(request: Request) -> str:
     try:
         token = await get_token_auth_header(request)
         return token
-    except httpx.HTTPStatusError as error:
-        raise HTTPException(
-            status_code=401, detail=f"Token verification failed: {error}"
-        ) from error
     except AuthError as error:
-        raise HTTPException(status_code=401, detail=f"Invalid token: {error}") from error
+        logger.warning("No valid token found, error: %s", error)
+        return None
 
 
-async def get_user_groups(token: str) -> dict[str, list[str]]:
+async def get_user_groups(token: str | None) -> dict[str, list[str]]:
     """Extracts and validates an access token from a request.
 
     Args:
@@ -100,6 +97,9 @@ async def get_user_groups(token: str) -> dict[str, list[str]]:
         HTTPException: If token is invalid or unauthorized access.
     """
     try:
+        if token is None:
+            return {"user_groups": []}
+
         headers = {"Authorization": f"Bearer {token}"}
         async with httpx.AsyncClient(timeout=10) as client:
             permissions_api_verification_endpoint = (

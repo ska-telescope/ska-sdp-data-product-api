@@ -7,8 +7,8 @@ from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 
 from ska_sdp_dataproduct_api.components.authorisation.authorisation import (
+    extract_token,
     get_user_groups,
-    requires_auth,
 )
 from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
 from ska_sdp_dataproduct_api.components.store.store_factory import (
@@ -95,7 +95,7 @@ async def data_products_search(search_parameters: SearchParametersClass):
 
 
 @app.post("/filterdataproducts")
-@requires_auth
+@extract_token
 async def filter_data(token: str, request: Request) -> list:
     """
     Filters product data based on provided criteria.
