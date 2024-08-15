@@ -150,7 +150,20 @@ POSTGRESQL_TABLE_NAME: str = config(
     default=("data_products_metadata_v1"),
 )
 # ----
+# SKA Permissions API
+SKA_PERMISSIONS_API_HOST: str = config(
+    "SKA_PERMISSIONS_API_HOST",
+    default="localhost",
+)
 
+SKA_PERMISSIONS_API_PORT: int = int(
+    config(
+        "SKA_PERMISSIONS_API_PORT",
+        default=8000,
+    )
+)
+
+# ----
 DATE_FORMAT: str = config("DATE_FORMAT", default="%Y-%m-%d")
 
 API_ROOT_PATH: str = config("API_ROOT_PATH", default="")
