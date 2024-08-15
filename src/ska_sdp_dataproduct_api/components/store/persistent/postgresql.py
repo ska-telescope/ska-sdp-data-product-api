@@ -85,9 +85,14 @@ class PostgresConnector(MetadataStore):
           None.
         """
         try:
-            connection_string = f"dbname='{self.dbname}' user='{self.user}' \
-password='{self.password}' host='{self.host}' port='{self.port}' \
-options='-c search_path=\"{self.schema}\"'"
+            connection_string = (
+                f"dbname='{self.dbname}' "
+                f"user='{self.user}' "
+                f"password='{self.password}' "
+                f"host='{self.host}' "
+                f"port='{self.port}' "
+                f"options='-c search_path=\"{self.schema}\"'"
+            )
             self.conn = psycopg.connect(connection_string)
 
             self.postgresql_running = True
@@ -120,17 +125,14 @@ options='-c search_path=\"{self.schema}\"'"
             )
 
             # Use parameterization to avoid SQL injection
-            create_table_query = """
-            CREATE TABLE IF NOT EXISTS %(schema_name)s.%(table_name)s (
+            create_table_query = f"""
+            CREATE TABLE IF NOT EXISTS {self.schema}.{self.table_name} (
                 id SERIAL PRIMARY KEY,
                 data JSONB NOT NULL,
                 execution_block VARCHAR(255) DEFAULT NULL UNIQUE,
                 json_hash CHAR(64) UNIQUE
             );
-            """ % {
-                "schema_name": self.schema,
-                "table_name": self.table_name,
-            }
+            """
             with self.conn.cursor() as cursor:
                 cursor.execute(create_table_query)
                 self.conn.commit()
