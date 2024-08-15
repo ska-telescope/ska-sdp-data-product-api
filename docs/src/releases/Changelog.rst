@@ -5,6 +5,12 @@ Changelog
 Current Development
 -------------------
 
+* `NAL-1145 <https://jira.skatelescope.org/browse/NAL-1145>`_ 
+
+  - [Changed] Updated the configuration of the PostgreSQL metadata store to allow specification of a schema.
+  - [Changed] Updated PostgreSQL connection to enable connection to an existing DB instance in a cluster. 
+  - [Changed] Moved passwords out of the env file into a .secrets file that is excluded from the repository and if found locally, loaded into environment variables.
+
 * `NAL-1132 <https://jira.skatelescope.org/browse/NAL-1132>`_ 
 
   - [Changed] Updated project structure to align with the component functions, separating metadata stores and search stores.

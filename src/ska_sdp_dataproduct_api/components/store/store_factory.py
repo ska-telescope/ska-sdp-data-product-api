@@ -14,9 +14,17 @@ from ska_sdp_dataproduct_api.components.store.in_memory.in_memory import (
 )
 from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
 from ska_sdp_dataproduct_api.configuration.settings import (
+    ELASTICSEARCH_HOST,
+    ELASTICSEARCH_INDICES,
+    ELASTICSEARCH_METADATA_SCHEMA_FILE,
+    ELASTICSEARCH_PASSWORD,
+    ELASTICSEARCH_PORT,
+    ELASTICSEARCH_USER,
+    POSTGRESQL_DBNAME,
     POSTGRESQL_HOST,
     POSTGRESQL_PASSWORD,
     POSTGRESQL_PORT,
+    POSTGRESQL_SCHEMA,
     POSTGRESQL_TABLE_NAME,
     POSTGRESQL_USER,
 )
@@ -45,7 +53,9 @@ def select_metadata_store_class() -> Union[PostgresConnector, InMemoryVolumeInde
             host=POSTGRESQL_HOST,
             port=POSTGRESQL_PORT,
             user=POSTGRESQL_USER,
+            schema=POSTGRESQL_SCHEMA,
             password=POSTGRESQL_PASSWORD,
+            dbname=POSTGRESQL_DBNAME,
             table_name=POSTGRESQL_TABLE_NAME,
         )
 
@@ -80,11 +90,27 @@ def select_search_store_class(
             `ElasticsearchMetadataStore` or `InMemoryDataproductSearch` depending on Elasticsearch
             availability.
     """
-    elastic_store_instance = ElasticsearchMetadataStore(metadata_store)
+    elastic_store_instance = ElasticsearchMetadataStore(
+        host=ELASTICSEARCH_HOST,
+        port=ELASTICSEARCH_PORT,
+        user=ELASTICSEARCH_USER,
+        password=ELASTICSEARCH_PASSWORD,
+        indices=ELASTICSEARCH_INDICES,
+        schema=ELASTICSEARCH_METADATA_SCHEMA_FILE,
+        metadata_store=metadata_store,
+    )
     elastic_store_instance.check_and_reconnect()
 
     try:
-        elastic_store_instance = ElasticsearchMetadataStore(metadata_store)
+        elastic_store_instance = ElasticsearchMetadataStore(
+            host=ELASTICSEARCH_HOST,
+            port=ELASTICSEARCH_PORT,
+            user=ELASTICSEARCH_USER,
+            password=ELASTICSEARCH_PASSWORD,
+            indices=ELASTICSEARCH_INDICES,
+            schema=ELASTICSEARCH_METADATA_SCHEMA_FILE,
+            metadata_store=metadata_store,
+        )
         if elastic_store_instance.host and elastic_store_instance.check_and_reconnect():
             logger.info("Elasticsearch reachable, setting search store to ElasticSearch")
             return elastic_store_instance

@@ -4,9 +4,11 @@ import pytest
 
 from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
 from ska_sdp_dataproduct_api.configuration.settings import (
+    POSTGRESQL_DBNAME,
     POSTGRESQL_HOST,
     POSTGRESQL_PASSWORD,
     POSTGRESQL_PORT,
+    POSTGRESQL_SCHEMA,
     POSTGRESQL_TABLE_NAME,
     POSTGRESQL_USER,
 )
@@ -22,6 +24,8 @@ def clean_database(mocker):
         port=POSTGRESQL_PORT,
         user=POSTGRESQL_USER,
         password=POSTGRESQL_PASSWORD,
+        dbname=POSTGRESQL_DBNAME,
+        schema=POSTGRESQL_SCHEMA,
         table_name=POSTGRESQL_TABLE_NAME,
     )
     mocker.patch.object(inmemory_store_mocked, "_connect")

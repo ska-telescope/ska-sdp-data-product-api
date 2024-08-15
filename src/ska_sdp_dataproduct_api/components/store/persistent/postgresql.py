@@ -28,17 +28,29 @@ class PostgresConnector(MetadataStore):
     A class to connect to a PostgreSQL instance and test its availability.
     """
 
-    def __init__(self, host: str, port: int, user: str, password: str, table_name: str):
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        user: str,
+        password: str,
+        dbname: str,
+        schema: str,
+        table_name: str,
+    ):
         super().__init__()
         self.host = host
         self.port = port
         self.user = user
         self.password = password
+        self.dbname = dbname
+        self.schema = schema
         self.table_name = table_name
         self.conn = None
         self.postgresql_running: bool = False
         self.postgresql_version: str = ""
         self.number_of_dataproducts: int = 0
+
         self._connect()
         if self.postgresql_running:
             self.postgresql_version = self._get_postgresql_version()
@@ -58,6 +70,8 @@ class PostgresConnector(MetadataStore):
             "port": self.port,
             "user": self.user,
             "running": self.postgresql_running,
+            "dbname": self.dbname,
+            "schema": self.schema,
             "table_name": self.table_name,
             "number_of_dataproducts": self.number_of_dataproducts,
             "postgresql_version": self.postgresql_version,
@@ -71,11 +85,19 @@ class PostgresConnector(MetadataStore):
           None.
         """
         try:
-            self.conn = psycopg.connect(
-                host=self.host, port=self.port, user=self.user, password=self.password
+            connection_string = (
+                f"dbname='{self.dbname}' "
+                f"user='{self.user}' "
+                f"password='{self.password}' "
+                f"host='{self.host}' "
+                f"port='{self.port}' "
+                f"options='-c search_path=\"{self.schema}\"'"
             )
+            self.conn = psycopg.connect(connection_string)
+
             self.postgresql_running = True
             logger.info("Connected to PostgreSQL successfully")
+
         except OperationalError as error:
             self.postgresql_running = False
             logger.error(
@@ -96,19 +118,29 @@ class PostgresConnector(MetadataStore):
         """
 
         try:
-            logger.info("Creating PostgreSQL metadata table: %s", self.table_name)
+            logger.info(
+                "Creating PostgreSQL metadata table: %s, in schema: %s",
+                self.table_name,
+                self.schema,
+            )
 
+            # Use parameterization to avoid SQL injection
             create_table_query = f"""
-                CREATE TABLE IF NOT EXISTS {self.table_name} (
-                    id SERIAL PRIMARY KEY,
-                    data JSONB NOT NULL,
-                    execution_block VARCHAR(255) DEFAULT NULL UNIQUE,
-                    json_hash CHAR(64) UNIQUE
-                );
+            CREATE TABLE IF NOT EXISTS {self.schema}.{self.table_name} (
+                id SERIAL PRIMARY KEY,
+                data JSONB NOT NULL,
+                execution_block VARCHAR(255) DEFAULT NULL UNIQUE,
+                json_hash CHAR(64) UNIQUE
+            );
             """
             with self.conn.cursor() as cursor:
                 cursor.execute(create_table_query)
-                logger.info("PostgreSQL metadata table %s created.", self.table_name)
+                self.conn.commit()
+                logger.info(
+                    "PostgreSQL metadata table %s created in schema: %s.",
+                    self.table_name,
+                    self.schema,
+                )
 
         except psycopg.Error as error:
             logger.error("Error creating metadata table: %s", error)
@@ -197,7 +229,8 @@ class PostgresConnector(MetadataStore):
     def check_metadata_exists_by_hash(self, json_hash: str) -> bool:
         """Checks if metadata exists based on the given hash."""
         with self.conn.cursor() as cursor:
-            check_query = f"SELECT EXISTS(SELECT 1 FROM {self.table_name} WHERE json_hash = %s)"
+            check_query = f"SELECT EXISTS(SELECT 1 FROM {self.schema}.{self.table_name} WHERE \
+json_hash = %s)"
             cursor.execute(check_query, (json_hash,))
             exists = cursor.fetchone()[0]
             return exists
@@ -205,7 +238,9 @@ class PostgresConnector(MetadataStore):
     def check_metadata_exists_by_execution_block(self, execution_block: str) -> int:
         """Checks if metadata exists based on the given execution block."""
         with self.conn.cursor() as cursor:
-            check_query = f"SELECT id FROM {self.table_name} WHERE execution_block = %s"
+            check_query = (
+                f"SELECT id FROM {self.schema}.{self.table_name} WHERE execution_block = %s"
+            )
             cursor.execute(check_query, (execution_block,))
             result = cursor.fetchone()
             return result[0] if result else None
@@ -214,7 +249,8 @@ class PostgresConnector(MetadataStore):
         """Updates existing metadata with the given data and hash."""
         json_hash = self.calculate_metadata_hash(metadata_file_json)
         with self.conn.cursor() as cursor:
-            update_query = f"UPDATE {self.table_name} SET data = %s, json_hash = %s WHERE id = %s"
+            update_query = f"UPDATE {self.schema}.{self.table_name} SET data = %s, json_hash = %s \
+WHERE id = %s"
             cursor.execute(update_query, (metadata_file_json, json_hash, id_field))
             self.conn.commit()
 
@@ -222,26 +258,12 @@ class PostgresConnector(MetadataStore):
         """Inserts new metadata into the database."""
         json_hash = self.calculate_metadata_hash(metadata_file_json)
         with self.conn.cursor() as cursor:
-            insert_query = f"INSERT INTO {self.table_name} (data, json_hash, execution_block) \
-    VALUES (%s, %s, %s)"
+            table: str = self.schema + "." + self.table_name
+            insert_query = (
+                f"INSERT INTO {table} (data, json_hash, execution_block) VALUES (%s, %s, %s)"
+            )
             cursor.execute(insert_query, (metadata_file_json, json_hash, execution_block))
             self.conn.commit()
-
-    def ingest_metadata(self, metadata: dict) -> None:
-        """
-        Ingests a data product metadata into the metadata store.
-
-        Args:
-            data_product_metadata_file_path (pathlib.Path): The path to the data file.
-
-        Returns:
-            None
-        """
-        try:
-            self.save_metadata_to_postgresql(metadata)
-        except Exception as error:
-            logger.error("Failed to ingest ingest_metadata, error: %s", error)
-            raise
 
     def save_metadata_to_postgresql(self, metadata_file_dict: dict) -> None:
         """Saves metadata to PostgreSQL."""
@@ -282,7 +304,7 @@ class PostgresConnector(MetadataStore):
         """
 
         with self.conn.cursor() as cursor:
-            cursor.execute(f"SELECT COUNT(*) FROM {self.table_name}")
+            cursor.execute(f"SELECT COUNT(*) FROM {self.schema}.{self.table_name}")
             result = cursor.fetchone()[0]
             self.number_of_dataproducts = int(result)
             return result
@@ -300,7 +322,7 @@ class PostgresConnector(MetadataStore):
         try:
             logger.info("PostgreSQL deleting database table %s", self.table_name)
             with self.conn.cursor() as cursor:
-                cursor.execute(f"DROP TABLE IF EXISTS {self.table_name}")
+                cursor.execute(f"DROP TABLE IF EXISTS {self.schema}.{self.table_name}")
                 self.conn.commit()
                 logger.info("PostgreSQL database table %s deleted.", self.table_name)
                 return True
@@ -324,7 +346,7 @@ class PostgresConnector(MetadataStore):
             list[dict]: list of JSON objects.
         """
         with self.conn.cursor() as cursor:
-            cursor.execute(f"SELECT id, data FROM {table_name}")
+            cursor.execute(f"SELECT id, data FROM {self.schema}.{table_name}")
             data = cursor.fetchall()
             return [{"id": row[0], "data": row[1]} for row in data]
 
@@ -346,12 +368,16 @@ class PostgresConnector(MetadataStore):
             A dictionary containing the metadata for the execution block, or None if not found.
         """
         try:
-            return self.get_data_by_execution_block(execution_block)
+            data_product_metadata = self.get_data_by_execution_block(execution_block)
+            if data_product_metadata:
+                return data_product_metadata
+            return {}
+
         except KeyError:
             logger.warning("Metadata not found for execution block ID: %s", execution_block)
             return {}
 
-    def get_data_by_execution_block(self, execution_block: str) -> dict[str, Any]:
+    def get_data_by_execution_block(self, execution_block: str) -> dict[str, Any] | None:
         """Retrieves data from the PostgreSQL table based on the execution_block.
 
         Args:
@@ -362,7 +388,9 @@ class PostgresConnector(MetadataStore):
         """
         try:
             with self.conn.cursor() as cursor:
-                check_query = f"SELECT data FROM {self.table_name} WHERE execution_block = %s"
+                check_query = (
+                    f"SELECT data FROM {self.schema}.{self.table_name} WHERE execution_block = %s"
+                )
                 cursor.execute(check_query, (execution_block,))
                 result = cursor.fetchone()
 
@@ -391,7 +419,9 @@ class PostgresConnector(MetadataStore):
 
         try:
             data_product_metadata = self.get_data_by_execution_block(execution_block)
-            return pathlib.Path(data_product_metadata["dataproduct_file"])
+            if data_product_metadata:
+                return pathlib.Path(data_product_metadata["dataproduct_file"])
+            return {}
         except KeyError:
             logger.warning("File path not found for execution block: %s", execution_block)
             return {}
