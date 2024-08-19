@@ -24,7 +24,7 @@ PYTHON_LINE_LENGTH = 99
 run-dev:
 # Proceed with poetry install and uvicorn command
 	poetry install; \
-	poetry run uvicorn ska_sdp_dataproduct_api.api.main:app --reload --port 8001 --host 0.0.0.0 --app-dir ./src --log-level debug
+	poetry run uvicorn ska_sdp_dataproduct_api.api.main:app --reload --port 8000 --host 0.0.0.0 --app-dir ./src --log-level debug
 
 restart-databases-containers:
 # Try restarting Docker containers (ignore errors)
