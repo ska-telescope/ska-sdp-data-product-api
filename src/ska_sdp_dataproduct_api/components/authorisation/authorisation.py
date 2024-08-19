@@ -7,7 +7,8 @@ import logging
 from typing import Any, Awaitable, Callable, Optional
 
 import httpx
-from fastapi import Depends, HTTPException, Request
+from fastapi import Depends, Request
+from httpx import ConnectError, HTTPStatusError, TimeoutException
 
 from ska_sdp_dataproduct_api.configuration.settings import (
     SKA_PERMISSIONS_API_HOST,
@@ -87,16 +88,17 @@ async def get_token_from_request(request: Request) -> str:
 
 
 async def get_user_groups(token: str | None) -> dict[str, list[str]]:
-    """Extracts and validates an access token from a request.
+    """Fetches user groups from the permissions API.
 
     Args:
-        request: The incoming request.
+        token: The access token.
 
     Returns:
-        The validated access token.
+        A dictionary containing the user's groups, or an empty dictionary
+        if there's an error or no token is provided.
 
     Raises:
-        HTTPException: If token is invalid or unauthorized access.
+        None
     """
     try:
         if token is None:
@@ -109,10 +111,7 @@ async def get_user_groups(token: str | None) -> dict[str, list[str]]:
             )
             response = await client.get(permissions_api_verification_endpoint, headers=headers)
             response.raise_for_status()  # Raise exception for non-200 status codes
-        return response.json()
-    except httpx.HTTPStatusError as error:
-        raise HTTPException(
-            status_code=401, detail=f"Token verification failed: {error}"
-        ) from error
-    except AuthError as error:
-        raise HTTPException(status_code=401, detail=f"Invalid token: {error}") from error
+            return response.json()
+    except (HTTPStatusError, AuthError, ConnectError, TimeoutException) as error:
+        logger.error("Error fetching user groups: %s", error)
+        return {"user_groups": []}

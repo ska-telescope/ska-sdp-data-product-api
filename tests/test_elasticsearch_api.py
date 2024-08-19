@@ -121,7 +121,11 @@ def test_search_metadata():
         ],
         "logicOperator": "and",
     }
-    metadata_list = search_store.filter_data(mui_data_grid_filter_model, search_panel_options)
+    metadata_list = search_store.filter_data(
+        mui_data_grid_filter_model=mui_data_grid_filter_model,
+        search_panel_options=search_panel_options,
+        users_user_group_list=[],
+    )
 
     expected_value = [
         {
@@ -159,7 +163,11 @@ def test_search_metadata_default_value():
         ],
         "logicOperator": "and",
     }
-    metadata_list = search_store.filter_data(mui_data_grid_filter_model, search_panel_options)
+    metadata_list = search_store.filter_data(
+        mui_data_grid_filter_model=mui_data_grid_filter_model,
+        search_panel_options=search_panel_options,
+        users_user_group_list=[],
+    )
 
     expected_value = [
         {

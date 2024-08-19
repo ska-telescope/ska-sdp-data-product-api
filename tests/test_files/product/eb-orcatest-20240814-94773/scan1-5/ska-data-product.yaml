@@ -1,0 +1,34 @@
+config:
+  cmdline: null
+  commit: null
+  image: artefact.skao.int/ska-sdp-script-pointing-offset
+  processing_block: pb-orcatestpo-20240814-94773
+  processing_script: pointing-offset
+  version: 0.5.0
+context: {
+  access_group: "ac9d0e43-931d-455d-b916-7e508db78a8e"}
+execution_block: eb-orcatest-20240814-94773
+files:
+- crc: null
+  description: 'Pointing offsets for scans: [1, 2, 3, 4, 5]'
+  path: /product/eb-orcatest-20240814-94773/ska-sdp/pb-orcatestpo-20240814-94773/scan1-5/pointing_offsets_scans_1-5.hdf5
+  status: done
+interface: http://schema.skao.int/ska-data-product-meta/0.1
+obscore:
+  access_estsize: 17
+  access_format: application/x-hdf5
+  calib_level: 0
+  dataproduct_type: POINTING-OFFSETS
+  em_max: 0.2194096688508468
+  em_min: 0.2259786503975031
+  facility_name: SKA-Observatory
+  instrument_name: SKA-MID
+  obs_collection: SKA-Observatory/SKA-MID/POINTING-OFFSETS
+  obs_id: ''
+  pol_states: stokesI
+  pol_xel: 1
+  s_dec: 2.052388
+  s_ra: 12.48519
+  t_max: 5179445120.477
+  t_min: 5179444768.625999
+  target_name: field_b

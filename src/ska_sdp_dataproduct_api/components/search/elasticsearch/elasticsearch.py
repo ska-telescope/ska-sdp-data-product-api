@@ -319,11 +319,26 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
         self.metadata_list.append(data_product_details)
         return
 
-    def filter_data(self, mui_data_grid_filter_model, search_panel_options):
-        """This is implemented in subclasses."""
+    def filter_data(
+        self,
+        mui_data_grid_filter_model,
+        search_panel_options,
+        users_user_group_list: list[str],
+    ):
+        """Filters data based on provided criteria.
+
+        Args:
+            mui_data_grid_filter_model: Filter model from the MUI data grid.
+            search_panel_options: Search panel options.
+            users_user_group_list: List of user groups.
+
+        Returns:
+            Filtered data.
+        """
         self.query_body = {"query": {"bool": {"should": [], "filter": []}}}
         self.add_search_panel_options_to_es_query(search_panel_options)
         self.add_mui_data_grid_filter_model_to_es_query(mui_data_grid_filter_model)
+        # add filter on access_group here
         self.search_metadata()
         muiDataGridInstance.rows.clear()
         muiDataGridInstance.flattened_list_of_dataproducts_metadata.clear()
@@ -336,6 +351,33 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
             muiDataGridInstance.flattened_list_of_dataproducts_metadata
         )
         return muiDataGridInstance.rows
+
+    def create_elasticsearch_query_body(self, users_user_groups):
+        """
+        Creates an Elasticsearch query body without using elasticsearch_dsl.
+
+        Args:
+            users_user_groups: A list of user groups.
+
+        Returns:
+            A dictionary representing the Elasticsearch query body.
+        """
+
+        query_body = {
+            "query": {
+                "bool": {
+                    "should": [{"bool": {"must_not": [{"exists": {"field": "access_group"}}]}}]
+                }
+            }
+        }
+
+        # Add terms query for each user group
+        for group in users_user_groups:
+            query_body["query"]["bool"]["should"].append({"term": {"access_group": group}})
+
+        logger.info("query_body:")
+        logger.info(query_body)
+        return query_body
 
     def add_search_panel_options_to_es_query(self, search_panel_options):
         """

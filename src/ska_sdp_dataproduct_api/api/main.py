@@ -90,7 +90,11 @@ async def data_products_search(search_parameters: SearchParametersClass):
         ],
         "logicOperator": "and",
     }
-    filtered_data = search_store.filter_data({}, search_options)
+    filtered_data = search_store.filter_data(
+        mui_data_grid_filter_model={},
+        search_panel_options=search_options,
+        users_user_group_list=[],
+    )
     return filtered_data
 
 
@@ -111,17 +115,19 @@ async def filter_data(token: str, request: Request) -> list:
         list: A list of filtered product data objects.
     """
     users_group_assignments = await get_user_groups(token=token)
-    logger.info("users_group_assignments:")
-    logger.info(users_group_assignments)
+    users_user_group_list = users_group_assignments["user_groups"]
 
     # Access the request body
     body = await request.json()
-
     mui_data_grid_filter_model = body.get("filterModel", {})
     search_panel_options = body.get("searchPanelOptions", {})
 
     # Rest of your code using body and request object
-    filtered_data = search_store.filter_data(mui_data_grid_filter_model, search_panel_options)
+    filtered_data = search_store.filter_data(
+        mui_data_grid_filter_model=mui_data_grid_filter_model,
+        search_panel_options=search_panel_options,
+        users_user_group_list=users_user_group_list,
+    )
 
     return filtered_data
 
