@@ -57,7 +57,15 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
         self.cluster_info: dict = {}
 
         self.metadata_list = []
-        self.query_body = {"query": {"bool": {"should": [], "filter": []}}}
+        self.query_body = {
+            "size": 100,
+            "query": {
+                "bool": {
+                    "must": [],
+                    "should": [],
+                }
+            },
+        }
         self.number_of_dataproducts: int = 0
 
     def status(self) -> dict:
@@ -335,10 +343,18 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
         Returns:
             Filtered data.
         """
-        self.query_body = {"query": {"bool": {"should": [], "filter": []}}}
+        self.query_body = {
+            "size": 100,
+            "query": {
+                "bool": {
+                    "must": [],
+                    "should": [],
+                }
+            },
+        }
         self.add_search_panel_options_to_es_query(search_panel_options)
         self.add_mui_data_grid_filter_model_to_es_query(mui_data_grid_filter_model)
-        # add filter on access_group here
+        self.add_access_group_to_query_body(users_user_group_list)
         self.search_metadata()
         muiDataGridInstance.rows.clear()
         muiDataGridInstance.flattened_list_of_dataproducts_metadata.clear()
@@ -352,34 +368,40 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
         )
         return muiDataGridInstance.rows
 
-    def create_elasticsearch_query_body(self, users_user_groups):
+    def add_access_group_to_query_body(self, users_user_groups: list[str]) -> None:
         """
-        Creates an Elasticsearch query body without using elasticsearch_dsl.
+        Modifies the internal query body to include a filter based on the provided user groups.
+
+        This method adds a nested boolean query with a "should" clause for each user group.
+        Each "should" clause includes a "match" query that searches for documents
+        where the "context.access_group" field matches the user group name.
 
         Args:
-            users_user_groups: A list of user groups.
+            users_user_groups (List[str]): A list of user group names.
+
+        Raises:
+            None
 
         Returns:
-            A dictionary representing the Elasticsearch query body.
+            dict: The updated query body.
         """
-
-        query_body = {
-            "query": {
-                "bool": {
-                    "should": [{"bool": {"must_not": [{"exists": {"field": "access_group"}}]}}]
-                }
+        access_group_query_body = {
+            "bool": {
+                "should": [
+                    {"bool": {"must_not": [{"exists": {"field": "context.access_group"}}]}},
+                ]
             }
         }
 
         # Add terms query for each user group
         for group in users_user_groups:
-            query_body["query"]["bool"]["should"].append({"term": {"access_group": group}})
+            access_group_query_body["bool"]["should"].append(
+                {"match": {"context.access_group": group}}
+            )
 
-        logger.info("query_body:")
-        logger.info(query_body)
-        return query_body
+        self.query_body["query"]["bool"]["must"].append(access_group_query_body)
 
-    def add_search_panel_options_to_es_query(self, search_panel_options):
+    def add_search_panel_options_to_es_query(self, search_panel_options) -> None:
         """
         Builds an Elasticsearch query body based on the provided data structure.
 
@@ -427,9 +449,9 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
             }
         }
 
-        self.query_body["query"]["bool"]["filter"].append(date_ranges)
+        self.query_body["query"]["bool"]["must"].append(date_ranges)
 
-    def add_mui_data_grid_filter_model_to_es_query(self, mui_data_grid_filter_model):
+    def add_mui_data_grid_filter_model_to_es_query(self, mui_data_grid_filter_model) -> None:
         """
         Builds an Elasticsearch query body based on the provided data structure.
 
