@@ -265,6 +265,12 @@ WHERE id = %s"
             cursor.execute(insert_query, (metadata_file_json, json_hash, execution_block))
             self.conn.commit()
 
+
+    def ingest_metadata(self, metadata_file_dict: dict) -> None:
+        """Saves or update metadata to PostgreSQL."""
+        self.save_metadata_to_postgresql(metadata_file_dict)
+
+
     def save_metadata_to_postgresql(self, metadata_file_dict: dict) -> None:
         """Saves metadata to PostgreSQL."""
         try:
