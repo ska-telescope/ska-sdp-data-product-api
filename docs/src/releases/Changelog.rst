@@ -5,6 +5,15 @@ Changelog
 Current Development
 -------------------
 
+* `NAL-1146 <https://jira.skatelescope.org/browse/NAL-1146>`_ 
+
+  - **BREAKING** [Added] Added the concept of access_group to the metadata. This limits the access to data products if the user, authenticated with MS Entra, has not been assigned to the access_group of the data product. When using the API with the Data Product Dashboard, the user can authenticate with MS Entra. When loading the data products (using the filterdataproducts endpoint) the users access token will be used to retrieve the users assigned user groups, and that will be used as access list to determine which data products the user have access to. 
+  Data products that does not have an access_group assigned, will be open access to all users.
+  Note: When using the API for scripted access to data products with the dataproductsearch endpoint, only data products with open access will be accessible.
+  - **BREAKING** [Added] Integrated the API with the SKA Permissions API to enable it to obtain the users assigned user groups from MS Entra.
+  - [Changed] Changed the Elasticsearch schema date_created field to date, and updated the query_body size to 100.
+
+
 * `NAL-1145 <https://jira.skatelescope.org/browse/NAL-1145>`_ 
 
   - [Changed] Updated the configuration of the PostgreSQL metadata store to allow specification of a schema.
