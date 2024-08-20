@@ -12,6 +12,7 @@ Current Development
   Note: When using the API for scripted access to data products with the dataproductsearch endpoint, only data products with open access will be accessible.
   - **BREAKING** [Added] Integrated the API with the SKA Permissions API to enable it to obtain the users assigned user groups from MS Entra.
   - [Changed] Changed the Elasticsearch schema date_created field to date, and updated the query_body size to 100.
+  - [Changed] The Elasticsearch http CA certificate needs to be loaded when deployed from the vault. To maintain the correct formatting, the certificate needs to be Base64 encoded before it is saved in the vault. The DPD API will now load the certificate from the vault into an environment variable, then decode it and save it in the format required for Elasticsearch.
 
 
 * `NAL-1145 <https://jira.skatelescope.org/browse/NAL-1145>`_ 

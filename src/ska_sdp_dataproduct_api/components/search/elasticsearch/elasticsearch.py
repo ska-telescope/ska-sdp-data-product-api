@@ -1,4 +1,5 @@
 """Module to insert data into Elasticsearch instance."""
+import base64
 import datetime
 import json
 import logging
@@ -16,7 +17,8 @@ from ska_sdp_dataproduct_api.components.store.in_memory.in_memory import (
 from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
 from ska_sdp_dataproduct_api.configuration.settings import (
     CONFIGURATION_FILES_PATH,
-    ELASTICSEARCH_HTTP_CA,
+    ELASTIC_HTTP_CA_BASE64_CERT,
+    ELASTIC_HTTP_CA_FILE_NAME,
 )
 from ska_sdp_dataproduct_api.utilities.helperfunctions import find_metadata
 
@@ -97,6 +99,35 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
 
         return response
 
+    def save_ca_cert_to_file(
+        self, ca_cert_content: str, config_file_path: Path, ca_cert: str
+    ) -> bool:
+        """Saves CA certificate content to file."""
+        try:
+            ca_cert_path = config_file_path / ca_cert
+            with open(ca_cert_path, "wb") as file:
+                file.write(ca_cert_content)
+            return True
+        except (IOError, ValueError) as error:
+            logging.error("Error saving CA certificate from environment: %s", error)
+            return False
+
+    def decode_base64(self, encoded_string):
+        """Decodes a Base64 encoded string.
+
+        Args:
+            encoded_string: The Base64 encoded string.
+
+        Returns:
+            The decoded string.
+        """
+
+        try:
+            return base64.b64decode(encoded_string)
+        except Exception as exception:  # pylint: disable=broad-exception-caught
+            logger.exception("Error decoding Base64 string: %s", exception)
+            return None
+
     def load_ca_cert(self, config_file_path: Path, ca_cert: str) -> None:
         """
         Attempts to load the CA certificate from the configured path.
@@ -130,10 +161,13 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
 
             ca_cert_path: Path = config_file_path / ca_cert
 
-            # Check if the file exists and is a regular file
-            if ca_cert_path.is_file():
+            if self.save_ca_cert_to_file(
+                ca_cert_content=self.decode_base64(ELASTIC_HTTP_CA_BASE64_CERT),
+                config_file_path=CONFIGURATION_FILES_PATH,
+                ca_cert=ELASTIC_HTTP_CA_FILE_NAME,
+            ):
                 self.ca_cert: Path = ca_cert_path
-
+                logging.info("CA certificate saved to file: %s", ca_cert_path)
             else:
                 logging.info("CA certificate file not found: %s", ca_cert_path)
                 self.ca_cert = None
@@ -147,7 +181,9 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
         """Connecting to Elasticsearch host and create default schema"""
         logger.info("Connecting to Elasticsearch...")
 
-        self.load_ca_cert(config_file_path=CONFIGURATION_FILES_PATH, ca_cert=ELASTICSEARCH_HTTP_CA)
+        self.load_ca_cert(
+            config_file_path=CONFIGURATION_FILES_PATH, ca_cert=ELASTIC_HTTP_CA_FILE_NAME
+        )
 
         self.es_client = Elasticsearch(
             hosts=self.url,
