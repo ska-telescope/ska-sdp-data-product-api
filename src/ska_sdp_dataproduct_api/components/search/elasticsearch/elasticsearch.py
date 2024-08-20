@@ -152,20 +152,27 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
         self.es_client = Elasticsearch(
             hosts=self.url,
             http_auth=(self.user, self.password),
-            verify_certs=False,
+            verify_certs=True,
             ca_certs=self.ca_cert,
         )
 
-        if self.es_client.ping():
-            self.connection_established_at = datetime.datetime.now()
-            self.elasticsearch_running = True
-            self.cluster_info = self.es_client.info()
-            logger.info("Connected to Elasticsearch; creating default schema...")
-            self.create_schema_if_not_existing(index=self.indices, schema=self.schema)
-            self.load_metadata_from_store()
+        try:
+            if self.es_client.ping():
+                self.connection_established_at = datetime.datetime.now()
+                self.elasticsearch_running = True
+                self.cluster_info = self.es_client.info()
+                logger.info("Connected to Elasticsearch; creating default schema...")
+                self.create_schema_if_not_existing(index=self.indices, schema=self.schema)
+                self.load_metadata_from_store()
 
-            return True
-        return False
+                return True
+            return False
+        except Exception as exception:  # pylint: disable=broad-exception-caught
+            logger.exception(
+                "Exception when trying to connect to Elasticsearch, using in memory search: %s",
+                exception,
+            )
+            return False
 
     def check_and_reconnect(self) -> bool:
         """
