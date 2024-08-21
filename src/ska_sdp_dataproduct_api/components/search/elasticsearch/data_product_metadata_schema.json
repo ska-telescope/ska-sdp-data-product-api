@@ -60,7 +60,8 @@
                 }
             },
             "date_created": {
-                "type": "text"
+                "type": "date",
+                "format": "yyyy-MM-dd"
             },
             "dataproduct_file": {
                 "type": "text"

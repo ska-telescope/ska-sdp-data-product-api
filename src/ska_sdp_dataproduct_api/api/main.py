@@ -1,12 +1,15 @@
 """This API exposes SDP Data Products to the SDP Data Product Dashboard."""
 
 import logging
-from typing import Optional
 
-from fastapi import BackgroundTasks, Body
+from fastapi import BackgroundTasks, Request
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 
+from ska_sdp_dataproduct_api.components.authorisation.authorisation import (
+    extract_token,
+    get_user_groups,
+)
 from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
 from ska_sdp_dataproduct_api.components.store.store_factory import (
     select_metadata_store_class,
@@ -87,12 +90,17 @@ async def data_products_search(search_parameters: SearchParametersClass):
         ],
         "logicOperator": "and",
     }
-    filtered_data = search_store.filter_data({}, search_options)
+    filtered_data = search_store.filter_data(
+        mui_data_grid_filter_model={},
+        search_panel_options=search_options,
+        users_user_group_list=[],
+    )
     return filtered_data
 
 
 @app.post("/filterdataproducts")
-async def filter_data(body: Optional[dict] = Body(...)) -> list:
+@extract_token
+async def filter_data(token: str, request: Request) -> list:
     """
     Filters product data based on provided criteria.
 
@@ -100,16 +108,27 @@ async def filter_data(body: Optional[dict] = Body(...)) -> list:
     It applies filters to the in-memory data search_store.
 
     Args:
-        filter_data (Optional[list]): The filter criteria.
-            Defaults to None.
+        token: The validated access token.
+        request: The incoming request object.
 
     Returns:
         list: A list of filtered product data objects.
     """
+    users_group_assignments = await get_user_groups(token=token)
+    users_user_group_list = users_group_assignments["user_groups"]
+
+    # Access the request body
+    body = await request.json()
     mui_data_grid_filter_model = body.get("filterModel", {})
     search_panel_options = body.get("searchPanelOptions", {})
 
-    filtered_data = search_store.filter_data(mui_data_grid_filter_model, search_panel_options)
+    # Rest of your code using body and request object
+    filtered_data = search_store.filter_data(
+        mui_data_grid_filter_model=mui_data_grid_filter_model,
+        search_panel_options=search_panel_options,
+        users_user_group_list=users_user_group_list,
+    )
+
     return filtered_data
 
 

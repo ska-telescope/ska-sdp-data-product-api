@@ -1,4 +1,5 @@
 """Module to insert data into Elasticsearch instance."""
+import base64
 import datetime
 import json
 import logging
@@ -16,7 +17,8 @@ from ska_sdp_dataproduct_api.components.store.in_memory.in_memory import (
 from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
 from ska_sdp_dataproduct_api.configuration.settings import (
     CONFIGURATION_FILES_PATH,
-    ELASTICSEARCH_HTTP_CA,
+    ELASTIC_HTTP_CA_BASE64_CERT,
+    ELASTIC_HTTP_CA_FILE_NAME,
 )
 from ska_sdp_dataproduct_api.utilities.helperfunctions import find_metadata
 
@@ -57,7 +59,15 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
         self.cluster_info: dict = {}
 
         self.metadata_list = []
-        self.query_body = {"query": {"bool": {"should": [], "filter": []}}}
+        self.query_body = {
+            "size": 100,
+            "query": {
+                "bool": {
+                    "must": [],
+                    "should": [],
+                }
+            },
+        }
         self.number_of_dataproducts: int = 0
 
     def status(self) -> dict:
@@ -88,6 +98,35 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
         }
 
         return response
+
+    def save_ca_cert_to_file(
+        self, ca_cert_content: str, config_file_path: Path, ca_cert: str
+    ) -> bool:
+        """Saves CA certificate content to file."""
+        try:
+            ca_cert_path = config_file_path / ca_cert
+            with open(ca_cert_path, "wb") as file:
+                file.write(ca_cert_content)
+            return True
+        except (IOError, ValueError) as error:
+            logging.error("Error saving CA certificate from environment: %s", error)
+            return False
+
+    def decode_base64(self, encoded_string):
+        """Decodes a Base64 encoded string.
+
+        Args:
+            encoded_string: The Base64 encoded string.
+
+        Returns:
+            The decoded string.
+        """
+
+        try:
+            return base64.b64decode(encoded_string)
+        except Exception as exception:  # pylint: disable=broad-exception-caught
+            logger.exception("Error decoding Base64 string: %s", exception)
+            return None
 
     def load_ca_cert(self, config_file_path: Path, ca_cert: str) -> None:
         """
@@ -122,10 +161,13 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
 
             ca_cert_path: Path = config_file_path / ca_cert
 
-            # Check if the file exists and is a regular file
-            if ca_cert_path.is_file():
+            if self.save_ca_cert_to_file(
+                ca_cert_content=self.decode_base64(ELASTIC_HTTP_CA_BASE64_CERT),
+                config_file_path=CONFIGURATION_FILES_PATH,
+                ca_cert=ELASTIC_HTTP_CA_FILE_NAME,
+            ):
                 self.ca_cert: Path = ca_cert_path
-
+                logging.info("CA certificate saved to file: %s", ca_cert_path)
             else:
                 logging.info("CA certificate file not found: %s", ca_cert_path)
                 self.ca_cert = None
@@ -139,25 +181,34 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
         """Connecting to Elasticsearch host and create default schema"""
         logger.info("Connecting to Elasticsearch...")
 
-        self.load_ca_cert(config_file_path=CONFIGURATION_FILES_PATH, ca_cert=ELASTICSEARCH_HTTP_CA)
+        self.load_ca_cert(
+            config_file_path=CONFIGURATION_FILES_PATH, ca_cert=ELASTIC_HTTP_CA_FILE_NAME
+        )
 
         self.es_client = Elasticsearch(
             hosts=self.url,
             http_auth=(self.user, self.password),
-            verify_certs=False,
+            verify_certs=True,
             ca_certs=self.ca_cert,
         )
 
-        if self.es_client.ping():
-            self.connection_established_at = datetime.datetime.now()
-            self.elasticsearch_running = True
-            self.cluster_info = self.es_client.info()
-            logger.info("Connected to Elasticsearch; creating default schema...")
-            self.create_schema_if_not_existing(index=self.indices, schema=self.schema)
-            self.load_metadata_from_store()
+        try:
+            if self.es_client.ping():
+                self.connection_established_at = datetime.datetime.now()
+                self.elasticsearch_running = True
+                self.cluster_info = self.es_client.info()
+                logger.info("Connected to Elasticsearch; creating default schema...")
+                self.create_schema_if_not_existing(index=self.indices, schema=self.schema)
+                self.load_metadata_from_store()
 
-            return True
-        return False
+                return True
+            return False
+        except Exception as exception:  # pylint: disable=broad-exception-caught
+            logger.exception(
+                "Exception when trying to connect to Elasticsearch, using in memory search: %s",
+                exception,
+            )
+            return False
 
     def check_and_reconnect(self) -> bool:
         """
@@ -319,11 +370,34 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
         self.metadata_list.append(data_product_details)
         return
 
-    def filter_data(self, mui_data_grid_filter_model, search_panel_options):
-        """This is implemented in subclasses."""
-        self.query_body = {"query": {"bool": {"should": [], "filter": []}}}
+    def filter_data(
+        self,
+        mui_data_grid_filter_model,
+        search_panel_options,
+        users_user_group_list: list[str],
+    ):
+        """Filters data based on provided criteria.
+
+        Args:
+            mui_data_grid_filter_model: Filter model from the MUI data grid.
+            search_panel_options: Search panel options.
+            users_user_group_list: List of user groups.
+
+        Returns:
+            Filtered data.
+        """
+        self.query_body = {
+            "size": 100,
+            "query": {
+                "bool": {
+                    "must": [],
+                    "should": [],
+                }
+            },
+        }
         self.add_search_panel_options_to_es_query(search_panel_options)
         self.add_mui_data_grid_filter_model_to_es_query(mui_data_grid_filter_model)
+        self.add_access_group_to_query_body(users_user_group_list)
         self.search_metadata()
         muiDataGridInstance.rows.clear()
         muiDataGridInstance.flattened_list_of_dataproducts_metadata.clear()
@@ -337,7 +411,40 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
         )
         return muiDataGridInstance.rows
 
-    def add_search_panel_options_to_es_query(self, search_panel_options):
+    def add_access_group_to_query_body(self, users_user_groups: list[str]) -> None:
+        """
+        Modifies the internal query body to include a filter based on the provided user groups.
+
+        This method adds a nested boolean query with a "should" clause for each user group.
+        Each "should" clause includes a "match" query that searches for documents
+        where the "context.access_group" field matches the user group name.
+
+        Args:
+            users_user_groups (List[str]): A list of user group names.
+
+        Raises:
+            None
+
+        Returns:
+            dict: The updated query body.
+        """
+        access_group_query_body = {
+            "bool": {
+                "should": [
+                    {"bool": {"must_not": [{"exists": {"field": "context.access_group"}}]}},
+                ]
+            }
+        }
+
+        # Add terms query for each user group
+        for group in users_user_groups:
+            access_group_query_body["bool"]["should"].append(
+                {"match": {"context.access_group": group}}
+            )
+
+        self.query_body["query"]["bool"]["must"].append(access_group_query_body)
+
+    def add_search_panel_options_to_es_query(self, search_panel_options) -> None:
         """
         Builds an Elasticsearch query body based on the provided data structure.
 
@@ -385,9 +492,9 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
             }
         }
 
-        self.query_body["query"]["bool"]["filter"].append(date_ranges)
+        self.query_body["query"]["bool"]["must"].append(date_ranges)
 
-    def add_mui_data_grid_filter_model_to_es_query(self, mui_data_grid_filter_model):
+    def add_mui_data_grid_filter_model_to_es_query(self, mui_data_grid_filter_model) -> None:
         """
         Builds an Elasticsearch query body based on the provided data structure.
 

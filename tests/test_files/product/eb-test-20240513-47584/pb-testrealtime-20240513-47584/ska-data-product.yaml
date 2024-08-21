@@ -1,0 +1,36 @@
+config:
+  cmdline: null
+  commit: null
+  image: artefact.skao.int/ska-sdp-script-vis-receive
+  processing_block: pb-testrealtime-20240513-47584
+  processing_script: vis-receive
+  version: 4.0.0
+context: {
+  access_group: "not-in-my-access-groups"}
+execution_block: eb-test-20240513-47584
+files:
+- crc: null
+  description: MS for scan 1
+  path: output.scan-1.ms
+  status: finished
+interface: http://schema.skao.int/ska-data-product-meta/0.1
+obscore:
+  access_estsize: null
+  access_format: application/unknown
+  access_url: null
+  calib_level: 0
+  dataproduct_type: Unknown
+  facility_name: SKA-Observatory
+  instrument_name: Unknown
+  o_ucd: null
+  obs_collection: Unknown
+  obs_id: ''
+  pol_states: null
+  pol_xel: null
+  s_dec: null
+  s_ra: null
+  t_exptime: null
+  t_max: null
+  t_min: null
+  t_resolution: null
+  target_name: null

@@ -82,8 +82,13 @@ ELASTICSEARCH_PORT: int = int(
     )
 )
 
-ELASTICSEARCH_HTTP_CA: str = config(
-    "SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA",
+ELASTIC_HTTP_CA_FILE_NAME: str = config(
+    "SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA_FILE_NAME",
+    default=None,
+)
+
+ELASTIC_HTTP_CA_BASE64_CERT: str = secrets(
+    "SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA_BASE64_CERT",
     default=None,
 )
 
@@ -109,7 +114,7 @@ ELASTICSEARCH_METADATA_SCHEMA_FILE: pathlib.Path = pathlib.Path(
 
 ELASTICSEARCH_INDICES: str = config(
     "SDP_DATAPRODUCT_API_ELASTIC_INDICES",
-    default=("localhost-sdp-dataproduct-dashboard-dev-v1"),
+    default=("ska-dp-dataproduct-localhost-dev-v1"),
 )
 # ----
 # PostgreSQL Variables
@@ -150,7 +155,20 @@ POSTGRESQL_TABLE_NAME: str = config(
     default=("data_products_metadata_v1"),
 )
 # ----
+# SKA Permissions API
+SKA_PERMISSIONS_API_HOST: str = config(
+    "SKA_PERMISSIONS_API_HOST",
+    default="localhost",
+)
 
+SKA_PERMISSIONS_API_PORT: int = int(
+    config(
+        "SKA_PERMISSIONS_API_PORT",
+        default=8000,
+    )
+)
+
+# ----
 DATE_FORMAT: str = config("DATE_FORMAT", default="%Y-%m-%d")
 
 API_ROOT_PATH: str = config("API_ROOT_PATH", default="")

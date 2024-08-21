@@ -14,7 +14,8 @@ Basic Usage
 -----------
 
 .. note:: This API is typically deployed behind a secure layer that encrypts communication (TLS/SSL) and likely requires user authentication through a separate system. When accessing the API through a browser, both the encryption and the authentication will be handled by the browser, but direct access with scripts or notebooks to the API from outside the cluster is currently not supported. To make use of this API directly, the user need to access it from within the cluster where it is hosted.
- 
+
+.. note:: If a data product have been assigned a context.access_group, then that data product will not be available/listed when accessing the api directly with scripts or notebooks. This is due the required access token of an authenticate user that is not available in this mode of operation.
 
 Status endpoint
 ~~~~~~~~~~~~~~~
@@ -55,7 +56,7 @@ Verify the API's status by sending a GET request to the /status endpoint. The re
             "running": true,
             "connection_established_at": "2024-08-06T21:59:18.210017",
             "number_of_dataproducts": 10,
-            "indices": "localhost-sdp-dataproduct-dashboard-dev-v1",
+            "indices": "ska-dp-dataproduct-localhost-dev-v1",
             "cluster_info": {
                 "name": "46f82bbc7307",
                 "cluster_name": "docker-cluster",

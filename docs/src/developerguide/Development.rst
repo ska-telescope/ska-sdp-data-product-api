@@ -42,14 +42,14 @@ When deployed to environments with a shared Elasticsearch instance managed by th
 
 .. code-block::
 
-    <Data center>-<product/app>-<namespace>-<version>
+    ska-dp-dataproduct-<Data center>-<namespace>-<version>
 
 For example:
 
 .. code-block::
 
-    localhost-sdp-dataproduct-dashboard-dev-v1
-    sdhp-stfc-sdp-dataproduct-dashboard-integration-v1
+    ska-dp-dataproduct-localhost-dev-v1
+    ska-dp-dataproduct-sdhp-stfc-integration-v1
 
 The version number allows for schema changes when needed.
 
@@ -66,14 +66,22 @@ Configure the environmental variables in the .env file under the root folder acc
     METADATA_FILE_NAME=ska-data-product.yaml
     STREAM_CHUNK_SIZE=65536
     SDP_DATAPRODUCT_API_POSTGRESQL_USER=postgres
-    SDP_DATAPRODUCT_API_POSTGRESQL_PASSWORD=password
     SDP_DATAPRODUCT_API_ELASTIC_HOST=http://localhost
     SDP_DATAPRODUCT_API_ELASTIC_PORT=9200
     SDP_DATAPRODUCT_API_ELASTIC_USER=elastic
-    SDP_DATAPRODUCT_API_ELASTIC_PASSWORD=password
-    SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA=http_ca.crt
+    SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA_FILE_NAME=http_ca.crt
     SDP_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE=./src/ska_sdp_dataproduct_api/components/search/elasticsearch/data_product_metadata_schema.json
-    SDP_DATAPRODUCT_API_ELASTIC_INDICES=localhost-sdp-dataproduct-dashboard-dev-v1
+    SDP_DATAPRODUCT_API_ELASTIC_INDICES=ska-dp-dataproduct-localhost-dev-v1
+
+
+Configure the application secrets in the .secrets file under the root folder according to your requirements and environment.
+
+.. code-block:: bash
+
+    SDP_DATAPRODUCT_API_POSTGRESQL_PASSWORD=password
+    SDP_DATAPRODUCT_API_ELASTIC_PASSWORD=password
+    SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA_BASE64_CERT="<Your self signed base 64 encoded CA Cert>"
+
 
 To run the application directly on your host machine:
 

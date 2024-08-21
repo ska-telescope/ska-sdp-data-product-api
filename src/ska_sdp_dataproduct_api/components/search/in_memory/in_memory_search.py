@@ -158,19 +158,53 @@ class InMemoryDataproductSearch(MetadataSearchStore):
         return json.dumps(search_results)
 
     def filter_data(
-        self, mui_data_grid_filter_model: dict[str, Any], search_panel_options: dict[str, Any]
-    ):
-        """This is implemented in subclasses."""
+        self,
+        mui_data_grid_filter_model: dict[str, Any],
+        search_panel_options: dict[str, Any],
+        users_user_group_list: list[str],
+    ) -> list[dict]:
+        """Filters data based on provided criteria.
+
+        Args:
+            mui_data_grid_filter_model: Filter model from the MUI data grid.
+            search_panel_options: Search panel options.
+            users_user_group_list: List of user groups.
+
+        Returns:
+            Filtered data.
+        """
         muiDataGridInstance.load_metadata_from_list(
             muiDataGridInstance.flattened_list_of_dataproducts_metadata
         )
 
-        mui_filtered_data = self.apply_filters(
-            muiDataGridInstance.rows.copy(), mui_data_grid_filter_model
+        access_filtered_data = self.access_filter(
+            data=muiDataGridInstance.rows.copy(), users_user_groups=users_user_group_list
         )
+        mui_filtered_data = self.apply_filters(access_filtered_data, mui_data_grid_filter_model)
         searchbox_filtered_data = self.apply_filters(mui_filtered_data, search_panel_options)
 
         return searchbox_filtered_data
+
+    def access_filter(
+        self, data: list[dict[str, Any]], users_user_groups: list[str]
+    ) -> list[dict[str, Any]]:
+        """Filters the mui_data_grid_filter_model based on access groups.
+
+        Args:
+            data: A list of dictionaries representing filter model data.
+            users_user_groups: A list of user group names.
+
+        Returns:
+            A filtered list of dictionaries where either no access_group is assigned or the
+            assigned access_group is in the users_user_groups list.
+        """
+
+        filtered_model = []
+        for item in data:
+            access_group = item.get("context.access_group", None)
+            if access_group is None or access_group in users_user_groups:
+                filtered_model.append(item)
+        return filtered_model
 
     def apply_filters(
         self, data: list[dict[str, Any]], filters: dict[str, Any]
