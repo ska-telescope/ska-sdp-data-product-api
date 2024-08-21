@@ -177,10 +177,10 @@ class InMemoryDataproductSearch(MetadataSearchStore):
             muiDataGridInstance.flattened_list_of_dataproducts_metadata
         )
 
-        access_filterd_data = self.access_filter(
+        access_filtered_data = self.access_filter(
             data=muiDataGridInstance.rows.copy(), users_user_groups=users_user_group_list
         )
-        mui_filtered_data = self.apply_filters(access_filterd_data, mui_data_grid_filter_model)
+        mui_filtered_data = self.apply_filters(access_filtered_data, mui_data_grid_filter_model)
         searchbox_filtered_data = self.apply_filters(mui_filtered_data, search_panel_options)
 
         return searchbox_filtered_data
