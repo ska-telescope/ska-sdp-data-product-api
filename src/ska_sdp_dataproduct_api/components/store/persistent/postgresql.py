@@ -51,7 +51,7 @@ class PostgresConnector(MetadataStore):
         self.postgresql_version: str = ""
         self.number_of_dataproducts: int = 0
 
-        self._connect()
+        self._connect(self.build_connection_string())
         if self.postgresql_running:
             self.postgresql_version = self._get_postgresql_version()
             self.create_metadata_table()
@@ -77,7 +77,23 @@ class PostgresConnector(MetadataStore):
             "postgresql_version": self.postgresql_version,
         }
 
-    def _connect(self) -> None:
+    def build_connection_string(self) -> str:
+        """
+        Builds the connection string for PostgreSQL based on provided credentials.
+
+        Returns:
+            str: The connection string.
+        """
+        return (
+            f"dbname='{self.dbname}' "
+            f"user='{self.user}' "
+            f"password='{self.password}' "
+            f"host='{self.host}' "
+            f"port='{self.port}' "
+            f"options='-c search_path=\"{self.schema}\"'"
+        )
+
+    def _connect(self, connection_string: str) -> None:
         """
         Attempts to connect to the PostgreSQL instance.
 
@@ -85,16 +101,7 @@ class PostgresConnector(MetadataStore):
           None.
         """
         try:
-            connection_string = (
-                f"dbname='{self.dbname}' "
-                f"user='{self.user}' "
-                f"password='{self.password}' "
-                f"host='{self.host}' "
-                f"port='{self.port}' "
-                f"options='-c search_path=\"{self.schema}\"'"
-            )
             self.conn = psycopg.connect(connection_string)
-
             self.postgresql_running = True
             logger.info("Connected to PostgreSQL successfully")
 
