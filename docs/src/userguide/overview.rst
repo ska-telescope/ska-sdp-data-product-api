@@ -257,7 +257,7 @@ For example, the POST request body:
 
     {
         "interface": "http://schema.skao.int/ska-data-product-meta/0.1",
-        "execution_block": "eb-rest-20240806-99999",
+        "execution_block": "eb-test-20240806-99999",
         "context": {
             "observer": "REST ingest",
             "intent": "",

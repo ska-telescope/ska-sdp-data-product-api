@@ -59,7 +59,7 @@ def test_ingest_new_metadata(test_app):
     """Test if metadata for a new data product can be ingested via the
     REST API
     """
-    execution_block_id = "eb-rest-00000000-99999"
+    execution_block_id = "eb-test-20191031-99999"
 
     data = {
         "interface": "http://schema.skao.int/ska-data-product-meta/0.1",

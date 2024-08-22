@@ -1,5 +1,6 @@
 """Module to insert data into Elasticsearch instance."""
 import copy
+import datetime
 import json
 import logging
 from typing import Any, Union
@@ -104,8 +105,8 @@ class InMemoryDataproductSearch(MetadataSearchStore):
     ):
         """Metadata Search method."""
         try:
-            start_date = parse_valid_date(start_date, DATE_FORMAT)
-            end_date = parse_valid_date(end_date, DATE_FORMAT)
+            start_date_datetime = parse_valid_date(start_date, DATE_FORMAT)
+            end_date_datetime = parse_valid_date(end_date, DATE_FORMAT)
         except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error(
                 "Error, invalid time range start_date=%s, end_date=%s with error: %s. \
@@ -114,8 +115,8 @@ class InMemoryDataproductSearch(MetadataSearchStore):
                 end_date,
                 exception,
             )
-            start_date: str = "1970-01-01"
-            end_date: str = "2100-01-01"
+            start_date_datetime: datetime.datetime = parse_valid_date("1970-01-01", DATE_FORMAT)
+            end_date_datetime: datetime.datetime = parse_valid_date("2100-01-01", DATE_FORMAT)
 
         if metadata_key_value_pairs is None or len(metadata_key_value_pairs) == 0:
             search_results = copy.deepcopy(
@@ -127,9 +128,21 @@ class InMemoryDataproductSearch(MetadataSearchStore):
                 except Exception as exception:  # pylint: disable=broad-exception-caught
                     logger.error("Error, invalid date=%s", exception)
                     continue
-                if not start_date <= product_date <= end_date:
+                if not start_date_datetime <= product_date <= end_date_datetime:
                     search_results.remove(product)
+                    logger.info(
+                        "Removed start_date_datetime=%s product_date=%s end_date_datetime=%s",
+                        start_date_datetime,
+                        product_date,
+                        end_date_datetime,
+                    )
                     continue
+                logger.info(
+                    "NOT REMOVED: start_date_datetime=%s product_date=%s end_date_datetime=%s",
+                    start_date_datetime,
+                    product_date,
+                    end_date_datetime,
+                )
 
             return json.dumps(search_results)
 
@@ -140,7 +153,7 @@ class InMemoryDataproductSearch(MetadataSearchStore):
             except Exception as exception:  # pylint: disable=broad-exception-caught
                 logger.error("Error, invalid date=%s", exception)
                 continue
-            if not start_date <= product_date <= end_date:
+            if not start_date_datetime <= product_date <= end_date_datetime:
                 search_results.remove(product)
                 continue
             for key_value_pair in metadata_key_value_pairs:
