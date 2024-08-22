@@ -36,6 +36,8 @@ class InMemoryDataproductSearch(MetadataSearchStore):
     ) -> None:
         super().__init__(metadata_store)
         self.number_of_dataproducts: int = 0
+        muiDataGridInstance.flattened_set_of_keys.clear()
+        muiDataGridInstance.flattened_list_of_dataproducts_metadata.clear()
         self.load_metadata_from_store()
 
     def insert_metadata_in_search_store(self, metadata_dict: dict):
