@@ -301,7 +301,7 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
             logger.error("Error inserting metadata into search store: %s", exception)
             return False
 
-    def sort_metadata_list(self) -> None:
+    def sort_list_of_dict(self) -> None:
         """This method sorts the metadata_list according to the set key"""
 
     def search_metadata(self):

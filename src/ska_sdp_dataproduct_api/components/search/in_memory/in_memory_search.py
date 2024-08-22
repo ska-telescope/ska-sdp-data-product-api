@@ -72,31 +72,6 @@ class InMemoryDataproductSearch(MetadataSearchStore):
             "number_of_dataproducts": self.number_of_dataproducts,
         }
 
-    def sort_metadata_list(self, key: str = "date_created", reverse: bool = True) -> None:
-        """Sorts the `flattened_list_of_dataproducts_metadata` attribute of the class instance
-        in-place.
-
-        Args:
-            key (str, optional): The key attribute to sort by. Defaults to "date_created".
-            reverse (bool, optional): Whether to sort in descending order. Defaults to True.
-
-        Raises:
-            TypeError: If the provided `key` is not a string.
-            ValueError: If the `key` is not found in the elements of
-            `flattened_list_of_dataproducts_metadata`.
-        """
-
-        for element in muiDataGridInstance.flattened_list_of_dataproducts_metadata:
-            if key not in element:
-                logger.info(
-                    "Key %s not found in all elements of flattened_list_of_dataproducts_metadata",
-                    key,
-                )
-
-        muiDataGridInstance.flattened_list_of_dataproducts_metadata.sort(
-            key=lambda x: x[key], reverse=reverse
-        )
-
     def search_metadata(
         self,
         start_date: str = "1970-01-01",
@@ -130,19 +105,7 @@ class InMemoryDataproductSearch(MetadataSearchStore):
                     continue
                 if not start_date_datetime <= product_date <= end_date_datetime:
                     search_results.remove(product)
-                    logger.info(
-                        "Removed start_date_datetime=%s product_date=%s end_date_datetime=%s",
-                        start_date_datetime,
-                        product_date,
-                        end_date_datetime,
-                    )
                     continue
-                logger.info(
-                    "NOT REMOVED: start_date_datetime=%s product_date=%s end_date_datetime=%s",
-                    start_date_datetime,
-                    product_date,
-                    end_date_datetime,
-                )
 
             return json.dumps(search_results)
 
