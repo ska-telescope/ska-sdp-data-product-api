@@ -1,62 +1,53 @@
 """Module to test PostgresConnector"""
 
+import pathlib
+
 import pytest
 
 from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
-from ska_sdp_dataproduct_api.configuration.settings import (
-    POSTGRESQL_DBNAME,
-    POSTGRESQL_HOST,
-    POSTGRESQL_PASSWORD,
-    POSTGRESQL_PORT,
-    POSTGRESQL_SCHEMA,
-    POSTGRESQL_TABLE_NAME,
-    POSTGRESQL_USER,
-)
 
-# pylint: disable=duplicate-code
+# pylint: disable=redefined-outer-name
 
 
-@pytest.fixture(autouse=True)
-def clean_database(mocker):
-    """Mock connection logic for setup and teardown"""
-    inmemory_store_mocked = PostgresConnector(
-        host=POSTGRESQL_HOST,
-        port=POSTGRESQL_PORT,
-        user=POSTGRESQL_USER,
-        password=POSTGRESQL_PASSWORD,
-        dbname=POSTGRESQL_DBNAME,
-        schema=POSTGRESQL_SCHEMA,
-        table_name=POSTGRESQL_TABLE_NAME,
+@pytest.fixture
+def mocked_postgres_connector(mocker):
+    """
+    Provides a mocked instance of PostgresConnector for testing.
+    """
+
+    # Mock the _connect method to prevent actual connection attempt
+    mocker.patch.object(PostgresConnector, "_connect")
+    mocker.patch.object(PostgresConnector, "get_data_by_execution_block")
+
+    # Create the instance with desired arguments (replace with yours)
+    connector = PostgresConnector(
+        host="localhost",
+        port=5432,
+        user="test_user",
+        password="test_password",
+        dbname="test_db",
+        schema="public",
+        table_name="my_table",
     )
-    mocker.patch.object(inmemory_store_mocked, "_connect")
-    mocker.patch.object(inmemory_store_mocked, "conn")
-    yield
+
+    # Set any additional properties you want to control
+    connector.postgresql_running = True
+
+    yield connector
 
 
-def test_status(mocker):
+def test_status(mocked_postgres_connector):
     """Mock connection logic for setup and teardown"""
-    inmemory_store_mocked = PostgresConnector(
-        host=POSTGRESQL_HOST,
-        port=POSTGRESQL_PORT,
-        user=POSTGRESQL_USER,
-        password=POSTGRESQL_PASSWORD,
-        dbname=POSTGRESQL_DBNAME,
-        schema=POSTGRESQL_SCHEMA,
-        table_name=POSTGRESQL_TABLE_NAME,
-    )
-    mocker.patch.object(inmemory_store_mocked, "_connect")
-    mocker.patch.object(inmemory_store_mocked, "conn")
-
-    status = inmemory_store_mocked.status()
+    status = mocked_postgres_connector.status()
     expected_status = {
         "store_type": "Persistent PosgreSQL metadata store",
         "host": "localhost",
         "port": 5432,
-        "user": "postgres",
-        "running": False,
-        "dbname": "postgres",
-        "schema": "sdp_sdp_dataproduct_dashboard_dev",
-        "table_name": "data_products_metadata_v1",
+        "user": "test_user",
+        "running": True,
+        "dbname": "test_db",
+        "schema": "public",
+        "table_name": "my_table",
         "number_of_dataproducts": 0,
         "postgresql_version": "",
     }
@@ -64,27 +55,52 @@ def test_status(mocker):
     assert status == expected_status
 
 
-def test_build_connection_string(mocker):
+def test_build_connection_string(mocked_postgres_connector):
     """
     Tests that the _build_connection_string function constructs the connection string correctly.
     """
-    inmemory_store_mocked = PostgresConnector(
-        host=POSTGRESQL_HOST,
-        port=POSTGRESQL_PORT,
-        user=POSTGRESQL_USER,
-        password=POSTGRESQL_PASSWORD,
-        dbname=POSTGRESQL_DBNAME,
-        schema=POSTGRESQL_SCHEMA,
-        table_name=POSTGRESQL_TABLE_NAME,
-    )
-    mocker.patch.object(inmemory_store_mocked, "_connect")
-    mocker.patch.object(inmemory_store_mocked, "conn")
-
     # Call the function under test
-    connection_string = inmemory_store_mocked.build_connection_string()
+    connection_string = mocked_postgres_connector.build_connection_string()
 
     # Assert the constructed connection string
     assert connection_string == (
-        "dbname='postgres' user='postgres' password='password' host='localhost' port='5432' \
-options='-c search_path=\"sdp_sdp_dataproduct_dashboard_dev\"'"
+        "dbname='test_db' user='test_user' password='test_password' host='localhost' port='5432' \
+options='-c search_path=\"public\"'"
     )
+
+
+def test_get_data_product_file_path_success(mocked_postgres_connector):
+    """Tests successful retrieval of file path."""
+    execution_block = "test_block"
+    expected_file_path = pathlib.Path("/path/to/file")
+    mocked_postgres_connector.get_data_by_execution_block.return_value = {
+        "dataproduct_file": str(expected_file_path)
+    }
+
+    result = mocked_postgres_connector.get_data_product_file_path(execution_block)
+
+    assert result == expected_file_path
+    mocked_postgres_connector.get_data_by_execution_block.assert_called_once_with(execution_block)
+
+
+def test_get_data_product_file_path_not_found(mocked_postgres_connector):
+    """Tests when file path is not found."""
+    execution_block = "test_block"
+    mocked_postgres_connector.get_data_by_execution_block.return_value = None
+
+    result = mocked_postgres_connector.get_data_product_file_path(execution_block)
+
+    assert result == {}
+    mocked_postgres_connector.get_data_by_execution_block.assert_called_once_with(execution_block)
+
+
+def test_get_data_product_file_path_key_error(mocked_postgres_connector, caplog):
+    """Tests handling of KeyError."""
+    execution_block = "test_block"
+    mocked_postgres_connector.get_data_by_execution_block.side_effect = KeyError()
+
+    result = mocked_postgres_connector.get_data_product_file_path(execution_block)
+
+    assert result == {}
+    mocked_postgres_connector.get_data_by_execution_block.assert_called_once_with(execution_block)
+    assert "File path not found for execution block" in caplog.text
