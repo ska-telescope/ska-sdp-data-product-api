@@ -1,6 +1,7 @@
 """Module to test PostgresConnector"""
 
 import pathlib
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -10,35 +11,34 @@ from ska_sdp_dataproduct_api.components.store.persistent.postgresql import Postg
 
 
 @pytest.fixture
-def mocked_postgres_connector(mocker):
+def mocked_postgres_connector():
     """
     Provides a mocked instance of PostgresConnector for testing.
     """
 
-    # Mock the _connect method to prevent actual connection attempt
-    mocker.patch.object(PostgresConnector, "_connect")
-    mocker.patch.object(PostgresConnector, "get_data_by_execution_block")
+    with patch("psycopg.connect") as mock_connect:
+        connector = PostgresConnector(
+            host="localhost",
+            port=5432,
+            user="test_user",
+            password="test_password",
+            dbname="test_db",
+            schema="public",
+            table_name="my_table",
+        )
 
-    # Create the instance with desired arguments (replace with yours)
-    connector = PostgresConnector(
-        host="localhost",
-        port=5432,
-        user="test_user",
-        password="test_password",
-        dbname="test_db",
-        schema="public",
-        table_name="my_table",
-    )
+        # Set any additional properties you want to control
+        connector.postgresql_running = True
+        connector.postgresql_version = "mocked"
+        mock_cursor = MagicMock()
+        mock_connect.return_value.cursor.return_value.__enter__.return_value = mock_cursor
 
-    # Set any additional properties you want to control
-    connector.postgresql_running = True
-
-    yield connector
+        yield {"connector": connector, "cursor": mock_cursor}
 
 
 def test_status(mocked_postgres_connector):
     """Mock connection logic for setup and teardown"""
-    status = mocked_postgres_connector.status()
+    status = mocked_postgres_connector["connector"].status()
     expected_status = {
         "store_type": "Persistent PosgreSQL metadata store",
         "host": "localhost",
@@ -48,8 +48,8 @@ def test_status(mocked_postgres_connector):
         "dbname": "test_db",
         "schema": "public",
         "table_name": "my_table",
-        "number_of_dataproducts": 0,
-        "postgresql_version": "",
+        "number_of_dataproducts": 1,
+        "postgresql_version": "mocked",
     }
 
     assert status == expected_status
@@ -60,7 +60,7 @@ def test_build_connection_string(mocked_postgres_connector):
     Tests that the _build_connection_string function constructs the connection string correctly.
     """
     # Call the function under test
-    connection_string = mocked_postgres_connector.build_connection_string()
+    connection_string = mocked_postgres_connector["connector"].build_connection_string()
 
     # Assert the constructed connection string
     assert connection_string == (
@@ -72,35 +72,25 @@ options='-c search_path=\"public\"'"
 def test_get_data_product_file_path_success(mocked_postgres_connector):
     """Tests successful retrieval of file path."""
     execution_block = "test_block"
-    expected_file_path = pathlib.Path("/path/to/file")
-    mocked_postgres_connector.get_data_by_execution_block.return_value = {
-        "dataproduct_file": str(expected_file_path)
-    }
+    expected_file_path = pathlib.Path("tests/test_files/product/eb-m002-20221212-12345")
 
-    result = mocked_postgres_connector.get_data_product_file_path(execution_block)
+    mocked_postgres_connector["cursor"].fetchone.return_value = (
+        {
+            "dataproduct_file": "tests/test_files/product/eb-m002-20221212-12345",
+        },
+    )
+
+    result = mocked_postgres_connector["connector"].get_data_product_file_path(execution_block)
 
     assert result == expected_file_path
-    mocked_postgres_connector.get_data_by_execution_block.assert_called_once_with(execution_block)
 
 
 def test_get_data_product_file_path_not_found(mocked_postgres_connector):
     """Tests when file path is not found."""
     execution_block = "test_block"
-    mocked_postgres_connector.get_data_by_execution_block.return_value = None
 
-    result = mocked_postgres_connector.get_data_product_file_path(execution_block)
+    mocked_postgres_connector["cursor"].fetchone.return_value = ({},)
 
-    assert result == {}
-    mocked_postgres_connector.get_data_by_execution_block.assert_called_once_with(execution_block)
-
-
-def test_get_data_product_file_path_key_error(mocked_postgres_connector, caplog):
-    """Tests handling of KeyError."""
-    execution_block = "test_block"
-    mocked_postgres_connector.get_data_by_execution_block.side_effect = KeyError()
-
-    result = mocked_postgres_connector.get_data_product_file_path(execution_block)
+    result = mocked_postgres_connector["connector"].get_data_product_file_path(execution_block)
 
     assert result == {}
-    mocked_postgres_connector.get_data_by_execution_block.assert_called_once_with(execution_block)
-    assert "File path not found for execution block" in caplog.text

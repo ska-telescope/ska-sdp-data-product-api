@@ -404,7 +404,6 @@ WHERE id = %s"
                 )
                 cursor.execute(check_query, (execution_block,))
                 result = cursor.fetchone()
-
                 if result[0]:
                     return result[0]
                 return {}
