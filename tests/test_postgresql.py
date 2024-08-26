@@ -108,3 +108,56 @@ def test_reindex_persistent_volume(mocked_postgres_connector):
     assert mocked_postgres_connector["connector"].number_of_dataproducts == 1
     assert len(mocked_postgres_connector["connector"].list_of_data_product_paths) == 17
     assert mocked_postgres_connector["connector"].indexing is False
+
+
+def test_save_metadata_to_postgresql(mocked_postgres_connector):
+    """Tests if"""
+
+    test_metadata = {
+        "interface": "http://schema.skao.int/ska-data-product-meta/0.1",
+        "execution_block": "eb-test-20240824-123321",
+        "context": {"observer": "Andre", "intent": "Postman Test", "notes": "Test note"},
+        "config": {
+            "processing_block": "",
+            "processing_script": "",
+            "image": "",
+            "version": "ssss",
+            "commit": "",
+            "cmdline": "",
+        },
+        "files": [],
+        "obscore": {
+            "access_estsize": 0,
+            "access_format": "application/unknown",
+            "access_url": "0",
+            "calib_level": 0,
+            "dataproduct_type": "MS",
+            "facility_name": "SKA",
+            "instrument_name": "SKA-LOW",
+            "o_ucd": "stat.fourier",
+            "obs_collection": "Unknown",
+            "obs_id": "",
+            "obs_publisher_did": "",
+            "pol_states": "XX/XY/YX/YY",
+            "pol_xel": 0,
+            "s_dec": 0,
+            "s_ra": 0.0,
+            "t_exptime": 5.0,
+            "t_max": 57196.962848574476,
+            "t_min": 57196.96279070411,
+            "t_resolution": 0.9,
+            "target_name": "",
+        },
+    }
+
+    with patch.object(
+        mocked_postgres_connector["connector"], "check_metadata_exists_by_hash", return_value=False
+    ):
+        with patch.object(
+            mocked_postgres_connector["connector"],
+            "check_metadata_exists_by_execution_block",
+            return_value=None,
+        ):
+            mocked_postgres_connector["connector"].save_metadata_to_postgresql(test_metadata)
+            assert mocked_postgres_connector["connector"].number_of_dataproducts == 1
+            assert mocked_postgres_connector["connector"].conn.commit.call_count == 2
