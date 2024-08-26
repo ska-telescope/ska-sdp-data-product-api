@@ -2,9 +2,9 @@
 interface: http://schema.skao.int/ska-data-product-meta/0.1
  
 context:
-  observer: simulation
-  intent: "Simulation run XYZ-123"
-  notes: "Simulated data"
+  observer: None
+  intent: "Misconfigured metadata, missing execution_block"
+  notes: "Use to test unhappy path in API, this data product should fail to ingest."
  
 config: # Configuration of generating software
   processing_block: 

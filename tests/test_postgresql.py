@@ -1,5 +1,6 @@
 """Module to test PostgresConnector"""
 
+import datetime
 import pathlib
 from unittest.mock import MagicMock, patch
 
@@ -30,6 +31,7 @@ def mocked_postgres_connector():
         # Set any additional properties you want to control
         connector.postgresql_running = True
         connector.postgresql_version = "mocked"
+        connector.date_modified = datetime.datetime.now()
         mock_cursor = MagicMock()
         mock_connect.return_value.cursor.return_value.__enter__.return_value = mock_cursor
 
@@ -50,6 +52,7 @@ def test_status(mocked_postgres_connector):
         "table_name": "my_table",
         "number_of_dataproducts": 1,
         "postgresql_version": "mocked",
+        "last_metadata_update_time": mocked_postgres_connector["connector"].date_modified,
     }
 
     assert status == expected_status

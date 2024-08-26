@@ -2,9 +2,9 @@ expected_metadata = {
     "interface": "http://schema.skao.int/ska-data-product-meta/0.1",
     "execution_block": "eb-m001-20230921-245",
     "context": {
-        "observer": "PST_jc",
-        "intent": "Tied-array beam observation of J0437-4715",
-        "notes": "Observation ran smoothly, but the RFI levels were higher than usual",
+        "observer": "Test",
+        "intent": "This file is intended to be used to test the metadata file upload endpoint",
+        "notes": "None",
     },
     "config": {"image": "artefact.skao.int/ska-pst/ska-pst", "version": "0.1.3"},
     "files": [
@@ -28,7 +28,7 @@ expected_metadata = {
         "dataproduct_type": "timeseries",
         "dataproduct_subtype": "voltages",
         "calib_level": 0,
-        "obs_id": 12345,
+        "obs_id": "eb-m001-20230921-245",
         "access_estsize": 615561.7734375,
         "target_name": "None",
         "s_ra": 4.6210833333,

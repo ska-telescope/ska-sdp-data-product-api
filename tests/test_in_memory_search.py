@@ -4,13 +4,15 @@ import json
 from ska_sdp_dataproduct_api.components.search.in_memory.in_memory_search import (
     InMemoryDataproductSearch,
 )
-from ska_sdp_dataproduct_api.components.store.store_factory import select_metadata_store_class
+from ska_sdp_dataproduct_api.components.store.in_memory.in_memory import (
+    InMemoryVolumeIndexMetadataStore,
+)
 
 
 def test_status():
     """Tests the status method."""
     # Call the method
-    metadata_store = select_metadata_store_class()
+    metadata_store = InMemoryVolumeIndexMetadataStore()
     mocked_search_store = InMemoryDataproductSearch(metadata_store=metadata_store)
     response = mocked_search_store.status()
 
@@ -24,7 +26,7 @@ def test_status():
 def test_search_metadata_execution_block_with_valid_date_and_no_eb():
     """Tests the search_metadata method, ensuring only one execution block entry."""
     # Call the method with expected data
-    metadata_store = select_metadata_store_class()
+    metadata_store = InMemoryVolumeIndexMetadataStore()
     mocked_search_store = InMemoryDataproductSearch(metadata_store=metadata_store)
     expected_execution_block = "eb-notebook-20240201-54576"
 
@@ -44,7 +46,7 @@ def test_search_metadata_execution_block_with_valid_date_and_no_eb():
 def test_search_metadata_execution_block_with_valid_date_and_eb():
     """Tests the search_metadata method, ensuring only one execution block entry."""
     # Call the method with expected data
-    metadata_store = select_metadata_store_class()
+    metadata_store = InMemoryVolumeIndexMetadataStore()
     mocked_search_store = InMemoryDataproductSearch(metadata_store=metadata_store)
     expected_execution_block = "eb-notebook-20240201-54576"
     metadata_key_value_pairs = [
@@ -68,7 +70,7 @@ def test_search_metadata_execution_block_with_valid_date_and_eb():
 
 def test_search_metadata():
     """Method to test search of metadata"""
-    metadata_store = select_metadata_store_class()
+    metadata_store = InMemoryVolumeIndexMetadataStore()
     mocked_search_store = InMemoryDataproductSearch(metadata_store=metadata_store)
     expected_execution_block = "eb-m001-20230921-245"
     mui_data_grid_filter_model = {
@@ -101,3 +103,24 @@ def test_search_metadata():
 
     assert len(set(item["execution_block"] for item in metadata_list)) == 1
     assert metadata_list[0]["execution_block"] == expected_execution_block
+
+
+def test_sort_list_of_dict_default():
+    """Tests sorting by default key (`date_created`) in ascending order."""
+    # Simulate some data with varying "date_created" values
+    metadata_store = InMemoryVolumeIndexMetadataStore()
+    mocked_search_store = InMemoryDataproductSearch(metadata_store=metadata_store)
+
+    mocked_list_of_data = [
+        {"name": "Product A", "date_created": "2024-08-20"},
+        {"name": "Product B", "date_created": "2024-08-21"},
+        {"name": "Product C", "date_created": "2024-08-19"},
+    ]
+    mocked_search_store.sort_list_of_dict(list_of_dict=mocked_list_of_data)
+    # Assert the list is sorted by "date_created" in ascending order
+    expected_order = [
+        {"name": "Product B", "date_created": "2024-08-21"},
+        {"name": "Product A", "date_created": "2024-08-20"},
+        {"name": "Product C", "date_created": "2024-08-19"},
+    ]
+    assert mocked_list_of_data == expected_order

@@ -26,11 +26,7 @@ from typing import Any
 
 from ska_sdp_dataproduct_api.components.metadata.metadata import DataProductMetadata
 from ska_sdp_dataproduct_api.components.store.metadata_store_base_class import MetadataStore
-from ska_sdp_dataproduct_api.configuration.settings import (
-    METADATA_FILE_NAME,
-    PERSISTENT_STORAGE_PATH,
-)
-from ska_sdp_dataproduct_api.utilities.helperfunctions import verify_persistent_storage_file_path
+from ska_sdp_dataproduct_api.configuration.settings import PERSISTENT_STORAGE_PATH
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +52,7 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
         return {
             "store_type": "In memory volume index metadata store",
             "number_of_dataproducts": self.number_of_dataproducts,
+            "last_metadata_update_time": self.date_modified,
         }
 
     def reindex_persistent_volume(self) -> None:
@@ -66,7 +63,10 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
             logger.info("Re-indexing persistent volume store...")
             self.indexing = True
             self.number_of_dataproducts = 0
-            self.list_all_data_product_files(PERSISTENT_STORAGE_PATH)
+            self.list_of_data_product_paths.clear()
+            self.list_of_data_product_paths: list[str] = self.list_all_data_product_files(
+                PERSISTENT_STORAGE_PATH
+            )
             self.ingest_list_of_data_product_paths()
             self.update_data_store_date_modified()
             self.indexing = False
@@ -74,34 +74,6 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
         except Exception as exception:
             self.indexing = False
             raise exception
-
-    def list_all_data_product_files(self, full_path_name: pathlib.Path) -> None:
-        """
-        Lists all data product files within the specified directory path.
-
-        This method recursively traverses the directory structure starting at `full_path_name`
-        and identifies files that are considered data products based on pre-defined criteria
-        of the folder containing a metadata file.
-
-        Args:
-            full_path_name (pathlib.Path): The path to the directory containing data products.
-
-        Returns:
-            None
-
-        Raises:
-            ValueError: If `full_path_name` does not represent a valid directory or is a symbolic
-            link.
-        """
-
-        if not verify_persistent_storage_file_path(full_path_name):
-            return
-        logger.info("Identifying data product files within directory: %s", full_path_name)
-
-        self.list_of_data_product_paths.clear()
-        for file_path in PERSISTENT_STORAGE_PATH.rglob(METADATA_FILE_NAME):
-            if file_path not in self.list_of_data_product_paths:
-                self.list_of_data_product_paths.append(file_path)
 
     def ingest_list_of_data_product_paths(self) -> None:
         """

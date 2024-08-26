@@ -1,0 +1,2 @@
+intent: "Misconfigured metadata, missing execution_block"
+notes: "Use to test unhappy path in API, this data product should fail to ingest."

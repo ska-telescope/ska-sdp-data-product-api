@@ -56,7 +56,7 @@ Verify the API's status by sending a GET request to the /status endpoint. The re
             "running": true,
             "connection_established_at": "2024-08-06T21:59:18.210017",
             "number_of_dataproducts": 10,
-            "indices": "ska-dp-dataproduct-localhost-dev-v1",
+            "indices": "ska-dp-dataproduct-localhost-dev-v2",
             "cluster_info": {
                 "name": "46f82bbc7307",
                 "cluster_name": "docker-cluster",
@@ -282,7 +282,7 @@ For example, the POST request body:
             "instrument_name": "SKA-LOW",
             "o_ucd": "stat.fourier",
             "obs_collection": "Unknown",
-            "obs_id": "",
+            "obs_id": "eb-test-20240806-99999",
             "obs_publisher_did": "",
             "pol_states": "XX/XY/YX/YY",
             "pol_xel": 0,

@@ -66,7 +66,7 @@ def test_status(mocker):
         "running": running,
         "connection_established_at": mocked_metadata_store.connection_established_at,
         "number_of_dataproducts": 0,
-        "indices": "ska-dp-dataproduct-localhost-dev-v1",
+        "indices": "ska-dp-dataproduct-localhost-dev-v2",
         "cluster_info": cluster_info,
     }
 

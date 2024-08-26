@@ -30,7 +30,7 @@ def test_download_file(test_app):
 
 def test_download_folder(test_app):
     """Test if a folder can be downloaded from the test files"""
-    data = '{"execution_block": "eb-m001-20191031-12345"}'
+    data = '{"execution_block": "eb-m001-20221212-12345"}'
     response = test_app.post("/download", data=data)
     assert response.status_code == 200
 
@@ -48,11 +48,11 @@ def test_in_memory_search(test_app):
     data = {
         "start_date": "2001-12-12",
         "end_date": "2032-12-12",
-        "key_value_pairs": ["execution_block:eb-m001-20191031-12345"],
+        "key_value_pairs": ["execution_block:eb-m001-20221212-12345"],
     }
     response = test_app.post("/dataproductsearch", json=data)
     assert response.status_code == 200
-    assert response.json()[0]["execution_block"] == "eb-m001-20191031-12345"
+    assert response.json()[0]["execution_block"] == "eb-m001-20221212-12345"
 
 
 def test_ingest_new_metadata(test_app):

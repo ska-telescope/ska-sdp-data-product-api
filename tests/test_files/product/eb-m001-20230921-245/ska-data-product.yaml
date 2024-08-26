@@ -26,7 +26,7 @@ obscore:
   dataproduct_type: timeseries
   dataproduct_subtype: voltages
   calib_level: 0
-  obs_id: 12345
+  obs_id: "eb-m001-20230921-245"
   access_estsize: 615561.7734375
   target_name: None
   s_ra: 4.6210833333

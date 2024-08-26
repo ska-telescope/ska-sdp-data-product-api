@@ -172,20 +172,6 @@ class MuiDataGrid:
                 result[new_key] = value
         return result
 
-    def sort_list_of_dict(
-        self, list_of_dict: list[dict], key: str = "date_created", reverse: bool = True
-    ) -> None:
-        """Sorts the list_of_dict instance in-place.
-
-        Args:
-            key (str, optional): The key attribute to sort by. Defaults to "date_created".
-            reverse (bool, optional): Whether to sort in descending order. Defaults to True.
-
-        Raises:
-            None
-        """
-        list_of_dict.sort(key=lambda x: x.get(key), reverse=reverse)
-
     def update_flattened_list_of_dataproducts_metadata(self, data_product_details):
         """
         Updates the internal list of data products with the provided metadata.
@@ -210,10 +196,6 @@ class MuiDataGrid:
             )
 
         muiDataGridInstance.flattened_list_of_dataproducts_metadata.append(data_product_details)
-
-        self.sort_list_of_dict(
-            list_of_dict=muiDataGridInstance.flattened_list_of_dataproducts_metadata
-        )
 
 
 muiDataGridInstance = MuiDataGrid()
