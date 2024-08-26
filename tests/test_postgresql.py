@@ -97,3 +97,14 @@ def test_get_data_product_file_path_not_found(mocked_postgres_connector):
     result = mocked_postgres_connector["connector"].get_data_product_file_path(execution_block)
 
     assert result == {}
+
+
+def test_reindex_persistent_volume(mocked_postgres_connector):
+    """Tests if the reindex_persistent_volume can be executed, the call to the PosgreSQL cursor
+    is mocked, so the expected return of the number if items in the db is only 1"""
+
+    mocked_postgres_connector["connector"].reindex_persistent_volume()
+
+    assert mocked_postgres_connector["connector"].number_of_dataproducts == 1
+    assert len(mocked_postgres_connector["connector"].list_of_data_product_paths) == 17
+    assert mocked_postgres_connector["connector"].indexing is False
