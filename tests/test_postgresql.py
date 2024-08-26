@@ -161,3 +161,27 @@ def test_save_metadata_to_postgresql(mocked_postgres_connector):
             mocked_postgres_connector["connector"].save_metadata_to_postgresql(test_metadata)
             assert mocked_postgres_connector["connector"].number_of_dataproducts == 1
             assert mocked_postgres_connector["connector"].conn.commit.call_count == 2
+
+    with patch.object(
+        mocked_postgres_connector["connector"], "check_metadata_exists_by_hash", return_value=False
+    ):
+        with patch.object(
+            mocked_postgres_connector["connector"],
+            "check_metadata_exists_by_execution_block",
+            return_value=1,
+        ):
+            mocked_postgres_connector["connector"].save_metadata_to_postgresql(test_metadata)
+            assert mocked_postgres_connector["connector"].number_of_dataproducts == 1
+            assert mocked_postgres_connector["connector"].conn.commit.call_count == 3
+
+
+def test_get_metadata(mocked_postgres_connector):
+    """Tests if the reindex_persistent_volume can be executed, the call to the PosgreSQL cursor
+    is mocked, so the expected return of the number if items in the db is only 1"""
+
+    mocked_postgres_connector["cursor"].fetchone.return_value = ({"mockData"},)
+
+    execution_block = "eb-test-20240824-123321"
+    result = mocked_postgres_connector["connector"].get_metadata(execution_block)
+
+    assert result == {"mockData"}
