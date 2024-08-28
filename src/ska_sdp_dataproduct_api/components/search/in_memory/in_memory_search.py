@@ -194,7 +194,6 @@ class InMemoryDataproductSearch(MetadataSearchStore):
             A filtered list of dictionaries where either no access_group is assigned or the
             assigned access_group is in the users_user_groups list.
         """
-
         filtered_model = []
         for item in data:
             access_group = item.get("context.access_group", None)

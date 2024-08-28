@@ -108,3 +108,54 @@ def test_in_faulty_data_search(test_app):
     }
     response = test_app.post("/dataproductsearch", json=data)
     assert response.status_code == 400
+
+
+def test_filterdataproducts_no_token(test_app):
+    """This tests the filterdataproducts endpoint when no token is supplied."""
+
+    data = {
+        "searchPanelOptions": {
+            "items": [
+                {"field": "date_created", "operator": "greaterThan", "value": ""},
+                {"field": "date_created", "operator": "lessThan", "value": ""},
+                {
+                    "field": "formFields",
+                    "keyPairs": [
+                        {"keyPair": "execution_block", "valuePair": "eb-m001-20221212-12345"}
+                    ],
+                },
+            ],
+            "logicOperator": "and",
+        }
+    }
+
+    response = test_app.post("/filterdataproducts", json=data)
+    assert response.status_code == 200
+    assert response.json()[0]["execution_block"] == "eb-m001-20221212-12345"
+
+
+def test_filterdataproducts_invalid_token(test_app):
+    """This tests the filterdataproducts endpoint when invalid token is supplied."""
+
+    data = {
+        "searchPanelOptions": {
+            "items": [
+                {"field": "date_created", "operator": "greaterThan", "value": ""},
+                {"field": "date_created", "operator": "lessThan", "value": ""},
+                {
+                    "field": "formFields",
+                    "keyPairs": [{}],
+                },
+            ],
+            "logicOperator": "and",
+        }
+    }
+    headers = {"Authorization": "Bearer invalid_token"}
+    response = test_app.post("/filterdataproducts", json=data, headers=headers)
+    assert response.status_code == 200
+    list_of_data_products = [dp["execution_block"] for dp in response.json()]
+    assert "eb-orcatest-20240814-94773" not in list_of_data_products
+    assert "eb-notebook-20240320-83046" not in list_of_data_products
+    assert "eb-test-20240513-47584" not in list_of_data_products
+    assert "eb-m005-20231031-12345" in list_of_data_products
+    assert "eb-test-20200325-00001" in list_of_data_products
