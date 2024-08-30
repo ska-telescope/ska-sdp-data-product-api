@@ -8,8 +8,8 @@ Current Development
 * `NAL-1157 <https://jira.skatelescope.org/browse/NAL-1157>`_ 
 
  - [Test Evidence] Improved test coverage
- - [Fixed] Failure to load metadata indo store when running the API with a PostgreSQL datastore.
- 
+ - [Fixed] Fixed failure to load metadata into store when running the API with a PostgreSQL datastore.
+
 
 * `NAL-1146 <https://jira.skatelescope.org/browse/NAL-1146>`_ 
 
