@@ -61,6 +61,7 @@ class InMemoryDataproductSearch(MetadataSearchStore):
         """Sorts the list_of_dict instance in-place.
 
         Args:
+            list_of_dict (list[dict]): The list of dictionaries to sort.
             key (str, optional): The key attribute to sort by. Defaults to "date_created".
             reverse (bool, optional): Whether to sort in descending order. Defaults to True.
 

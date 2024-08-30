@@ -65,8 +65,8 @@ class MetadataStore:
 
         if not verify_persistent_storage_file_path(full_path_name):
             return []
-        logger.info("Identifying data product files within directory: %s", full_path_name)
 
+        logger.info("Identifying data product files within directory: %s", full_path_name)
         list_of_data_product_paths = []
         for file_path in PERSISTENT_STORAGE_PATH.rglob(METADATA_FILE_NAME):
             if file_path not in list_of_data_product_paths:

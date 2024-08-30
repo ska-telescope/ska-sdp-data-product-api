@@ -259,9 +259,6 @@ WHERE id = %s"
             json_hash = self.calculate_metadata_hash(data_product_metadata_instance.metadata_dict)
             execution_block = data_product_metadata_instance.metadata_dict["execution_block"]
 
-            logger.info('metadata_file_dict["execution_block"]: %s', execution_block)
-            logger.info('metadata_file_dict["date_created"]: %s', execution_block)
-
             if self.check_metadata_exists_by_hash(json_hash):
                 logger.info("Metadata with hash %s already exists.", json_hash)
                 return

@@ -291,7 +291,6 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
 
         try:
             execution_block = metadata_dict.get("execution_block")
-            logger.info("Inserting into search store execution_block: %s", execution_block)
             if not execution_block:
                 raise ValueError("Missing 'execution_block' in metadata")
 
