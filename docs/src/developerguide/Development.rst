@@ -48,7 +48,7 @@ For example:
 
 .. code-block::
 
-    ska-dp-dataproduct-localhost-dev-v2
+    ska-dp-dataproduct-localhost-dev-v1
     ska-dp-dataproduct-sdhp-stfc-integration-v1
 
 The version number allows for schema changes when needed.
@@ -71,7 +71,7 @@ Configure the environmental variables in the .env file under the root folder acc
     SDP_DATAPRODUCT_API_ELASTIC_USER=elastic
     SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA_FILE_NAME=http_ca.crt
     SDP_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE=./src/ska_sdp_dataproduct_api/components/search/elasticsearch/data_product_metadata_schema.json
-    SDP_DATAPRODUCT_API_ELASTIC_INDICES=ska-dp-dataproduct-localhost-dev-v2
+    SDP_DATAPRODUCT_API_ELASTIC_INDICES=ska-dp-dataproduct-localhost-dev-v1
 
 
 Configure the application secrets in the .secrets file under the root folder according to your requirements and environment.

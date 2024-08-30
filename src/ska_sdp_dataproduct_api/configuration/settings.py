@@ -114,7 +114,7 @@ ELASTICSEARCH_METADATA_SCHEMA_FILE: pathlib.Path = pathlib.Path(
 
 ELASTICSEARCH_INDICES: str = config(
     "SDP_DATAPRODUCT_API_ELASTIC_INDICES",
-    default=("ska-dp-dataproduct-localhost-dev-v2"),
+    default=("ska-dp-dataproduct-localhost-dev-v1"),
 )
 # ----
 # PostgreSQL Variables
