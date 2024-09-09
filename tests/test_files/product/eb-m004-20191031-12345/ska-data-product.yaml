@@ -39,7 +39,7 @@ files:
 obscore: # ObsCore minimal set
   access_estsize: 1
   dataproduct_type: MS
-  calib_level: raw
+  calib_level: 0
   obs_collection: AIV-tests-20191031
   obs_id: pb-m004-20191031-12345
   access_url: https://archive.skatelescope.org/pb-m004-20191031-12345/retrieve

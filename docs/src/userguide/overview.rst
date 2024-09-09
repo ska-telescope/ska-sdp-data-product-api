@@ -257,7 +257,7 @@ For example, the POST request body:
 
     {
         "interface": "http://schema.skao.int/ska-data-product-meta/0.1",
-        "execution_block": "eb-rest-20240806-99999",
+        "execution_block": "eb-test-20240806-99999",
         "context": {
             "observer": "REST ingest",
             "intent": "",
@@ -282,7 +282,7 @@ For example, the POST request body:
             "instrument_name": "SKA-LOW",
             "o_ucd": "stat.fourier",
             "obs_collection": "Unknown",
-            "obs_id": "",
+            "obs_id": "eb-test-20240806-99999",
             "obs_publisher_did": "",
             "pol_states": "XX/XY/YX/YY",
             "pol_xel": 0,

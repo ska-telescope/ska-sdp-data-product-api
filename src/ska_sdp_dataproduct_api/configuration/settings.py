@@ -158,7 +158,7 @@ POSTGRESQL_TABLE_NAME: str = config(
 # SKA Permissions API
 SKA_PERMISSIONS_API_HOST: str = config(
     "SKA_PERMISSIONS_API_HOST",
-    default="localhost",
+    default="http://localhost",
 )
 
 SKA_PERMISSIONS_API_PORT: int = int(

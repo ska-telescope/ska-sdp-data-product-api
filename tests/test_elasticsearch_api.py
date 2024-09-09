@@ -1,5 +1,6 @@
 """Module to test ElasticsearchMetadataStore"""
 
+import pathlib
 from datetime import datetime
 
 from ska_sdp_dataproduct_api.components.search.elasticsearch.elasticsearch import (
@@ -181,3 +182,35 @@ def test_search_metadata_default_value():
     ]
 
     assert metadata_list == expected_value
+
+
+def test_save_ca_cert_to_file_success():
+    """Tests save_ca_cert_to_file."""
+
+    search_store = ElasticsearchMetadataStore(
+        host=ELASTICSEARCH_HOST,
+        port=ELASTICSEARCH_PORT,
+        user=ELASTICSEARCH_USER,
+        password=ELASTICSEARCH_PASSWORD,
+        indices=ELASTICSEARCH_INDICES,
+        schema=ELASTICSEARCH_METADATA_SCHEMA_FILE,
+        metadata_store=metadata_store,
+    )
+    search_store.es_client = MockElasticsearch()
+    search_store.es_client.ping = lambda: True
+
+    ca_cert_content = b"certificate_content"
+    config_file_path = pathlib.Path("/tmp")
+    ca_cert = pathlib.Path("ca.crt")
+
+    result = search_store.save_ca_cert_to_file(ca_cert_content, config_file_path, ca_cert)
+    test_file_path = pathlib.Path(config_file_path / ca_cert)
+    test_file_path.unlink()
+    assert result is True
+
+    ca_cert_content = b"certificate_content"
+    config_file_path = pathlib.Path("/non_existing_path")
+    ca_cert = pathlib.Path("ca.crt")
+
+    result = search_store.save_ca_cert_to_file(ca_cert_content, config_file_path, ca_cert)
+    assert result is False

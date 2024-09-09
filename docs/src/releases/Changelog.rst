@@ -5,6 +5,12 @@ Changelog
 Current Development
 -------------------
 
+* `NAL-1157 <https://jira.skatelescope.org/browse/NAL-1157>`_ 
+
+ - [Test Evidence] Improved test coverage
+ - [Fixed] Fixed failure to load metadata into store when running the API with a PostgreSQL datastore.
+
+
 * `NAL-1146 <https://jira.skatelescope.org/browse/NAL-1146>`_ 
 
   - **BREAKING** [Added] Added the concept of access_group to the metadata. This limits the access to data products if the user, authenticated with MS Entra, has not been assigned to the access_group of the data product. When using the API with the Data Product Dashboard, the user can authenticate with MS Entra. When loading the data products (using the filterdataproducts endpoint) the users access token will be used to retrieve the users assigned user groups, and that will be used as access list to determine which data products the user have access to. 

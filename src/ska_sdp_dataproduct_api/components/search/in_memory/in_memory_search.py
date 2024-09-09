@@ -1,5 +1,6 @@
 """Module to insert data into Elasticsearch instance."""
 import copy
+import datetime
 import json
 import logging
 from typing import Any, Union
@@ -35,6 +36,8 @@ class InMemoryDataproductSearch(MetadataSearchStore):
     ) -> None:
         super().__init__(metadata_store)
         self.number_of_dataproducts: int = 0
+        muiDataGridInstance.flattened_set_of_keys.clear()
+        muiDataGridInstance.flattened_list_of_dataproducts_metadata.clear()
         self.load_metadata_from_store()
 
     def insert_metadata_in_search_store(self, metadata_dict: dict):
@@ -46,7 +49,26 @@ class InMemoryDataproductSearch(MetadataSearchStore):
             muiDataGridInstance.flatten_dict(metadata_dict)
         )
 
+        self.sort_list_of_dict(
+            list_of_dict=muiDataGridInstance.flattened_list_of_dataproducts_metadata
+        )
+
         self.number_of_dataproducts = self.number_of_dataproducts + 1
+
+    def sort_list_of_dict(
+        self, list_of_dict: list[dict], key: str = "date_created", reverse: bool = True
+    ) -> None:
+        """Sorts the list_of_dict instance in-place.
+
+        Args:
+            list_of_dict (list[dict]): The list of dictionaries to sort.
+            key (str, optional): The key attribute to sort by. Defaults to "date_created".
+            reverse (bool, optional): Whether to sort in descending order. Defaults to True.
+
+        Raises:
+            None
+        """
+        list_of_dict.sort(key=lambda x: x.get(key), reverse=reverse)
 
     def status(self) -> dict:
         """
@@ -71,31 +93,6 @@ class InMemoryDataproductSearch(MetadataSearchStore):
             "number_of_dataproducts": self.number_of_dataproducts,
         }
 
-    def sort_metadata_list(self, key: str = "date_created", reverse: bool = True) -> None:
-        """Sorts the `flattened_list_of_dataproducts_metadata` attribute of the class instance
-        in-place.
-
-        Args:
-            key (str, optional): The key attribute to sort by. Defaults to "date_created".
-            reverse (bool, optional): Whether to sort in descending order. Defaults to True.
-
-        Raises:
-            TypeError: If the provided `key` is not a string.
-            ValueError: If the `key` is not found in the elements of
-            `flattened_list_of_dataproducts_metadata`.
-        """
-
-        for element in muiDataGridInstance.flattened_list_of_dataproducts_metadata:
-            if key not in element:
-                logger.info(
-                    "Key %s not found in all elements of flattened_list_of_dataproducts_metadata",
-                    key,
-                )
-
-        muiDataGridInstance.flattened_list_of_dataproducts_metadata.sort(
-            key=lambda x: x[key], reverse=reverse
-        )
-
     def search_metadata(
         self,
         start_date: str = "1970-01-01",
@@ -104,8 +101,8 @@ class InMemoryDataproductSearch(MetadataSearchStore):
     ):
         """Metadata Search method."""
         try:
-            start_date = parse_valid_date(start_date, DATE_FORMAT)
-            end_date = parse_valid_date(end_date, DATE_FORMAT)
+            start_date_datetime = parse_valid_date(start_date, DATE_FORMAT)
+            end_date_datetime = parse_valid_date(end_date, DATE_FORMAT)
         except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error(
                 "Error, invalid time range start_date=%s, end_date=%s with error: %s. \
@@ -114,8 +111,8 @@ class InMemoryDataproductSearch(MetadataSearchStore):
                 end_date,
                 exception,
             )
-            start_date: str = "1970-01-01"
-            end_date: str = "2100-01-01"
+            start_date_datetime: datetime.datetime = parse_valid_date("1970-01-01", DATE_FORMAT)
+            end_date_datetime: datetime.datetime = parse_valid_date("2100-01-01", DATE_FORMAT)
 
         if metadata_key_value_pairs is None or len(metadata_key_value_pairs) == 0:
             search_results = copy.deepcopy(
@@ -127,7 +124,7 @@ class InMemoryDataproductSearch(MetadataSearchStore):
                 except Exception as exception:  # pylint: disable=broad-exception-caught
                     logger.error("Error, invalid date=%s", exception)
                     continue
-                if not start_date <= product_date <= end_date:
+                if not start_date_datetime <= product_date <= end_date_datetime:
                     search_results.remove(product)
                     continue
 
@@ -140,7 +137,7 @@ class InMemoryDataproductSearch(MetadataSearchStore):
             except Exception as exception:  # pylint: disable=broad-exception-caught
                 logger.error("Error, invalid date=%s", exception)
                 continue
-            if not start_date <= product_date <= end_date:
+            if not start_date_datetime <= product_date <= end_date_datetime:
                 search_results.remove(product)
                 continue
             for key_value_pair in metadata_key_value_pairs:
@@ -198,7 +195,6 @@ class InMemoryDataproductSearch(MetadataSearchStore):
             A filtered list of dictionaries where either no access_group is assigned or the
             assigned access_group is in the users_user_groups list.
         """
-
         filtered_model = []
         for item in data:
             access_group = item.get("context.access_group", None)

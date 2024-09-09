@@ -11,11 +11,7 @@ from psycopg.errors import OperationalError
 
 from ska_sdp_dataproduct_api.components.metadata.metadata import DataProductMetadata
 from ska_sdp_dataproduct_api.components.store.metadata_store_base_class import MetadataStore
-from ska_sdp_dataproduct_api.configuration.settings import (
-    METADATA_FILE_NAME,
-    PERSISTENT_STORAGE_PATH,
-)
-from ska_sdp_dataproduct_api.utilities.helperfunctions import verify_persistent_storage_file_path
+from ska_sdp_dataproduct_api.configuration.settings import PERSISTENT_STORAGE_PATH
 
 logger = logging.getLogger(__name__)
 
@@ -50,8 +46,9 @@ class PostgresConnector(MetadataStore):
         self.postgresql_running: bool = False
         self.postgresql_version: str = ""
         self.number_of_dataproducts: int = 0
+        self.list_of_data_product_paths: list[pathlib.Path] = []
 
-        self._connect()
+        self._connect(self.build_connection_string())
         if self.postgresql_running:
             self.postgresql_version = self._get_postgresql_version()
             self.create_metadata_table()
@@ -75,9 +72,26 @@ class PostgresConnector(MetadataStore):
             "table_name": self.table_name,
             "number_of_dataproducts": self.number_of_dataproducts,
             "postgresql_version": self.postgresql_version,
+            "last_metadata_update_time": self.date_modified,
         }
 
-    def _connect(self) -> None:
+    def build_connection_string(self) -> str:
+        """
+        Builds the connection string for PostgreSQL based on provided credentials.
+
+        Returns:
+            str: The connection string.
+        """
+        return (
+            f"dbname='{self.dbname}' "
+            f"user='{self.user}' "
+            f"password='{self.password}' "
+            f"host='{self.host}' "
+            f"port='{self.port}' "
+            f"options='-c search_path=\"{self.schema}\"'"
+        )
+
+    def _connect(self, connection_string: str) -> None:
         """
         Attempts to connect to the PostgreSQL instance.
 
@@ -85,16 +99,7 @@ class PostgresConnector(MetadataStore):
           None.
         """
         try:
-            connection_string = (
-                f"dbname='{self.dbname}' "
-                f"user='{self.user}' "
-                f"password='{self.password}' "
-                f"host='{self.host}' "
-                f"port='{self.port}' "
-                f"options='-c search_path=\"{self.schema}\"'"
-            )
             self.conn = psycopg.connect(connection_string)
-
             self.postgresql_running = True
             logger.info("Connected to PostgreSQL successfully")
 
@@ -156,45 +161,17 @@ class PostgresConnector(MetadataStore):
         Raises:
             Exception: If an error occurs during the reindexing process.
         """
-
-        list_of_data_product_paths: list[str] = self.list_all_data_product_files(
+        logger.info("Re-indexing persistent volume store...")
+        self.indexing = True
+        self.list_of_data_product_paths.clear()
+        self.list_of_data_product_paths: list[str] = self.list_all_data_product_files(
             PERSISTENT_STORAGE_PATH
         )
-        for product_path in list_of_data_product_paths:
+        for product_path in self.list_of_data_product_paths:
             self.ingest_file(product_path)
         self.count_jsonb_objects()
-
-    def list_all_data_product_files(self, full_path_name: pathlib.Path) -> list:
-        """
-        Lists all data product files within the specified directory path.
-
-        This method recursively traverses the directory structure starting at `full_path_name`
-        and identifies files that are considered data products based on pre-defined criteria
-        of the folder containing a metadata file.
-
-        Args:
-            full_path_name (pathlib.Path): The path to the directory containing data products.
-
-        Returns:
-            list[pathlib.Path]: A list of `pathlib.Path` objects representing the identified
-                                data product files within the directory and its subdirectories.
-                                If no data product files are found, an empty list is returned.
-
-        Raises:
-            ValueError: If `full_path_name` does not represent a valid directory or is a symbolic
-            link.
-        """
-
-        if not verify_persistent_storage_file_path(full_path_name):
-            return []
-        logger.info("Identifying data product files within directory: %s", full_path_name)
-
-        list_of_data_product_paths = []
-        for file_path in PERSISTENT_STORAGE_PATH.rglob(METADATA_FILE_NAME):
-            if file_path not in list_of_data_product_paths:
-                list_of_data_product_paths.append(file_path)
-
-        return list_of_data_product_paths
+        self.indexing = False
+        logger.info("Metadata store re-indexed")
 
     def ingest_file(self, data_product_metadata_file_path: pathlib.Path) -> None:
         """
@@ -276,8 +253,11 @@ WHERE id = %s"
                 logger.error("Error saving metadata to PostgreSQL, instance not available")
                 return
 
-            json_hash = self.calculate_metadata_hash(metadata_file_dict)
-            execution_block = metadata_file_dict["execution_block"]
+            data_product_metadata_instance: DataProductMetadata = DataProductMetadata()
+            data_product_metadata_instance.load_metadata_from_class(metadata_file_dict)
+
+            json_hash = self.calculate_metadata_hash(data_product_metadata_instance.metadata_dict)
+            execution_block = data_product_metadata_instance.metadata_dict["execution_block"]
 
             if self.check_metadata_exists_by_hash(json_hash):
                 logger.info("Metadata with hash %s already exists.", json_hash)
@@ -285,11 +265,15 @@ WHERE id = %s"
 
             metadata_id = self.check_metadata_exists_by_execution_block(execution_block)
             if metadata_id:
-                self.update_metadata(json.dumps(metadata_file_dict), metadata_id)
+                self.update_metadata(
+                    json.dumps(data_product_metadata_instance.metadata_dict), metadata_id
+                )
                 logger.info("Updated metadata with execution_block %s", execution_block)
                 self.count_jsonb_objects()
             else:
-                self.insert_metadata(json.dumps(metadata_file_dict), execution_block)
+                self.insert_metadata(
+                    json.dumps(data_product_metadata_instance.metadata_dict), execution_block
+                )
                 logger.info("Inserted new metadata with execution_block %s", execution_block)
                 self.count_jsonb_objects()
 
@@ -397,7 +381,6 @@ WHERE id = %s"
                 )
                 cursor.execute(check_query, (execution_block,))
                 result = cursor.fetchone()
-
                 if result[0]:
                     return result[0]
                 return {}

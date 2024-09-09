@@ -173,7 +173,6 @@ async def ingest_new_data_product(
     metadata_store.ingest_file(
         ABSOLUTE_PERSISTENT_STORAGE_PATH / file_object.execution_block / METADATA_FILE_NAME
     )
-    search_store.sort_metadata_list()
     metadata_store.update_data_store_date_modified()
     logger.info("New data product metadata file loaded and search_store index updated")
     return "New data product metadata file loaded and search_store index updated"

@@ -272,6 +272,8 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
         try:
             if self.index_metadata_to_elasticsearch(self.indices, metadata_dict):
                 self.number_of_dataproducts = self.number_of_dataproducts + 1
+            else:
+                logger.warning("Inserting into search store failed for: %s", metadata_dict)
         except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error("Error inserting metadata into search store: %s", exception)
 
@@ -300,9 +302,6 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
         except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error("Error inserting metadata into search store: %s", exception)
             return False
-
-    def sort_metadata_list(self) -> None:
-        """This method sorts the metadata_list according to the set key"""
 
     def search_metadata(self):
         """Metadata Search method"""
