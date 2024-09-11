@@ -44,8 +44,8 @@ class PostgresConnector(MetadataStore):
         self.schema = schema
         self.table_name = table_name
         self.conn = None
-        self.max_retries = 3  # Adjust the maximum number of retries as needed
-        self.retry_delay = 5  # Adjust the delay between retries in seconds
+        self.max_retries = 3  # The maximum number of retries
+        self.retry_delay = 5  # The delay between retries in seconds
         self.postgresql_running: bool = False
         self.postgresql_version: str = ""
         self.number_of_dataproducts: int = 0
