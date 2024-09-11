@@ -1,14 +1,15 @@
 """Module to test PostgresConnector"""
-
 import datetime
 import pathlib
 from unittest.mock import MagicMock, patch
 
 import pytest
+from psycopg import OperationalError
 
 from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
 
 # pylint: disable=redefined-outer-name
+# pylint: disable=protected-access
 
 
 @pytest.fixture
@@ -185,3 +186,18 @@ def test_get_metadata(mocked_postgres_connector):
     result = mocked_postgres_connector["connector"].get_metadata(execution_block)
 
     assert result == {"mockData"}
+
+
+def test_postgresql_query_operational_error(mocked_postgres_connector):
+    """Simulate a connection error that occurs multiple times"""
+
+    def raise_operational_error():
+        raise OperationalError("Connection error")
+
+    mocked_postgres_connector["connector"].conn.cursor = raise_operational_error
+    mocked_postgres_connector["connector"].retry_delay = 1
+
+    with pytest.raises(OperationalError):
+        mocked_postgres_connector["connector"]._postgresql_query("SELECT 1;", ())
+
+    assert mocked_postgres_connector["connector"].postgresql_running is False
