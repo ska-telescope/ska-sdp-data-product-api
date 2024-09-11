@@ -151,9 +151,7 @@ class PostgresConnector(MetadataStore):
                         "Failed to connect to PostgreSQL after multiple attempts: %s", error
                     )
                     self.postgresql_running = False
-                    raise psycopg.OperationalError(
-                        error
-                    )
+                    raise psycopg.OperationalError(error)
 
             except psycopg.Error as error:
                 logger.error("Error executing PostgreSQL query: %s", error)
