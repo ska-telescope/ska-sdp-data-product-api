@@ -5,6 +5,10 @@ Changelog
 Current Development
 -------------------
 
+* `NAL-1186 <https://jira.skatelescope.org/browse/NAL-1186>`_ 
+
+ - [Changed] To enable better handling of connections and re-connections, a common PostgreSQL query method is added that returns the cursor object. When an operation fails due to a connection failure, it will retry and set the PostgreSQL availability to false on repeated failure.
+
 * `NAL-1157 <https://jira.skatelescope.org/browse/NAL-1157>`_ 
 
  - [Test Evidence] Improved test coverage

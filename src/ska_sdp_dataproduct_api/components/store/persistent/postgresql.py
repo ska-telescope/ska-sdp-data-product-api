@@ -4,6 +4,7 @@ import hashlib
 import json
 import logging
 import pathlib
+import time
 from typing import Any
 
 import psycopg
@@ -43,6 +44,8 @@ class PostgresConnector(MetadataStore):
         self.schema = schema
         self.table_name = table_name
         self.conn = None
+        self.max_retries = 3  # The maximum number of retries
+        self.retry_delay = 5  # The delay between retries in seconds
         self.postgresql_running: bool = False
         self.postgresql_version: str = ""
         self.number_of_dataproducts: int = 0
@@ -109,9 +112,55 @@ class PostgresConnector(MetadataStore):
                 "An error occurred while connecting to the PostgreSQL database: %s", error
             )
 
+    def _postgresql_query(self, query: str, params: tuple = ()) -> psycopg.cursor:
+        """
+        Executes a PostgreSQL query and returns the cursor object.
+
+        Args:
+            query (str): The SQL query to execute.
+            params (tuple, optional): A tuple of parameters to be passed to the query. Defaults to
+            an empty tuple.
+
+
+        Returns:
+            psycopg.extensions.cursor: The cursor object representing the query result.
+
+        Raises:
+            psycopg.OperationalError: If the query fails after multiple attempts.
+            psycopg.Error: If there's a general PostgreSQL error during execution.
+        """
+
+        for attempt in range(self.max_retries):
+            try:
+                cursor = self.conn.cursor()
+                cursor.execute(query, params)
+                return cursor
+
+            except psycopg.OperationalError as error:
+                if attempt < self.max_retries - 1:
+                    logger.warning(
+                        "PostgreSQL connection error (attempt %s/%s): %s",
+                        str(attempt + 1),
+                        self.max_retries,
+                        error,
+                    )
+                    self._connect(self.build_connection_string())  # Attempt reconnect here
+                    time.sleep(self.retry_delay)
+                else:
+                    logger.error(
+                        "Failed to connect to PostgreSQL after multiple attempts: %s", error
+                    )
+                    self.postgresql_running = False
+                    raise psycopg.OperationalError(error)
+
+            except psycopg.Error as error:
+                logger.error("Error executing PostgreSQL query: %s", error)
+                raise psycopg.Error(error)
+
+        raise psycopg.OperationalError("Failed to execute query after multiple attempts")
+
     def _get_postgresql_version(self):
-        with self.conn.cursor() as cursor:
-            cursor.execute("SELECT version()")
+        with self._postgresql_query(query="SELECT version()") as cursor:
             return cursor.fetchone()[0]
 
     def create_metadata_table(self) -> None:
@@ -130,7 +179,7 @@ class PostgresConnector(MetadataStore):
             )
 
             # Use parameterization to avoid SQL injection
-            create_table_query = f"""
+            query_string = f"""
             CREATE TABLE IF NOT EXISTS {self.schema}.{self.table_name} (
                 id SERIAL PRIMARY KEY,
                 data JSONB NOT NULL,
@@ -138,8 +187,7 @@ class PostgresConnector(MetadataStore):
                 json_hash CHAR(64) UNIQUE
             );
             """
-            with self.conn.cursor() as cursor:
-                cursor.execute(create_table_query)
+            with self._postgresql_query(query=query_string) as _:
                 self.conn.commit()
                 logger.info(
                     "PostgreSQL metadata table %s created in schema: %s.",
@@ -205,41 +253,38 @@ class PostgresConnector(MetadataStore):
 
     def check_metadata_exists_by_hash(self, json_hash: str) -> bool:
         """Checks if metadata exists based on the given hash."""
-        with self.conn.cursor() as cursor:
-            check_query = f"SELECT EXISTS(SELECT 1 FROM {self.schema}.{self.table_name} WHERE \
+        query_string = f"SELECT EXISTS(SELECT 1 FROM {self.schema}.{self.table_name} WHERE \
 json_hash = %s)"
-            cursor.execute(check_query, (json_hash,))
-            exists = cursor.fetchone()[0]
-            return exists
+
+        with self._postgresql_query(query=query_string, params=(json_hash,)) as cursor:
+            return cursor.fetchone()[0]
 
     def check_metadata_exists_by_execution_block(self, execution_block: str) -> int:
         """Checks if metadata exists based on the given execution block."""
-        with self.conn.cursor() as cursor:
-            check_query = (
-                f"SELECT id FROM {self.schema}.{self.table_name} WHERE execution_block = %s"
-            )
-            cursor.execute(check_query, (execution_block,))
+        query_string = f"SELECT id FROM {self.schema}.{self.table_name} WHERE execution_block = %s"
+        with self._postgresql_query(query=query_string, params=(execution_block,)) as cursor:
             result = cursor.fetchone()
             return result[0] if result else None
 
     def update_metadata(self, metadata_file_json: str, id_field: int) -> None:
         """Updates existing metadata with the given data and hash."""
         json_hash = self.calculate_metadata_hash(metadata_file_json)
-        with self.conn.cursor() as cursor:
-            update_query = f"UPDATE {self.schema}.{self.table_name} SET data = %s, json_hash = %s \
+        query_string = f"UPDATE {self.schema}.{self.table_name} SET data = %s, json_hash = %s \
 WHERE id = %s"
-            cursor.execute(update_query, (metadata_file_json, json_hash, id_field))
+        with self._postgresql_query(
+            query=query_string, params=(metadata_file_json, json_hash, id_field)
+        ) as _:
             self.conn.commit()
 
     def insert_metadata(self, metadata_file_json: str, execution_block: str) -> None:
         """Inserts new metadata into the database."""
         json_hash = self.calculate_metadata_hash(metadata_file_json)
-        with self.conn.cursor() as cursor:
-            table: str = self.schema + "." + self.table_name
-            insert_query = (
-                f"INSERT INTO {table} (data, json_hash, execution_block) VALUES (%s, %s, %s)"
-            )
-            cursor.execute(insert_query, (metadata_file_json, json_hash, execution_block))
+        table: str = self.schema + "." + self.table_name
+        query_string = f"INSERT INTO {table} (data, json_hash, execution_block) VALUES \
+(%s, %s, %s)"
+        with self._postgresql_query(
+            query=query_string, params=(metadata_file_json, json_hash, execution_block)
+        ) as _:
             self.conn.commit()
 
     def ingest_metadata(self, metadata_file_dict: dict) -> None:
@@ -290,9 +335,8 @@ WHERE id = %s"
         Returns:
             The total count of JSON objects.
         """
-
-        with self.conn.cursor() as cursor:
-            cursor.execute(f"SELECT COUNT(*) FROM {self.schema}.{self.table_name}")
+        query_string = f"SELECT COUNT(*) FROM {self.schema}.{self.table_name}"
+        with self._postgresql_query(query=query_string) as cursor:
             result = cursor.fetchone()[0]
             self.number_of_dataproducts = int(result)
             return result
@@ -309,8 +353,8 @@ WHERE id = %s"
 
         try:
             logger.info("PostgreSQL deleting database table %s", self.table_name)
-            with self.conn.cursor() as cursor:
-                cursor.execute(f"DROP TABLE IF EXISTS {self.schema}.{self.table_name}")
+            query_string = f"DROP TABLE IF EXISTS {self.schema}.{self.table_name}"
+            with self._postgresql_query(query=query_string) as _:
                 self.conn.commit()
                 logger.info("PostgreSQL database table %s deleted.", self.table_name)
                 return True
@@ -333,10 +377,10 @@ WHERE id = %s"
         Returns:
             list[dict]: list of JSON objects.
         """
-        with self.conn.cursor() as cursor:
-            cursor.execute(f"SELECT id, data FROM {self.schema}.{table_name}")
-            data = cursor.fetchall()
-            return [{"id": row[0], "data": row[1]} for row in data]
+        query_string = f"SELECT id, data FROM {self.schema}.{table_name}"
+        with self._postgresql_query(query=query_string) as cursor:
+            result = cursor.fetchall()
+            return [{"id": row[0], "data": row[1]} for row in result]
 
     def load_data_products_from_persistent_metadata_store(self) -> list[dict[str, any]]:
         """Loads data products metadata from the persistent metadata store.
@@ -375,11 +419,10 @@ WHERE id = %s"
             The data (JSONB) associated with the execution block, or None if not found.
         """
         try:
-            with self.conn.cursor() as cursor:
-                check_query = (
-                    f"SELECT data FROM {self.schema}.{self.table_name} WHERE execution_block = %s"
-                )
-                cursor.execute(check_query, (execution_block,))
+            query_string = (
+                f"SELECT data FROM {self.schema}.{self.table_name} WHERE execution_block = %s"
+            )
+            with self._postgresql_query(query=query_string, params=(execution_block,)) as cursor:
                 result = cursor.fetchone()
                 if result[0]:
                     return result[0]
