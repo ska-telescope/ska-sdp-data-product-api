@@ -4,6 +4,13 @@ Changelog
 
 Current Development
 -------------------
+ 
+
+Released
+========
+
+v0.9.0
+------
 
 * `NAL-1186 <https://jira.skatelescope.org/browse/NAL-1186>`_ 
 
@@ -76,10 +83,6 @@ Current Development
 * `YAN-1370 <https://jira.skatelescope.org/browse/YAN-1370>`_ 
 
   - [Added] Introduced a new endpoint: /ingestnewmetadata (POST). This endpoint allows you to ingest data product metadata directly through the REST API. Send a POST request with the contents of your metadata file formatted as JSON. The API will parse the JSON data and add the corresponding data product to the metadata store in use.
- 
-
-Released
-========
 
 v0.8.0
 ------
