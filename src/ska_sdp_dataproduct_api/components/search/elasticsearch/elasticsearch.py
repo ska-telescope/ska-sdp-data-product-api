@@ -181,18 +181,23 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
         """Connecting to Elasticsearch host and create default schema"""
         logger.info("Connecting to Elasticsearch...")
 
-        self.load_ca_cert(
-            config_file_path=CONFIGURATION_FILES_PATH, ca_cert=ELASTIC_HTTP_CA_FILE_NAME
-        )
-
-        self.es_client = Elasticsearch(
-            hosts=self.url,
-            http_auth=(self.user, self.password),
-            verify_certs=True,
-            ca_certs=self.ca_cert,
-        )
+        try:
+            self.load_ca_cert(
+                config_file_path=CONFIGURATION_FILES_PATH, ca_cert=ELASTIC_HTTP_CA_FILE_NAME
+            )
+        except Exception as exception:  # pylint: disable=broad-exception-caught
+            logger.exception(
+                "Exception when trying to load ca_cert, will attempt to run without it: %s",
+                exception,
+            )
 
         try:
+            self.es_client = Elasticsearch(
+                hosts=self.url,
+                http_auth=(self.user, self.password),
+                verify_certs=True,
+                ca_certs=self.ca_cert,
+            )
             if self.es_client.ping():
                 self.connection_established_at = datetime.datetime.now()
                 self.elasticsearch_running = True
