@@ -192,7 +192,7 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
 
     def connect(self):
         """Connecting to Elasticsearch host and create default schema"""
-        logger.info("Connecting to Elasticsearch...")
+        logger.info("Connecting to Elasticsearch hosted at %s...", self.url)
 
         try:
             self.load_ca_cert(
