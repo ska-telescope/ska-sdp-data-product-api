@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 config = Config(".env")
 
 SECRETS_FILE_PATH: pathlib.Path = pathlib.Path(
-    config("SDP_DATAPRODUCT_SECRETS_FILE_PATH", default=".secrets")
+    config("SKA_DATAPRODUCT_SECRETS_FILE_PATH", default=".secrets")
 )
 
 if not SECRETS_FILE_PATH.exists():
@@ -42,13 +42,13 @@ except Exception as exception:  # pylint: disable=broad-exception-caught
 
 CONFIGURATION_FILES_PATH: pathlib.Path = pathlib.Path(__file__).parent
 
-REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL: str = config(
-    "REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL",
+REACT_APP_SKA_DATAPRODUCT_DASHBOARD_URL: str = config(
+    "REACT_APP_SKA_DATAPRODUCT_DASHBOARD_URL",
     default="http://localhost",
 )
 
-REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_PORT: str = config(
-    "REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_PORT",
+REACT_APP_SKA_DATAPRODUCT_DASHBOARD_PORT: str = config(
+    "REACT_APP_SKA_DATAPRODUCT_DASHBOARD_PORT",
     default="8100",
 )
 
@@ -58,7 +58,7 @@ METADATA_FILE_NAME: str = config(
 )
 
 VERSION: str = config(
-    "SKA_SDP_DATAPRODUCT_API_VERSION",
+    "SKA_DATAPRODUCT_API_VERSION",
     default=api.__version__,
 )
 
@@ -71,40 +71,40 @@ STREAM_CHUNK_SIZE: int = int(
 
 # ElasticSearch Variables
 ELASTICSEARCH_HOST: str = config(
-    "SDP_DATAPRODUCT_API_ELASTIC_HOST",
+    "SKA_DATAPRODUCT_API_ELASTIC_HOST",
     default="https://localhost",
 )
 
 ELASTICSEARCH_PORT: int = int(
     config(
-        "SDP_DATAPRODUCT_API_ELASTIC_PORT",
+        "SKA_DATAPRODUCT_API_ELASTIC_PORT",
         default=9200,
     )
 )
 
 ELASTIC_HTTP_CA_FILE_NAME: str = config(
-    "SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA_FILE_NAME",
+    "SKA_DATAPRODUCT_API_ELASTIC_HTTP_CA_FILE_NAME",
     default=None,
 )
 
 ELASTIC_HTTP_CA_BASE64_CERT: str = secrets(
-    "SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA_BASE64_CERT",
+    "SKA_DATAPRODUCT_API_ELASTIC_HTTP_CA_BASE64_CERT",
     default=None,
 )
 
 ELASTICSEARCH_USER: str = config(
-    "SDP_DATAPRODUCT_API_ELASTIC_USER",
+    "SKA_DATAPRODUCT_API_ELASTIC_USER",
     default="elastic",
 )
 
 ELASTICSEARCH_PASSWORD: str = secrets(
-    "SDP_DATAPRODUCT_API_ELASTIC_PASSWORD",
+    "SKA_DATAPRODUCT_API_ELASTIC_PASSWORD",
     default="",
 )
 
 ELASTICSEARCH_METADATA_SCHEMA_FILE: pathlib.Path = pathlib.Path(
     config(
-        "SDP_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE",
+        "SKA_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE",
         default=(
             "./src/ska_dataproduct_api/components/search/elasticsearch/"
             "data_product_metadata_schema.json"
@@ -113,45 +113,45 @@ ELASTICSEARCH_METADATA_SCHEMA_FILE: pathlib.Path = pathlib.Path(
 ).resolve()
 
 ELASTICSEARCH_INDICES: str = config(
-    "SDP_DATAPRODUCT_API_ELASTIC_INDICES",
+    "SKA_DATAPRODUCT_API_ELASTIC_INDICES",
     default=("ska-dp-dataproduct-localhost-dev-v1"),
 )
 # ----
 # PostgreSQL Variables
 POSTGRESQL_HOST: str = config(
-    "SDP_DATAPRODUCT_API_POSTGRESQL_HOST",
+    "SKA_DATAPRODUCT_API_POSTGRESQL_HOST",
     default="localhost",
 )
 
 POSTGRESQL_PORT: int = int(
     config(
-        "SDP_DATAPRODUCT_API_POSTGRESQL_PORT",
+        "SKA_DATAPRODUCT_API_POSTGRESQL_PORT",
         default=5432,
     )
 )
 
 POSTGRESQL_USER: str = config(
-    "SDP_DATAPRODUCT_API_POSTGRESQL_USER",
+    "SKA_DATAPRODUCT_API_POSTGRESQL_USER",
     default="postgres",
 )
 
 POSTGRESQL_PASSWORD: str = secrets(
-    "SDP_DATAPRODUCT_API_POSTGRESQL_PASSWORD",
+    "SKA_DATAPRODUCT_API_POSTGRESQL_PASSWORD",
     default="",
 )
 
 POSTGRESQL_DBNAME: str = config(
-    "SDP_DATAPRODUCT_API_POSTGRESQL_DBNAME",
+    "SKA_DATAPRODUCT_API_POSTGRESQL_DBNAME",
     default=("postgres"),
 )
 
 POSTGRESQL_SCHEMA: str = config(
-    "SDP_DATAPRODUCT_API_POSTGRESQL_SCHEMA",
+    "SKA_DATAPRODUCT_API_POSTGRESQL_SCHEMA",
     default=("public"),
 )
 
 POSTGRESQL_TABLE_NAME: str = config(
-    "SDP_DATAPRODUCT_API_POSTGRESQL_TABLE_NAME",
+    "SKA_DATAPRODUCT_API_POSTGRESQL_TABLE_NAME",
     default=("data_products_metadata_v1"),
 )
 # ----
@@ -187,11 +187,11 @@ def origins() -> list:
     known_origins = [
         "http://localhost",
         "http://localhost:8000",
-        "http://localhost:" + REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_PORT,
-        REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL,
-        REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_URL
+        "http://localhost:" + REACT_APP_SKA_DATAPRODUCT_DASHBOARD_PORT,
+        REACT_APP_SKA_DATAPRODUCT_DASHBOARD_URL,
+        REACT_APP_SKA_DATAPRODUCT_DASHBOARD_URL
         + ":"
-        + REACT_APP_SKA_SDP_DATAPRODUCT_DASHBOARD_PORT,
+        + REACT_APP_SKA_DATAPRODUCT_DASHBOARD_PORT,
     ]
 
     return list(set(known_origins))
