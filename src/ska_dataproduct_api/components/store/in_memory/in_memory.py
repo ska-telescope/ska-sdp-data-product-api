@@ -24,9 +24,9 @@ import logging
 import pathlib
 from typing import Any
 
-from ska_sdp_dataproduct_api.components.metadata.metadata import DataProductMetadata
-from ska_sdp_dataproduct_api.components.store.metadata_store_base_class import MetadataStore
-from ska_sdp_dataproduct_api.configuration.settings import PERSISTENT_STORAGE_PATH
+from ska_dataproduct_api.components.metadata.metadata import DataProductMetadata
+from ska_dataproduct_api.components.store.metadata_store_base_class import MetadataStore
+from ska_dataproduct_api.configuration.settings import PERSISTENT_STORAGE_PATH
 
 logger = logging.getLogger(__name__)
 

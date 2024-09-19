@@ -5,14 +5,14 @@ import json
 import logging
 from typing import Any, Union
 
-from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
-from ska_sdp_dataproduct_api.components.search.search_store_base_class import MetadataSearchStore
-from ska_sdp_dataproduct_api.components.store.in_memory.in_memory import (
+from ska_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
+from ska_dataproduct_api.components.search.search_store_base_class import MetadataSearchStore
+from ska_dataproduct_api.components.store.in_memory.in_memory import (
     InMemoryVolumeIndexMetadataStore,
 )
-from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
-from ska_sdp_dataproduct_api.configuration.settings import DATE_FORMAT
-from ska_sdp_dataproduct_api.utilities.helperfunctions import (
+from ska_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
+from ska_dataproduct_api.configuration.settings import DATE_FORMAT
+from ska_dataproduct_api.utilities.helperfunctions import (
     filter_by_item,
     filter_by_key_value_pair,
     parse_valid_date,

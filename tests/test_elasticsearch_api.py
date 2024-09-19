@@ -3,11 +3,11 @@
 import pathlib
 from datetime import datetime
 
-from ska_sdp_dataproduct_api.components.search.elasticsearch.elasticsearch import (
+from ska_dataproduct_api.components.search.elasticsearch.elasticsearch import (
     ElasticsearchMetadataStore,
 )
-from ska_sdp_dataproduct_api.components.store.store_factory import select_metadata_store_class
-from ska_sdp_dataproduct_api.configuration.settings import (
+from ska_dataproduct_api.components.store.store_factory import select_metadata_store_class
+from ska_dataproduct_api.configuration.settings import (
     CONFIGURATION_FILES_PATH,
     ELASTICSEARCH_HOST,
     ELASTICSEARCH_INDICES,
@@ -16,7 +16,7 @@ from ska_sdp_dataproduct_api.configuration.settings import (
     ELASTICSEARCH_PORT,
     ELASTICSEARCH_USER,
 )
-from ska_sdp_dataproduct_api.utilities.helperfunctions import DPDAPIStatus
+from ska_dataproduct_api.utilities.helperfunctions import DPDAPIStatus
 from tests.mock_elasticsearch_api import MockElasticsearch
 
 DPD_API_Status = DPDAPIStatus()

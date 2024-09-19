@@ -15,11 +15,8 @@ import logging
 import pathlib
 from time import time
 
-from ska_sdp_dataproduct_api.configuration.settings import (
-    METADATA_FILE_NAME,
-    PERSISTENT_STORAGE_PATH,
-)
-from ska_sdp_dataproduct_api.utilities.helperfunctions import verify_persistent_storage_file_path
+from ska_dataproduct_api.configuration.settings import METADATA_FILE_NAME, PERSISTENT_STORAGE_PATH
+from ska_dataproduct_api.utilities.helperfunctions import verify_persistent_storage_file_path
 
 logger = logging.getLogger(__name__)
 

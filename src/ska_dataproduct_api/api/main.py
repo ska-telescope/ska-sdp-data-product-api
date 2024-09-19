@@ -1,4 +1,4 @@
-"""This API exposes SDP Data Products to the SDP Data Product Dashboard."""
+"""This API exposes SKA Data Products to the SKA Data Product Dashboard."""
 
 import logging
 
@@ -6,22 +6,22 @@ from fastapi import BackgroundTasks, Request
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 
-from ska_sdp_dataproduct_api.components.authorisation.authorisation import (
+from ska_dataproduct_api.components.authorisation.authorisation import (
     extract_token,
     get_user_groups,
 )
-from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
-from ska_sdp_dataproduct_api.components.store.store_factory import (
+from ska_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
+from ska_dataproduct_api.components.store.store_factory import (
     select_metadata_store_class,
     select_search_store_class,
 )
-from ska_sdp_dataproduct_api.configuration.settings import (
+from ska_dataproduct_api.configuration.settings import (
     ABSOLUTE_PERSISTENT_STORAGE_PATH,
     DEFAULT_DISPLAY_LAYOUT,
     METADATA_FILE_NAME,
     app,
 )
-from ska_sdp_dataproduct_api.utilities.helperfunctions import (
+from ska_dataproduct_api.utilities.helperfunctions import (
     DPDAPIStatus,
     ExecutionBlock,
     FilePaths,

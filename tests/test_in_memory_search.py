@@ -1,10 +1,10 @@
 """Module to test InMemoryDataproductSearch"""
 import json
 
-from ska_sdp_dataproduct_api.components.search.in_memory.in_memory_search import (
+from ska_dataproduct_api.components.search.in_memory.in_memory_search import (
     InMemoryDataproductSearch,
 )
-from ska_sdp_dataproduct_api.components.store.in_memory.in_memory import (
+from ska_dataproduct_api.components.store.in_memory.in_memory import (
     InMemoryVolumeIndexMetadataStore,
 )
 

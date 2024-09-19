@@ -1,5 +1,5 @@
 """Module to test exceptions"""
-from ska_sdp_dataproduct_api.utilities.exceptions import AuthError
+from ska_dataproduct_api.utilities.exceptions import AuthError
 
 
 def test_auth_error_initialization():
