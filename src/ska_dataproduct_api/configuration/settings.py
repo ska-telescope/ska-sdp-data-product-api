@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 config = Config(".env")
 
 SECRETS_FILE_PATH: pathlib.Path = pathlib.Path(
-    config("SKA_DATAPRODUCT_SECRETS_FILE_PATH", default=".secrets")
+    config("SKA_DATAPRODUCT_API_SECRETS_FILE_PATH", default=".secrets")
 )
 
 if not SECRETS_FILE_PATH.exists():
@@ -189,9 +189,7 @@ def origins() -> list:
         "http://localhost:8000",
         "http://localhost:" + REACT_APP_SKA_DATAPRODUCT_DASHBOARD_PORT,
         REACT_APP_SKA_DATAPRODUCT_DASHBOARD_URL,
-        REACT_APP_SKA_DATAPRODUCT_DASHBOARD_URL
-        + ":"
-        + REACT_APP_SKA_DATAPRODUCT_DASHBOARD_PORT,
+        REACT_APP_SKA_DATAPRODUCT_DASHBOARD_URL + ":" + REACT_APP_SKA_DATAPRODUCT_DASHBOARD_PORT,
     ]
 
     return list(set(known_origins))
