@@ -1,4 +1,4 @@
-"""API SDP Settings"""
+"""API Settings"""
 
 import logging
 import pathlib
@@ -10,7 +10,7 @@ from ska_ser_logging import configure_logging
 from starlette.config import Config
 
 # pylint: disable=consider-using-from-import
-import ska_sdp_dataproduct_api.api as api
+import ska_dataproduct_api.api as api
 
 configure_logging(level=uvicorn.config.LOGGING_CONFIG["loggers"]["uvicorn.error"]["level"])
 logger = logging.getLogger(__name__)
@@ -106,7 +106,7 @@ ELASTICSEARCH_METADATA_SCHEMA_FILE: pathlib.Path = pathlib.Path(
     config(
         "SDP_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE",
         default=(
-            "./src/ska_sdp_dataproduct_api/components/search/elasticsearch/"
+            "./src/ska_dataproduct_api/components/search/elasticsearch/"
             "data_product_metadata_schema.json"
         ),
     )

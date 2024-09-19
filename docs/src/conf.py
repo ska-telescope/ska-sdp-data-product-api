@@ -19,7 +19,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'ska-sdp-dataproduct-api'
+project = 'ska-dataproduct-api'
 copyright = '2024, SKAO'
 author = 'SKAO'
 
@@ -176,8 +176,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'ska-sdp-dataproduct-api', 'ska-sdp-dataproduct-api Documentation',
-     author, 'ska-sdp-dataproduct-api', 'One line description of project.',
+    (master_doc, 'ska-dataproduct-api', 'ska-dataproduct-api Documentation',
+     author, 'ska-dataproduct-api', 'One line description of project.',
      'Miscellaneous'),
 ]
 

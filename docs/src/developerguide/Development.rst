@@ -21,7 +21,7 @@ Clone the repository and its submodules:
 
 .. code-block:: bash
 
-    git clone --recursive git@gitlab.com:ska-telescope/sdp/ska-sdp-dataproduct-api.git
+    git clone --recursive git@gitlab.com:ska-telescope/ska-dataproduct-api.git
 
 The application make use of two databases; a persistent metadata store implemented with PostgreSQL and a search metadata store, implemented with Elasticsearch. Development instances of the databases can be created in a local Docker environment by running the provided Makefile commands:
 
@@ -70,7 +70,7 @@ Configure the environmental variables in the .env file under the root folder acc
     SDP_DATAPRODUCT_API_ELASTIC_PORT=9200
     SDP_DATAPRODUCT_API_ELASTIC_USER=elastic
     SDP_DATAPRODUCT_API_ELASTIC_HTTP_CA_FILE_NAME=http_ca.crt
-    SDP_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE=./src/ska_sdp_dataproduct_api/components/search/elasticsearch/data_product_metadata_schema.json
+    SDP_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE=./src/ska_dataproduct_api/components/search/elasticsearch/data_product_metadata_schema.json
     SDP_DATAPRODUCT_API_ELASTIC_INDICES=ska-dp-dataproduct-localhost-dev-v1
 
 
@@ -95,7 +95,7 @@ To run the application directly on your host machine:
 
 .. code-block:: bash
 
-    docker build -t ska-sdp-dataproduct-api .
-    docker run -p 8000:8000 -v <YOUR_PROJECT_DIR>/ska-sdp-dataproduct-api/tests:/usr/src/ska_sdp_dataproduct_api/tests ska-sdp-dataproduct-api
+    docker build -t ska-dataproduct-api .
+    docker run -p 8000:8000 -v <YOUR_PROJECT_DIR>/ska-dataproduct-api/tests:/usr/src/ska_dataproduct_api/tests ska-dataproduct-api
 
 Uvicorn will then be running on http://127.0.0.1:8000
