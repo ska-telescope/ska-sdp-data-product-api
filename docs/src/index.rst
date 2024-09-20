@@ -1,7 +1,7 @@
-Documentation for the SKA SDP Data Product API
-==============================================
+Documentation for the SKA Data Product API
+==========================================
 
-The `ska-sdp-dataproduct-api` repository contains the code for the API that is used to access SDP Data Products in a storage volume.
+The `ska-dataproduct-api` repository contains the code for the API that is used to access SKA Data Products in a storage volume.
 
 .. toctree::
   :maxdepth: 1

@@ -6,10 +6,10 @@ data product store into a search store.
 import logging
 from typing import Union
 
-from ska_sdp_dataproduct_api.components.store.in_memory.in_memory import (
+from ska_dataproduct_api.components.store.in_memory.in_memory import (
     InMemoryVolumeIndexMetadataStore,
 )
-from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
+from ska_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
 
 logger = logging.getLogger(__name__)
 

@@ -9,18 +9,18 @@ from typing import Union
 import elasticsearch
 from elasticsearch import Elasticsearch
 
-from ska_sdp_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
-from ska_sdp_dataproduct_api.components.search.search_store_base_class import MetadataSearchStore
-from ska_sdp_dataproduct_api.components.store.in_memory.in_memory import (
+from ska_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
+from ska_dataproduct_api.components.search.search_store_base_class import MetadataSearchStore
+from ska_dataproduct_api.components.store.in_memory.in_memory import (
     InMemoryVolumeIndexMetadataStore,
 )
-from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
-from ska_sdp_dataproduct_api.configuration.settings import (
+from ska_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
+from ska_dataproduct_api.configuration.settings import (
     CONFIGURATION_FILES_PATH,
     ELASTIC_HTTP_CA_BASE64_CERT,
     ELASTIC_HTTP_CA_FILE_NAME,
 )
-from ska_sdp_dataproduct_api.utilities.helperfunctions import find_metadata
+from ska_dataproduct_api.utilities.helperfunctions import find_metadata
 
 logger = logging.getLogger(__name__)
 

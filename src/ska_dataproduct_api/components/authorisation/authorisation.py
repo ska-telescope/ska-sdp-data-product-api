@@ -10,11 +10,11 @@ import httpx
 from fastapi import Depends, Request
 from httpx import ConnectError, HTTPStatusError, TimeoutException
 
-from ska_sdp_dataproduct_api.configuration.settings import (
+from ska_dataproduct_api.configuration.settings import (
     SKA_PERMISSIONS_API_HOST,
     SKA_PERMISSIONS_API_PORT,
 )
-from ska_sdp_dataproduct_api.utilities.exceptions import AuthError
+from ska_dataproduct_api.utilities.exceptions import AuthError
 
 logger = logging.getLogger(__name__)
 

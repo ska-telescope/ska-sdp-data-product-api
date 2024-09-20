@@ -3,17 +3,17 @@ Elasticsearch availability."""
 import logging
 from typing import Union
 
-from ska_sdp_dataproduct_api.components.search.elasticsearch.elasticsearch import (
+from ska_dataproduct_api.components.search.elasticsearch.elasticsearch import (
     ElasticsearchMetadataStore,
 )
-from ska_sdp_dataproduct_api.components.search.in_memory.in_memory_search import (
+from ska_dataproduct_api.components.search.in_memory.in_memory_search import (
     InMemoryDataproductSearch,
 )
-from ska_sdp_dataproduct_api.components.store.in_memory.in_memory import (
+from ska_dataproduct_api.components.store.in_memory.in_memory import (
     InMemoryVolumeIndexMetadataStore,
 )
-from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
-from ska_sdp_dataproduct_api.configuration.settings import (
+from ska_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
+from ska_dataproduct_api.configuration.settings import (
     ELASTICSEARCH_HOST,
     ELASTICSEARCH_INDICES,
     ELASTICSEARCH_METADATA_SCHEMA_FILE,

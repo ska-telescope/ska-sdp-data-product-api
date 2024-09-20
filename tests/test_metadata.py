@@ -5,7 +5,7 @@ import pathlib
 import pytest
 import yaml
 
-from ska_sdp_dataproduct_api.components.metadata.metadata import DataProductMetadata
+from ska_dataproduct_api.components.metadata.metadata import DataProductMetadata
 
 data_product_metadata_instance: DataProductMetadata = DataProductMetadata()
 

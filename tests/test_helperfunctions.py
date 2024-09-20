@@ -5,8 +5,8 @@ from datetime import datetime
 
 import pytest
 
-from ska_sdp_dataproduct_api.configuration.settings import PERSISTENT_STORAGE_PATH
-from ska_sdp_dataproduct_api.utilities.helperfunctions import (
+from ska_dataproduct_api.configuration.settings import PERSISTENT_STORAGE_PATH
+from ska_dataproduct_api.utilities.helperfunctions import (
     filter_by_item,
     filter_by_key_value_pair,
     get_relative_path,

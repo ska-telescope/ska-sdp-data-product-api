@@ -1,7 +1,7 @@
-SDP Data Product API Overview
+SKA Data Product API Overview
 =============================
 
-This API is used to provide a list of SDP data products (files) that are hosted at a configurable storage location <PERSISTENT_STORAGE_PATH>.
+This API is used to provide a list of SKA Data Products (files) that are hosted at a configurable storage location <PERSISTENT_STORAGE_PATH>.
 
 
 Automatic API Documentation
@@ -301,7 +301,7 @@ API User
 
 The Data Product Dashboard (DPD) will usually be used via the GUI, for certain systems and users direct access to the API may be useful and desired. This guide will help users get up to speed with the Data Product Dashboard API.
 
-DPD API documentation can be found at https://developer.skao.int/projects/ska-sdp-dataproduct-api/en/latest/overview.html#automatic-api-documentation. The DPD API is self documenting and as such the available endpoints can be found at `/docs`
+DPD API documentation can be found at https://developer.skao.int/projects/ska-dataproduct-api/en/latest/overview.html#automatic-api-documentation. The DPD API is self documenting and as such the available endpoints can be found at `/docs`
 
 Searching for and Downloading Data Products
 When searching for data products it is important to ensure that the most recent data is available. The cached map for the in-memory solution periodically checks for new product that are available, but there is a way to manually ensure this, namely through the update command:

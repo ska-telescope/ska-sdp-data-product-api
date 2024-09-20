@@ -1,7 +1,7 @@
 """Module to test authorisation"""
 import pytest
 
-from ska_sdp_dataproduct_api.components.authorisation.authorisation import (
+from ska_dataproduct_api.components.authorisation.authorisation import (
     AuthError,
     get_token_auth_header,
 )

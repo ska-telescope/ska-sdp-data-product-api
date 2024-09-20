@@ -9,10 +9,10 @@ RUN poetry export -f requirements.txt --without-hashes --output requirements.txt
 FROM artefact.skao.int/ska-sdp-python:0.1.0
 
 # set the working direction
-WORKDIR /usr/src/ska_sdp_dataproduct_api
+WORKDIR /usr/src/ska_dataproduct_api
 
 # add app
-COPY src/ska_sdp_dataproduct_api/ .
+COPY src/ska_dataproduct_api/ .
 
 # install app dependencies
 COPY --from=builder /usr/src/app/requirements.txt .
@@ -21,4 +21,4 @@ RUN set -eux \
     && rm -rf /root/.cache/pip
 
 # start app
-CMD ["uvicorn", "ska_sdp_dataproduct_api.api.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000", "--app-dir", "/usr/src",  "--log-level", "warning"]
+CMD ["uvicorn", "ska_dataproduct_api.api.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000", "--app-dir", "/usr/src",  "--log-level", "warning"]

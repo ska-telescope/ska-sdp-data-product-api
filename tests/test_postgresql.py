@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from psycopg import OperationalError
 
-from ska_sdp_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
+from ska_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
 
 # pylint: disable=redefined-outer-name
 # pylint: disable=protected-access
