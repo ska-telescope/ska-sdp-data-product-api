@@ -5,6 +5,10 @@ Changelog
 Current Development
 -------------------
 
+
+v0.10.0
+------
+
 * `NAL-1228 <https://jira.skatelescope.org/browse/NAL-1228>`_ 
 
  - [Changed] Updated the error handling when the ElasticSearch connection fails.
@@ -13,10 +17,7 @@ Current Development
 * `NAL-1227 <https://jira.skatelescope.org/browse/NAL-1227>`_ 
 
  - BREAKING [Changed] The project have now been renamed and moved out of the SDP Gitlab folder. This was done because the Data Product API is not limited to data products of SDP and it might cause confusion if the name is not more general.
-
-Released
-========
-
+ 
 v0.9.0
 ------
 
