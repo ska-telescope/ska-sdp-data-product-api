@@ -66,7 +66,7 @@ Configure the environmental variables in the .env file under the root folder acc
     METADATA_FILE_NAME=ska-data-product.yaml
     STREAM_CHUNK_SIZE=65536
     SKA_DATAPRODUCT_API_POSTGRESQL_USER=postgres
-    SKA_DATAPRODUCT_API_ELASTIC_HOST=http://localhost
+    SKA_DATAPRODUCT_API_ELASTIC_HOST=https://localhost
     SKA_DATAPRODUCT_API_ELASTIC_PORT=9200
     SKA_DATAPRODUCT_API_ELASTIC_USER=elastic
     SKA_DATAPRODUCT_API_ELASTIC_HTTP_CA_FILE_NAME=http_ca.crt

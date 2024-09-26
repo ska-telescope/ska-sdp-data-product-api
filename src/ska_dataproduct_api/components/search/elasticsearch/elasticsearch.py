@@ -121,12 +121,13 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
         Returns:
             The decoded string.
         """
-
         try:
             return base64.b64decode(encoded_string)
-        except Exception as exception:  # pylint: disable=broad-exception-caught
-            logger.exception("Error decoding Base64 string: %s", exception)
-            return None
+        except (TypeError, ValueError, base64.binascii.Error) as exception:
+            logger.exception(
+                "Error decoding Base64 string: %s (encoded string: %s)", exception, encoded_string
+            )
+            raise exception
 
     def load_ca_cert(self, config_file_path: Path, ca_cert: str) -> None:
         """
@@ -174,25 +175,43 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
 
         except (FileNotFoundError, PermissionError) as error:
             # Handle potential file access errors gracefully
-            logging.error("Error loading CA certificate: %s", error)
+            logging.error(
+                "Error while trying to load CA certificate: %s",
+                error,
+            )
             self.ca_cert = None
+            raise error
+
+        except Exception as exception:  # pylint: disable=broad-exception-caught
+            logger.exception(
+                "Exception while trying to load CA certificate: %s",
+                exception,
+            )
+            self.ca_cert = None
+            raise exception
 
     def connect(self):
         """Connecting to Elasticsearch host and create default schema"""
-        logger.info("Connecting to Elasticsearch...")
-
-        self.load_ca_cert(
-            config_file_path=CONFIGURATION_FILES_PATH, ca_cert=ELASTIC_HTTP_CA_FILE_NAME
-        )
-
-        self.es_client = Elasticsearch(
-            hosts=self.url,
-            http_auth=(self.user, self.password),
-            verify_certs=True,
-            ca_certs=self.ca_cert,
-        )
+        logger.info("Connecting to Elasticsearch hosted at %s...", self.url)
 
         try:
+            self.load_ca_cert(
+                config_file_path=CONFIGURATION_FILES_PATH, ca_cert=ELASTIC_HTTP_CA_FILE_NAME
+            )
+        except Exception as exception:  # pylint: disable=broad-exception-caught
+            logger.exception(
+                "Exception when trying to load CA certificate, using in memory search: %s",
+                exception,
+            )
+            return False
+
+        try:
+            self.es_client = Elasticsearch(
+                hosts=self.url,
+                http_auth=(self.user, self.password),
+                verify_certs=True,
+                ca_certs=self.ca_cert,
+            )
             if self.es_client.ping():
                 self.connection_established_at = datetime.datetime.now()
                 self.elasticsearch_running = True
@@ -220,7 +239,8 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
         """
 
         if not self.es_client:
-            self.connect()
+            if not self.connect():
+                return False
 
         try:
             if self.es_client.ping():
