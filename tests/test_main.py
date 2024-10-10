@@ -37,7 +37,7 @@ def test_download_folder(test_app):
 
 def test_data_product_metadata(test_app):
     """Test if metadata can be retrieved for a data product"""
-    data = '{"execution_block": "eb-m005-20231031-12345"}'
+    data = '{"uuid": "6a11ddaa-6b45-6759-47e7-a5abd5105b0e"}'
     response = test_app.post("/dataproductmetadata", data=data)
     assert response.status_code == 200
     assert "Experimental run as part of XYZ-123" in str(response.json())

@@ -25,6 +25,7 @@ class MetadataSearchStore:
     """
 
     def __init__(self, metadata_store: Union[PostgresConnector, InMemoryVolumeIndexMetadataStore]):
+        self.number_of_dataproducts: int = 0
         self.metadata_store: Union[
             PostgresConnector, InMemoryVolumeIndexMetadataStore
         ] = metadata_store
@@ -64,11 +65,12 @@ class MetadataSearchStore:
         Iterates through the dictionary of data product metadata provided by the in-memory store
         and extracts the metadata dictionary for insertion into the search store.
         """
+        self.number_of_dataproducts = 0
         for (
-            execution_block,
+            uuid,
             data_product,
         ) in self.metadata_store.dict_of_data_products_metadata.items():
-            print("Loading execution_block %s into search store", execution_block)
+            logger.debug("Loading UUID %s into search store", uuid)
             self.insert_metadata_in_search_store(data_product.metadata_dict)
 
     def insert_metadata_in_search_store(self, metadata_dict: dict) -> dict:

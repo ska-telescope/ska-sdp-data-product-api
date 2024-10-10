@@ -1,0 +1,24 @@
+interface: http://schema.skao.int/ska-data-product-meta/0.1
+ 
+execution_block: eb-largefiletest-20241009-00001
+ 
+context: # Free-form data provided by OET.
+  observer: None
+  intent: "Large file to test download functionality of the DPD"
+  notes: "Single file of randome binary data of total size 2GB"
+ 
+config: # Configuration of generating software
+  processing_block: pb-largefiletest-20241009-00001
+  processing_script: None
+  image: None
+  version: 0.0.0
+  commit: None
+  cmdline: None
+ 
+files:
+  -
+    crc: unknown
+    description: This is test file 1
+    path: ska-sub-system/random_noise.bin
+    size: 2000000000
+    status: done

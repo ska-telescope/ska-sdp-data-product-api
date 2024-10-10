@@ -15,7 +15,7 @@ Basic Usage
 
 .. note:: This API is typically deployed behind a secure layer that encrypts communication (TLS/SSL) and likely requires user authentication through a separate system. When accessing the API through a browser, both the encryption and the authentication will be handled by the browser, but direct access with scripts or notebooks to the API from outside the cluster is currently not supported. To make use of this API directly, the user need to access it from within the cluster where it is hosted.
 
-.. note:: If a data product have been assigned a context.access_group, then that data product will not be available/listed when accessing the api directly with scripts or notebooks. This is due the required access token of an authenticate user that is not available in this mode of operation.
+.. note:: If a data product have been assigned a context.access_group, then that data product will not be available/listed when accessing the api directly with scripts or notebooks. This is due the required access token of an authenticated user that is not available in this mode of operation.
 
 Status endpoint
 ~~~~~~~~~~~~~~~
@@ -82,7 +82,7 @@ Verify the API's status by sending a GET request to the /status endpoint. The re
 Search endpoint
 ~~~~~~~~~~~~~~~
 
-Use the search endpoint to query your data products. Specify a time range and key-value pairs to filter your results. The response prioritizes products within the timeframe that best match your criteria.
+Use the search endpoint to query the data products. You can specify a time range and key-value pairs to filter the results. The response prioritizes products within the timeframe that best match your criteria.
 
 *Request*
 
@@ -120,7 +120,7 @@ Use the search endpoint to query your data products. Specify a time range and ke
 Re-index data products endpoint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The data product metadata store can be re-indexed but making a get request to the reindexdataproducts endpoint. This allows the user to update the metadata store if metadata have been added or changed since the previous indexing.
+The data product metadata store can be re-indexed but making a get request to the /reindexdataproducts endpoint. This allows the user to update the metadata store if data products or metadata have been added or changed on the data volume since the previous indexing.
 
 *Request*
 
@@ -139,7 +139,7 @@ Download data product endpoint
 
 Sending a post request to the download endpoint will return a stream response of the specified data product as a tar archive.
 
-The body of the post request must contain the name of the file and the relative path of the file you want to download as listed in the file list response above. 
+The body of the post request must contain the execution block id or the UUID of the data product you want to download. 
 
 
 *Request*
@@ -156,16 +156,26 @@ The body of the post request must contain the name of the file and the relative 
         "execution_block": "eb-test-20200325-00001"
     }
 
+or 
+
+.. code-block:: bash
+
+    {
+        "uuid": "a0a2a10f-e382-31ba-0949-9a79204dfcad"
+    }
+
 *Response*
 
 A stream response of the specified data product as a tar archive
 
+.. note:: A data product with an execution block id can contain 'sub' data products, that is defined by another metadata file. If the user request to download the product with the execution_block, all the product of that execution block id will be downloaded.
+
 Retrieve metadata of a data product endpoint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Sending a post request to the dataproductmetadata endpoint will return a Response with the metadata of the data product in a JSON format.
+Sending a post request to the /dataproductmetadata endpoint will return a Response with the metadata of the data product in a JSON format.
 
-The body of the post request must contain the name of the file "ska-data-product.yaml" and the relative path of the metadata file. 
+The body of the post request must contain the UUID of the data product. 
 
 For example, the post request body:
 
@@ -180,7 +190,7 @@ For example, the post request body:
 .. code-block:: bash
 
     {
-        "execution_block": "eb-test-20200325-00001"
+        "uuid": "6a11ddaa-6b45-6759-47e7-a5abd5105b0e"
     }
 
 *Response*
@@ -188,37 +198,39 @@ For example, the post request body:
 .. code-block:: bash
 
     {
-        "interface": "http://schema.skao.int/ska-data-product-meta/0.1", 
-        "execution_block": "eb-m001-20191031-12345", 
-        "context": 
-        {
-            "observer": "AIV_person_1", 
-            "intent": "Experimental run as part of XYZ-123", 
+        "interface": "http://schema.skao.int/ska-data-product-meta/0.1",
+        "execution_block": "eb-m005-20231031-12345",
+        "context": {
+            "observer": "AIV_person_1",
+            "intent": "Experimental run as part of XYZ-123",
             "notes": "Running that signal from XX/YY/ZZ through again, things seem a bit flaky"
-        }, 
-        "config": 
-        {
-            "processing_block": "pb-m001-20191031-12345", 
-            "processing_script": "receive", 
-            "image": "artefact.skao.int/ska-docker/vis_receive", 
-            "version": "0.1.3", 
-            "commit": "516fb5a693f9dc9aff5d46192f4e055b582fc025", 
-            "cmdline": "-dump /product/eb-m001-20191031-12345/ska-sdp/pb-m001-20191031-12345/vis.ms"
-        }, 
-        "files": 
-        [
+        },
+        "config": {
+            "processing_block": "pb-m004-20191031-12345",
+            ...
+        },
+        "files": [
             {
-                "path": "vis.ms", 
-                "status": "working", 
-                "description": "Raw visibility dump from receive"
+                "crc": "2a890fbe",
+                ...
             }
-        ]
+        ],
+        "obscore": {
+            "access_estsize": 1,
+            "dataproduct_type": "MS",
+            "calib_level": 0,
+            ...
+        },
+        "date_created": "2023-10-31",
+        "dataproduct_file": "tests/test_files/product/eb-m005-20231031-12345",
+        "metadata_file": "tests/test_files/product/eb-m005-20231031-12345/ska-data-product.yaml",
+        "dpd_uuid": "6a11ddaa-6b45-6759-47e7-a5abd5105b0e"
     }
 
 Ingest new data product
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Sending a POST request to the ingestnewdataproduct endpoint will load and parse a file at the supplied filename, and add the data product to the metadata store.
+Sending a POST request to the /ingestnewdataproduct endpoint will load and parse a file at the supplied filename, and add the data product to the metadata store.
 
 *Request*
 
@@ -241,7 +253,7 @@ Ingest new metadata endpoint
 
 .. note:: In this release, ingested metadata is not persistently stored. This means any data you add will be cleared when the API restarts. This functionality will be changed in future releases.
 
-Sending a POST request to the ingestnewmetadata endpoint will parse the supplied JSON data as data product metadata, and add the data product to the metadata store.
+Sending a POST request to the /ingestnewmetadata endpoint will parse the supplied JSON data as data product metadata, and add the data product to the metadata store.
 
 For example, the POST request body:
 
@@ -301,15 +313,15 @@ API User
 
 The Data Product Dashboard (DPD) will usually be used via the GUI, for certain systems and users direct access to the API may be useful and desired. This guide will help users get up to speed with the Data Product Dashboard API.
 
-DPD API documentation can be found at https://developer.skao.int/projects/ska-dataproduct-api/en/latest/overview.html#automatic-api-documentation. The DPD API is self documenting and as such the available endpoints can be found at `/docs`
+To access the API from within the cluster, you can use the BASE_URL http://<service name>.<namespace>:<port>
 
-Searching for and Downloading Data Products
+Searching for and downloading Data Products
 When searching for data products it is important to ensure that the most recent data is available. The cached map for the in-memory solution periodically checks for new product that are available, but there is a way to manually ensure this, namely through the update command:
 
 .. code-block:: python
 
     import requests
-    BASE_URL = "http://localhost:8000"
+    BASE_URL = "http://<service name>.<namespace>:<port>"
     response = requests.get(f"{BASE_URL}/reindexdataproducts")
     print(response.status_code)
     >>> 202
@@ -340,7 +352,14 @@ The download endpoint returns a response that can be used to stream the data pro
 
 .. code-block:: python
 
-    data = {"execution_block": product["dataproduct_file"],"relativePathName": product["dataproduct_file"]}
+    data = {"execution_block": "eb-notebook-20240201-54576"}
+
+or
+
+.. code-block:: python
+
+    data = {"uuid": "a0a2a10f-e382-31ba-0949-9a79204dfcad"}
+
     response = requests.post(f"{BASE_URL}/download", json=data)
 
     with open('product.tar', 'wb') as fd:
@@ -352,4 +371,4 @@ The tarball can then be opened using standard operation software. On linux this 
 .. code-block:: bash
 
     $ tar -xvf ./product.tar
-    eb-m001-20221212-12345/
+    eb-notebook-20240201-54576/

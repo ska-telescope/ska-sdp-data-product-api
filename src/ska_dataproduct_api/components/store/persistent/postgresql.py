@@ -437,7 +437,7 @@ WHERE id = %s"
             )
             return {}
 
-    def get_data_product_file_path(self, execution_block: str) -> pathlib.Path:
+    def get_data_product_file_paths(self, execution_block: str) -> pathlib.Path:
         """Retrieves the file path to the data product for the given execution block.
 
         Args:

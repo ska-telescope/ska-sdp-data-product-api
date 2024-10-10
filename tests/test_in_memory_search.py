@@ -19,7 +19,7 @@ def test_status():
     # Assert expected response
     assert response == {
         "metadata_search_store_in_use": "In memory search store",
-        "number_of_dataproducts": 13,
+        "number_of_dataproducts": 15,
     }
 
 

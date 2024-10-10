@@ -27,6 +27,7 @@ from typing import Any
 from ska_dataproduct_api.components.metadata.metadata import DataProductMetadata
 from ska_dataproduct_api.components.store.metadata_store_base_class import MetadataStore
 from ska_dataproduct_api.configuration.settings import PERSISTENT_STORAGE_PATH
+from ska_dataproduct_api.utilities.helperfunctions import DataProductIdentifier
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,7 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
         super().__init__()
         self.postgresql_running: bool = False
         self.number_of_dataproducts: int = 0
+        self.number_of_metadata_files: int = 0
         self.list_of_data_product_paths: list[pathlib.Path] = []
         self.dict_of_data_products_metadata: dict[DataProductMetadata] = {}
         self.reindex_persistent_volume()
@@ -51,7 +53,8 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
         """
         return {
             "store_type": "In memory volume index metadata store",
-            "number_of_dataproducts": self.number_of_dataproducts,
+            "number_of_dataproducts_loaded": self.number_of_dataproducts,
+            "number_of_metadata_files_found": self.number_of_metadata_files,
             "last_metadata_update_time": self.date_modified,
         }
 
@@ -62,11 +65,11 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
         try:
             logger.info("Re-indexing persistent volume store...")
             self.indexing = True
-            self.number_of_dataproducts = 0
             self.list_of_data_product_paths.clear()
             self.list_of_data_product_paths: list[str] = self.list_all_data_product_files(
                 PERSISTENT_STORAGE_PATH
             )
+            self.number_of_metadata_files = len(self.list_of_data_product_paths)
             self.ingest_list_of_data_product_paths()
             self.update_data_store_date_modified()
             self.indexing = False
@@ -107,10 +110,15 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
                 data_product_metadata_file_path
             )
 
-            self.dict_of_data_products_metadata[
-                data_product_metadata_instance.metadata_dict["execution_block"]
-            ] = data_product_metadata_instance
-            self.number_of_dataproducts = self.number_of_dataproducts + 1
+            if data_product_metadata_instance.uuid is None:
+                logger.error("Failed to ingest data product with no derivable UUID")
+                return
+
+            if data_product_metadata_instance.uuid not in self.dict_of_data_products_metadata:
+                self.dict_of_data_products_metadata[
+                    str(data_product_metadata_instance.uuid)
+                ] = data_product_metadata_instance
+                self.number_of_dataproducts = self.number_of_dataproducts + 1
 
         except Exception as error:  # pylint: disable=broad-exception-caught
             logger.error(
@@ -135,14 +143,14 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
             data_product_metadata_instance.load_metadata_from_class(metadata)
 
             self.dict_of_data_products_metadata[
-                data_product_metadata_instance.metadata_dict["execution_block"]
+                str(data_product_metadata_instance.uuid)
             ] = data_product_metadata_instance
             self.number_of_dataproducts = self.number_of_dataproducts + 1
         except Exception as error:
             logger.error("Failed to ingest ingest_metadata, error: %s", error)
             raise
 
-    def get_metadata(self, execution_block: str) -> dict[str, Any]:
+    def get_metadata(self, uuid: str) -> dict[str, Any]:
         """Retrieves metadata for the given execution block.
 
         Args:
@@ -151,30 +159,57 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
         Returns:
             A dictionary containing the metadata for the execution block, or None if not found.
         """
-        try:
-            return self.dict_of_data_products_metadata[execution_block].metadata_dict
-        except KeyError:
-            logger.warning("Metadata not found for execution block: %s", execution_block)
+        if not uuid:
+            logger.warning("Metadata not found for uuid: %s", uuid)
             return {}
 
-    def get_data_product_file_path(self, execution_block: str) -> pathlib.Path:
+        try:
+            return self.dict_of_data_products_metadata[uuid].metadata_dict
+        except Exception as error:  # pylint: disable=broad-exception-caught
+            logger.error("Failed to get metadata for execution block, error: %s", error)
+            return {}
+
+    def get_data_product_file_paths(
+        self, data_product_identifier: DataProductIdentifier
+    ) -> list[pathlib.Path]:
         """Retrieves the file path to the data product for the given execution block.
 
         Args:
             execution_block: The execution block to retrieve metadata for.
 
         Returns:
-            The file path as a pathlib.Path object, or {} if not found.
+            The list of file path as a pathlib.Path objects.
         """
-        try:
-            return pathlib.Path(
-                self.dict_of_data_products_metadata[execution_block].metadata_dict[
-                    "dataproduct_file"
-                ]
+
+        if not data_product_identifier.uuid and not data_product_identifier.execution_block:
+            logger.warning(
+                "File path not found for execution block: %s",
+                data_product_identifier.uuid or data_product_identifier.execution_block,
             )
+            return []
+
+        try:
+            if data_product_identifier.execution_block:
+                file_paths: list[pathlib.Path] = []
+                for _, metadata in self.dict_of_data_products_metadata.items():
+                    if metadata.execution_block == data_product_identifier.execution_block:
+                        file_paths.append(pathlib.Path(metadata.metadata_dict["dataproduct_file"]))
+                return file_paths
+            if data_product_identifier.uuid:
+                return [
+                    pathlib.Path(
+                        self.dict_of_data_products_metadata[
+                            data_product_identifier.uuid
+                        ].metadata_dict["dataproduct_file"]
+                    )
+                ]
+            return []
         except KeyError:
-            logger.warning("File path not found for execution block: %s", execution_block)
-            return {}
+            logger.warning(
+                "File path not found for data product with identifier: %s",
+                data_product_identifier.uuid or data_product_identifier.execution_block,
+            )
+            return []
 
     def check_file_exists(self, file_object: pathlib.Path) -> bool:
         """

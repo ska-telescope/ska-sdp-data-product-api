@@ -13,8 +13,10 @@ Functions:
 """
 
 import datetime
+import hashlib
 import logging
 import pathlib
+import uuid
 
 import yaml
 
@@ -37,6 +39,49 @@ class DataProductMetadata:
         self.data_product_metadata_file_path: pathlib.Path = None
         self.metadata_dict: dict = None
         self.date_created: str = None
+        self.object_id: str = None
+        self.uuid: uuid.UUID = None
+        self.execution_block: str = None
+
+    def get_execution_block_id(self, metadata_dict) -> str | None:
+        """Retrieves the execution block ID from the given metadata dictionary.
+
+        Args:
+            metadata_dict (dict): The metadata dictionary.
+
+        Returns:
+            str | None: The execution block ID, or None if not found.
+        """
+        try:
+            return metadata_dict["execution_block"]
+        except Exception as error:  # pylint: disable=broad-exception-caught
+            logger.error("execution_block value key not found in data product, error: %s", error)
+            return None
+
+    def derive_uuid(self, execution_block_id: str, file_path: pathlib.Path) -> uuid.UUID:
+        """Derives a UUID from an execution block ID and file path.
+
+        Args:
+            execution_block_id: The execution block ID.
+            file_path: The file path.
+
+        Returns:
+            str | None: The derived UUID, or None if not found.
+        """
+        if execution_block_id is None:
+            logger.error("No execution_block_id, so the UUID is not set")
+            return None
+
+        try:
+            combined_string = f"{execution_block_id}:{str(file_path)}"
+            hash_value = hashlib.sha256(combined_string.encode("utf-8")).hexdigest()
+            formatted_hash = f"{hash_value[:8]}-{hash_value[8:12]}-{hash_value[12:16]}-\
+{hash_value[16:20]}-{hash_value[20:32]}"
+            uuid_value = uuid.UUID(formatted_hash)
+            return uuid_value
+        except Exception as error:  # pylint: disable=broad-exception-caught
+            logger.error("Failed to create uuid, error: %s", error)
+            return None
 
     def load_yaml_file(self, file_path: pathlib.Path) -> None:
         """
@@ -55,6 +100,10 @@ class DataProductMetadata:
         try:
             with open(self.data_product_metadata_file_path, "r", encoding="utf-8") as file:
                 self.metadata_dict = yaml.safe_load(file)
+                self.execution_block = self.get_execution_block_id(self.metadata_dict)
+                self.uuid = self.derive_uuid(
+                    execution_block_id=self.execution_block, file_path=self.data_product_file_path
+                )
         except FileNotFoundError as error:
             raise FileNotFoundError(
                 f"Metadata file not found: {self.data_product_metadata_file_path}"
@@ -89,6 +138,10 @@ class DataProductMetadata:
             A dictionary containing the loaded metadata.
         """
         self.metadata_dict = metadata
+        self.execution_block = self.get_execution_block_id(self.metadata_dict)
+        self.uuid = self.derive_uuid(
+            execution_block_id=self.execution_block, file_path=self.data_product_file_path
+        )
         self.append_metadata()
         return self.metadata_dict
 
@@ -116,7 +169,7 @@ class DataProductMetadata:
         """
 
         try:
-            self.date_created = self.get_date_from_name(self.metadata_dict["execution_block"])
+            self.date_created = self.get_date_from_name(self.execution_block)
         except (KeyError, ValueError, TypeError) as exception:
             logger.error(
                 "Failed to extract date from execution block: %s. Error: %s",
@@ -138,6 +191,7 @@ class DataProductMetadata:
                 "date_created": self.date_created,
                 "dataproduct_file": str(self.data_product_file_path),
                 "metadata_file": str(self.data_product_metadata_file_path),
+                "dpd_uuid": str(self.uuid),
             }
         )
 

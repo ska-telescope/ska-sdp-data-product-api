@@ -84,7 +84,7 @@ def test_get_data_product_file_path_success(mocked_postgres_connector):
         },
     )
 
-    result = mocked_postgres_connector["connector"].get_data_product_file_path(execution_block)
+    result = mocked_postgres_connector["connector"].get_data_product_file_paths(execution_block)
 
     assert result == expected_file_path
 
@@ -95,7 +95,7 @@ def test_get_data_product_file_path_not_found(mocked_postgres_connector):
 
     mocked_postgres_connector["cursor"].fetchone.return_value = ({},)
 
-    result = mocked_postgres_connector["connector"].get_data_product_file_path(execution_block)
+    result = mocked_postgres_connector["connector"].get_data_product_file_paths(execution_block)
 
     assert result == {}
 
@@ -107,7 +107,7 @@ def test_reindex_persistent_volume(mocked_postgres_connector):
     mocked_postgres_connector["connector"].reindex_persistent_volume()
 
     assert mocked_postgres_connector["connector"].number_of_dataproducts == 1
-    assert len(mocked_postgres_connector["connector"].list_of_data_product_paths) == 17
+    assert len(mocked_postgres_connector["connector"].list_of_data_product_paths) == 18
     assert mocked_postgres_connector["connector"].indexing is False
 
 

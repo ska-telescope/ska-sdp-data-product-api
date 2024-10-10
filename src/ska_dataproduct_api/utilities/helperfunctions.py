@@ -3,10 +3,10 @@ import datetime
 import logging
 import pathlib
 import subprocess
+import tempfile
 from typing import Any, Generator, Optional
 
 # pylint: disable=no-name-in-module
-from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -88,6 +88,13 @@ class ExecutionBlock(BaseModel):
     execution_block: str = None
 
 
+class DataProductIdentifier(BaseModel):
+    """Class for defining Data Product identifiers"""
+
+    uuid: str | None = None
+    execution_block: str | None = None
+
+
 class SearchParametersClass(BaseModel):
     """Class for defining search parameters"""
 
@@ -111,66 +118,60 @@ class PydanticDataProductMetadataModel(BaseModel):
     obscore: dict | None = None
 
 
-def generate_data_stream(file_path: pathlib.Path) -> Generator[bytes, None, None]:
+def generate_data_stream(file_path_list: list[pathlib.Path]) -> Generator[bytes, None, None]:
     """
-    This function creates a subprocess that generates data chunks from the specified file for
-    streaming.
+    Generates a stream of data chunks from the specified file path using the `tar` command.
 
     Args:
         file_path (pathlib.Path): The path to the file to read.
 
     Yields:
-        bytes: Chunks of data read from the file.
+        bytes: Chunks of data read from the file compressed as a tar archive.
     """
-    verify_file_path(file_path.parent)
+    with tempfile.NamedTemporaryFile(mode="w+", delete=False) as temp_file:
+        temp_file.truncate(0)
+        for file_path in file_path_list:
+            relative_path = file_path.resolve().relative_to(PERSISTENT_STORAGE_PATH.resolve())
+            temp_file.write(str(relative_path) + "\n")
+
+    file_paths_str = temp_file.name
+
     # create a subprocess to run the tar command
     with subprocess.Popen(
-        ["tar", "-C", str(file_path.parent), "-c", str(file_path.name)],
+        ["tar", "-C", PERSISTENT_STORAGE_PATH.resolve(), "-c", "-T", file_paths_str],
         stdout=subprocess.PIPE,
     ) as process:
-        # stream the data from the process output
-        chunk = process.stdout.read(STREAM_CHUNK_SIZE)
-        while chunk:
+        for chunk in iter(lambda: process.stdout.read(STREAM_CHUNK_SIZE), b""):
             yield chunk
-            chunk = process.stdout.read(STREAM_CHUNK_SIZE)
 
 
-def download_file(data_product_file_path: pathlib.Path):
+def download_file(data_product_file_paths: list[pathlib.Path]) -> StreamingResponse:
     """
-    Streams the contents of the specified file as a download response.
+    Streams the contents of the specified file path as a download response compressed as a tar
+    archive.
 
     Args:
         data_product_file_path (pathlib.Path): The path to the file to be downloaded.
 
     Returns:
-        fastapi.StreamingResponse: A streaming response object representing the file content.
+        fastapi.StreamingResponse: A streaming response object representing the compressed file
+        content.
     """
     return StreamingResponse(
-        generate_data_stream(data_product_file_path),
+        generate_data_stream(data_product_file_paths),
         media_type="application/x-tar",
     )
 
 
-def verify_file_path(file_path: pathlib.Path):
+def verify_file_path(parent_path: pathlib.Path) -> None:
     """
-    A function that verifies the file path.
-
-    Args:
-        file_path (pathlib.Path): The file path.
-
-    Returns:
-        bool: True if the file path exists.
+    Verifies if the parent directory of the file path exists.
 
     Raises:
-        HTTPException: If the file path does not exist.
-
+        FileNotFoundError: If the parent directory doesn't exist.
     """
-    if not file_path.exists():
-        raise HTTPException(
-            status_code=404,
-            detail=f"File path with name '{str(file_path)}' not found",
-        )
-    return True
+    if not parent_path.exists():
+        raise FileNotFoundError(f"Parent directory not found: {parent_path}")
 
 
 def get_relative_path(absolute_path: pathlib.Path) -> pathlib.Path:
