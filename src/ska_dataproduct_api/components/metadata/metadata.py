@@ -191,7 +191,7 @@ class DataProductMetadata:
                 "date_created": self.date_created,
                 "dataproduct_file": str(self.data_product_file_path),
                 "metadata_file": str(self.data_product_metadata_file_path),
-                "dpd_uuid": str(self.uuid),
+                "uuid": str(self.uuid),
             }
         )
 

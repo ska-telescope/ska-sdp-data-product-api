@@ -65,6 +65,8 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
         try:
             logger.info("Re-indexing persistent volume store...")
             self.indexing = True
+            self.number_of_dataproducts = 0
+            self.number_of_metadata_files = 0
             self.list_of_data_product_paths.clear()
             self.list_of_data_product_paths: list[str] = self.list_all_data_product_files(
                 PERSISTENT_STORAGE_PATH

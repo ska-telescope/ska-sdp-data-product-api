@@ -179,7 +179,7 @@ class MuiDataGrid:
     def update_flattened_list_of_dataproducts_metadata(self, data_product_details: dict) -> None:
         """
         Updates the internal list of data products with the provided metadata, ensuring
-        no duplicates based on `dpd_uuid`. If a duplicate is found, it updates the existing
+        no duplicates based on `uuid`. If a duplicate is found, it updates the existing
         dictionary with the new values.
 
         This method adds the provided `data_product_details` dictionary to the internal
@@ -195,7 +195,7 @@ class MuiDataGrid:
         """
 
         for item in muiDataGridInstance.flattened_list_of_dataproducts_metadata:
-            if item["dpd_uuid"] == data_product_details["dpd_uuid"]:
+            if item["uuid"] == data_product_details["uuid"]:
                 # Update the existing dictionary with new values
                 item.update(data_product_details)
                 return

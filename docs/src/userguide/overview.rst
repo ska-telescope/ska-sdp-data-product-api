@@ -224,7 +224,7 @@ For example, the post request body:
         "date_created": "2023-10-31",
         "dataproduct_file": "tests/test_files/product/eb-m005-20231031-12345",
         "metadata_file": "tests/test_files/product/eb-m005-20231031-12345/ska-data-product.yaml",
-        "dpd_uuid": "6a11ddaa-6b45-6759-47e7-a5abd5105b0e"
+        "uuid": "6a11ddaa-6b45-6759-47e7-a5abd5105b0e"
     }
 
 Ingest new data product
