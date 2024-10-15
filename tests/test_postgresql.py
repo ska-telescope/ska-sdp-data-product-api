@@ -80,7 +80,7 @@ def test_get_data_product_file_path_success(mocked_postgres_connector):
     """Tests successful retrieval of file path."""
     data_product_identifier = DataProductIdentifier()
     data_product_identifier.execution_block = "test_block"
-    expected_file_path = pathlib.Path("tests/test_files/product/eb-m002-20221212-12345")
+    expected_file_path = [pathlib.Path("tests/test_files/product/eb-m002-20221212-12345")]
 
     mocked_postgres_connector["cursor"].fetchone.return_value = (
         {
