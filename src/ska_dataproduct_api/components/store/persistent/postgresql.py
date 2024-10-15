@@ -454,23 +454,23 @@ uuid = %s WHERE id = %s"
         """
         return self.fetch_data(self.table_name)
 
-    def get_metadata(self, execution_block: str) -> dict[str, Any]:
-        """Retrieves metadata for the given execution block.
+    def get_metadata(self, data_product_uuid: str) -> dict[str, Any]:
+        """Retrieves metadata for the given uuid.
 
         Args:
-            execution_block: The execution block identifier.
+            data_product_uuid: The data product uuid identifier.
 
         Returns:
-            A dictionary containing the metadata for the execution block, or None if not found.
+            A dictionary containing the metadata for the uuid, or None if not found.
         """
         try:
-            data_product_metadata = self.get_data_by_execution_block(execution_block)
+            data_product_metadata = self.get_data_by_uuid(data_product_uuid)
             if data_product_metadata:
                 return data_product_metadata
             return {}
 
         except KeyError:
-            logger.warning("Metadata not found for execution block ID: %s", execution_block)
+            logger.warning("Metadata not found for uuid: %s", data_product_uuid)
             return {}
 
     def get_data_by_execution_block(self, execution_block: str) -> dict[str, Any] | None:
