@@ -68,6 +68,7 @@ class MockElasticsearch:
                             "date_created": "2019-10-31",
                             "dataproduct_file": "product",
                             "metadata_file": "product",
+                            "uuid": "f0b91aa5-d54b-e11a-410e-3e4edca5346f",
                         },
                     },
                 ],

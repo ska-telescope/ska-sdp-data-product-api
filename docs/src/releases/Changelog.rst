@@ -11,7 +11,7 @@ Current Development
  - [Fixed] Updated the in memory search store that failed to load new data on a re-index of the PV.
  - [Changed] Changed the /dataproductmetadata endpoint to expect a data products UUID instead of a execution_block_id, which is not unique in the case where there are sub products inside a data product.
  - [Changed] Updated the /download endpoint to accept either the execution_block_id or a UUID. The UUID is used to differentiate between sub products inside a data product when downloading from the dashboard. If there are more than one match for data products of an execution_block_id, they will all be downloaded when calling the endpoint with an execution_block_id.
-
+ - [Changed] Updated the response of the /ingestnewdataproduct and /ingestnewmetadata endpoint to reply with an http response and uuid of the product submitted.
 
 v0.10.0
 -------

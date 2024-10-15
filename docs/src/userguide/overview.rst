@@ -247,6 +247,18 @@ Sending a POST request to the /ingestnewdataproduct endpoint will load and parse
         "relativePathName": "product/eb-test-20200325-00001"
     }
 
+*Response*
+
+.. code-block:: bash
+
+    [
+        {
+            "status": "success",
+            "message": "New data product received and search store index updated",
+            "uuid": "f0b91aa5-d54b-e11a-410e-3e4edca5346f"
+        },
+        201
+    ]
 
 Ingest new metadata endpoint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -307,6 +319,19 @@ For example, the POST request body:
             "target_name": ""
         }
     }
+
+*Response*
+
+.. code-block:: bash
+
+    [
+        {
+            "status": "success",
+            "message": "New data product metadata received and search store index updated",
+            "uuid": "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c"
+        },
+        201
+    ]
 
 API User
 --------

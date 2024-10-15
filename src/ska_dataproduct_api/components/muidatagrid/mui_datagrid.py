@@ -193,6 +193,8 @@ class MuiDataGrid:
         Returns:
             None
         """
+        if "uuid" not in data_product_details:
+            return
 
         for item in muiDataGridInstance.flattened_list_of_dataproducts_metadata:
             if item["uuid"] == data_product_details["uuid"]:

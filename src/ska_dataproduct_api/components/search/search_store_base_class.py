@@ -56,7 +56,8 @@ class MetadataSearchStore:
         for (
             data_product
         ) in self.metadata_store.load_data_products_from_persistent_metadata_store():
-            self.insert_metadata_in_search_store(data_product["data"])
+            if data_product["data"]:
+                self.insert_metadata_in_search_store(data_product["data"])
 
     def load_in_memory_volume_index_metadata_store_data(self):
         """
@@ -65,15 +66,14 @@ class MetadataSearchStore:
         Iterates through the dictionary of data product metadata provided by the in-memory store
         and extracts the metadata dictionary for insertion into the search store.
         """
-        self.number_of_dataproducts = 0
         for (
-            uuid,
+            data_product_uuid,
             data_product,
         ) in self.metadata_store.dict_of_data_products_metadata.items():
-            logger.debug("Loading UUID %s into search store", uuid)
+            logger.debug("Loading UUID %s into search store", data_product_uuid)
             self.insert_metadata_in_search_store(data_product.metadata_dict)
 
-    def insert_metadata_in_search_store(self, metadata_dict: dict) -> dict:
+    def insert_metadata_in_search_store(self, metadata_dict: dict) -> None:
         """
         Inserts the provided metadata dictionary into the search store.
 

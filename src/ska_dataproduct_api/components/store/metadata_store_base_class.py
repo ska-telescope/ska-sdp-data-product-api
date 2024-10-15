@@ -69,5 +69,4 @@ class MetadataStore:
             if file_path not in list_of_data_product_paths:
                 list_of_data_product_paths.append(file_path)
 
-        print(str(list_of_data_product_paths))
         return list_of_data_product_paths

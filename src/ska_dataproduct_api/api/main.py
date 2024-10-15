@@ -2,7 +2,7 @@
 
 import logging
 
-from fastapi import BackgroundTasks, Request
+from fastapi import BackgroundTasks, Request, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 
@@ -193,25 +193,63 @@ async def ingest_new_data_product(
 ):
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
-    metadata_store.ingest_file(
-        ABSOLUTE_PERSISTENT_STORAGE_PATH / file_object.execution_block / METADATA_FILE_NAME
-    )
-    metadata_store.update_data_store_date_modified()
-    logger.info("New data product metadata file loaded and search_store index updated")
-    return "New data product metadata file loaded and search_store index updated"
+    try:
+        data_product_uuid = metadata_store.ingest_file(
+            ABSOLUTE_PERSISTENT_STORAGE_PATH / file_object.execution_block / METADATA_FILE_NAME
+        )
+        metadata_store.update_data_store_date_modified()
+        return {
+            "status": "success",
+            "message": "New data product received and search store index updated",
+            "uuid": data_product_uuid,
+        }, status.HTTP_201_CREATED
+    except Exception as error:
+        logger.error("Error ingesting metadata: %s", error)
+        raise HTTPException(
+            status_code=500, detail="Internal server error during metadata ingestion."
+        ) from error
 
 
 @app.post("/ingestnewmetadata")
 async def ingest_new_metadata(
     metadata: dict,
 ):
-    """This API endpoint takes JSON data product metadata and ingests into
-    the appropriate search_store."""
-    metadata_store.ingest_metadata(metadata)
-    search_store.insert_metadata_in_search_store(metadata)
-    metadata_store.update_data_store_date_modified()
-    logger.info("New data product metadata received and search_store index updated")
-    return "New data product metadata received and search store index updated"
+    """
+    This API endpoint ingests new data product metadata in JSON format and
+    updates the search store index. Raises a 400 Bad Request exception
+    if the provided metadata is not a valid dictionary.
+
+    Args:
+        metadata (dict[str, str]): The data product metadata in JSON format.
+
+    Raises:
+        HTTPException: Raised if the provided metadata is not a valid dictionary.
+
+    Returns:
+        dict: A JSON response containing a success message and the ingested metadata.
+    """
+
+    if not isinstance(metadata, dict):
+        raise HTTPException(
+            status_code=400, detail="Invalid metadata format. Must be a dictionary."
+        )
+
+    try:
+        data_product_uuid = metadata_store.ingest_metadata(metadata)
+        search_store.insert_metadata_in_search_store(metadata)
+        metadata_store.update_data_store_date_modified()
+        logger.info("New data product metadata received and search_store index updated")
+        return {
+            "status": "success",
+            "message": "New data product metadata received and search store index updated",
+            "uuid": data_product_uuid,
+        }, status.HTTP_201_CREATED
+
+    except Exception as error:
+        logger.error("Error ingesting metadata: %s", error)
+        raise HTTPException(
+            status_code=500, detail="Internal server error during metadata ingestion."
+        ) from error
 
 
 @app.get("/layout")

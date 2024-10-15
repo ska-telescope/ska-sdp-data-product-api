@@ -22,12 +22,16 @@ persistent PostgreSQL deployments.
 """
 import logging
 import pathlib
+import uuid
 from typing import Any
 
 from ska_dataproduct_api.components.metadata.metadata import DataProductMetadata
 from ska_dataproduct_api.components.store.metadata_store_base_class import MetadataStore
 from ska_dataproduct_api.configuration.settings import PERSISTENT_STORAGE_PATH
-from ska_dataproduct_api.utilities.helperfunctions import DataProductIdentifier
+from ska_dataproduct_api.utilities.helperfunctions import (
+    DataProductIdentifier,
+    validate_data_product_identifier,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +60,7 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
             "number_of_dataproducts_loaded": self.number_of_dataproducts,
             "number_of_metadata_files_found": self.number_of_metadata_files,
             "last_metadata_update_time": self.date_modified,
+            "indexing": self.indexing,
         }
 
     def reindex_persistent_volume(self) -> None:
@@ -65,8 +70,6 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
         try:
             logger.info("Re-indexing persistent volume store...")
             self.indexing = True
-            self.number_of_dataproducts = 0
-            self.number_of_metadata_files = 0
             self.list_of_data_product_paths.clear()
             self.list_of_data_product_paths: list[str] = self.list_all_data_product_files(
                 PERSISTENT_STORAGE_PATH
@@ -93,9 +96,16 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
             None
         """
         for product_path in self.list_of_data_product_paths:
-            self.ingest_file(product_path)
+            try:
+                _ = self.ingest_file(product_path)
+            except Exception as error:  # pylint: disable=broad-exception-caught
+                logger.error(
+                    "Failed to ingest data product at file location: %s, due to error: %s",
+                    str(product_path),
+                    error,
+                )
 
-    def ingest_file(self, data_product_metadata_file_path: pathlib.Path) -> None:
+    def ingest_file(self, data_product_metadata_file_path: pathlib.Path) -> uuid.UUID:
         """
         Ingests a data product file by loading its metadata, structuring the information,
         and inserting it into the metadata store.
@@ -112,24 +122,23 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
                 data_product_metadata_file_path
             )
 
-            if data_product_metadata_instance.uuid is None:
-                logger.error("Failed to ingest data product with no derivable UUID")
-                return
-
-            if data_product_metadata_instance.uuid not in self.dict_of_data_products_metadata:
-                self.dict_of_data_products_metadata[
-                    str(data_product_metadata_instance.uuid)
-                ] = data_product_metadata_instance
-                self.number_of_dataproducts = self.number_of_dataproducts + 1
-
         except Exception as error:  # pylint: disable=broad-exception-caught
             logger.error(
                 "Failed to ingest dataproduct %s in list of products paths. Error: %s",
                 data_product_metadata_file_path,
                 error,
             )
+            raise error
 
-    def ingest_metadata(self, metadata: dict) -> None:
+        self.dict_of_data_products_metadata[
+            str(data_product_metadata_instance.data_product_uuid)
+        ] = data_product_metadata_instance
+
+        self.number_of_dataproducts = len(self.dict_of_data_products_metadata)
+
+        return data_product_metadata_instance.data_product_uuid
+
+    def ingest_metadata(self, metadata: dict) -> uuid.UUID:
         """
         Ingests a data product,structuring the information,
         and inserting it into the metadata store.
@@ -144,15 +153,23 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
             data_product_metadata_instance: DataProductMetadata = DataProductMetadata()
             data_product_metadata_instance.load_metadata_from_class(metadata)
 
-            self.dict_of_data_products_metadata[
-                str(data_product_metadata_instance.uuid)
-            ] = data_product_metadata_instance
-            self.number_of_dataproducts = self.number_of_dataproducts + 1
         except Exception as error:
-            logger.error("Failed to ingest ingest_metadata, error: %s", error)
-            raise
+            logger.error(
+                "Failed to ingest dataproduct metadata: %s. Error: %s",
+                metadata,
+                error,
+            )
+            raise error
 
-    def get_metadata(self, uuid: str) -> dict[str, Any]:
+        self.dict_of_data_products_metadata[
+            str(data_product_metadata_instance.data_product_uuid)
+        ] = data_product_metadata_instance
+
+        self.number_of_dataproducts = len(self.dict_of_data_products_metadata)
+
+        return data_product_metadata_instance.data_product_uuid
+
+    def get_metadata(self, data_product_uuid: str) -> dict[str, Any]:
         """Retrieves metadata for the given execution block.
 
         Args:
@@ -161,12 +178,12 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
         Returns:
             A dictionary containing the metadata for the execution block, or None if not found.
         """
-        if not uuid:
-            logger.warning("Metadata not found for uuid: %s", uuid)
+        if not data_product_uuid:
+            logger.warning("Metadata not found for uuid: %s", data_product_uuid)
             return {}
 
         try:
-            return self.dict_of_data_products_metadata[uuid].metadata_dict
+            return self.dict_of_data_products_metadata[data_product_uuid].metadata_dict
         except Exception as error:  # pylint: disable=broad-exception-caught
             logger.error("Failed to get metadata for execution block, error: %s", error)
             return {}
@@ -183,10 +200,12 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
             The list of file path as a pathlib.Path objects.
         """
 
-        if not data_product_identifier.uuid and not data_product_identifier.execution_block:
+        try:
+            validate_data_product_identifier(data_product_identifier)
+        except ValueError as error:
             logger.warning(
-                "File path not found for execution block: %s",
-                data_product_identifier.uuid or data_product_identifier.execution_block,
+                "File path not found for data product, error: %s",
+                error,
             )
             return []
 

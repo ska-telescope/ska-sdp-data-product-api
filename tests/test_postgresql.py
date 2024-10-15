@@ -6,7 +6,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 from psycopg import OperationalError
 
+from ska_dataproduct_api.components.metadata.metadata import DataProductMetadata
 from ska_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
+from ska_dataproduct_api.utilities.helperfunctions import DataProductIdentifier
 
 # pylint: disable=redefined-outer-name
 # pylint: disable=protected-access
@@ -48,6 +50,7 @@ def test_status(mocked_postgres_connector):
         "port": 5432,
         "user": "test_user",
         "running": True,
+        "indexing": False,
         "dbname": "test_db",
         "schema": "public",
         "table_name": "my_table",
@@ -75,7 +78,8 @@ options='-c search_path=\"public\"'"
 
 def test_get_data_product_file_path_success(mocked_postgres_connector):
     """Tests successful retrieval of file path."""
-    execution_block = "test_block"
+    data_product_identifier = DataProductIdentifier()
+    data_product_identifier.execution_block = "test_block"
     expected_file_path = pathlib.Path("tests/test_files/product/eb-m002-20221212-12345")
 
     mocked_postgres_connector["cursor"].fetchone.return_value = (
@@ -84,20 +88,25 @@ def test_get_data_product_file_path_success(mocked_postgres_connector):
         },
     )
 
-    result = mocked_postgres_connector["connector"].get_data_product_file_paths(execution_block)
+    result = mocked_postgres_connector["connector"].get_data_product_file_paths(
+        data_product_identifier
+    )
 
     assert result == expected_file_path
 
 
 def test_get_data_product_file_path_not_found(mocked_postgres_connector):
     """Tests when file path is not found."""
-    execution_block = "test_block"
+    data_product_identifier = DataProductIdentifier()
+    data_product_identifier.execution_block = "test_block"
 
     mocked_postgres_connector["cursor"].fetchone.return_value = ({},)
 
-    result = mocked_postgres_connector["connector"].get_data_product_file_paths(execution_block)
+    result = mocked_postgres_connector["connector"].get_data_product_file_paths(
+        data_product_identifier
+    )
 
-    assert result == {}
+    assert result == []
 
 
 def test_reindex_persistent_volume(mocked_postgres_connector):
@@ -150,6 +159,8 @@ def test_save_metadata_to_postgresql(mocked_postgres_connector):
             "target_name": "",
         },
     }
+    data_product_metadata_instance: DataProductMetadata = DataProductMetadata()
+    data_product_metadata_instance.load_metadata_from_class(test_metadata)
 
     with patch.object(
         mocked_postgres_connector["connector"], "check_metadata_exists_by_hash", return_value=False
@@ -159,7 +170,9 @@ def test_save_metadata_to_postgresql(mocked_postgres_connector):
             "check_metadata_exists_by_execution_block",
             return_value=None,
         ):
-            mocked_postgres_connector["connector"].save_metadata_to_postgresql(test_metadata)
+            mocked_postgres_connector["connector"].save_metadata_to_postgresql(
+                data_product_metadata_instance
+            )
             assert mocked_postgres_connector["connector"].number_of_dataproducts == 1
             assert mocked_postgres_connector["connector"].conn.commit.call_count == 2
 
@@ -171,7 +184,9 @@ def test_save_metadata_to_postgresql(mocked_postgres_connector):
             "check_metadata_exists_by_execution_block",
             return_value=1,
         ):
-            mocked_postgres_connector["connector"].save_metadata_to_postgresql(test_metadata)
+            mocked_postgres_connector["connector"].save_metadata_to_postgresql(
+                data_product_metadata_instance
+            )
             assert mocked_postgres_connector["connector"].number_of_dataproducts == 1
             assert mocked_postgres_connector["connector"].conn.commit.call_count == 3
 

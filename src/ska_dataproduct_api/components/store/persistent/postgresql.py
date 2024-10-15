@@ -5,6 +5,7 @@ import json
 import logging
 import pathlib
 import time
+import uuid
 from typing import Any
 
 import psycopg
@@ -13,11 +14,17 @@ from psycopg.errors import OperationalError
 from ska_dataproduct_api.components.metadata.metadata import DataProductMetadata
 from ska_dataproduct_api.components.store.metadata_store_base_class import MetadataStore
 from ska_dataproduct_api.configuration.settings import PERSISTENT_STORAGE_PATH
+from ska_dataproduct_api.utilities.helperfunctions import (
+    DataProductIdentifier,
+    validate_data_product_identifier,
+)
 
 logger = logging.getLogger(__name__)
 
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=too-many-arguments
+# pylint: disable=too-many-public-methods
+# pylint: disable=duplicate-code
 
 
 class PostgresConnector(MetadataStore):
@@ -70,6 +77,7 @@ class PostgresConnector(MetadataStore):
             "port": self.port,
             "user": self.user,
             "running": self.postgresql_running,
+            "indexing": self.indexing,
             "dbname": self.dbname,
             "schema": self.schema,
             "table_name": self.table_name,
@@ -183,7 +191,8 @@ class PostgresConnector(MetadataStore):
             CREATE TABLE IF NOT EXISTS {self.schema}.{self.table_name} (
                 id SERIAL PRIMARY KEY,
                 data JSONB NOT NULL,
-                execution_block VARCHAR(255) DEFAULT NULL UNIQUE,
+                execution_block VARCHAR(255) DEFAULT NULL,
+                uuid CHAR(64) UNIQUE,
                 json_hash CHAR(64) UNIQUE
             );
             """
@@ -216,12 +225,20 @@ class PostgresConnector(MetadataStore):
             PERSISTENT_STORAGE_PATH
         )
         for product_path in self.list_of_data_product_paths:
-            self.ingest_file(product_path)
+            try:
+                _ = self.ingest_file(product_path)
+            except Exception as error:  # pylint: disable=broad-exception-caught
+                logger.error(
+                    "Failed to ingest data product at file location: %s, due to error: %s",
+                    str(product_path),
+                    error,
+                )
+
         self.count_jsonb_objects()
         self.indexing = False
         logger.info("Metadata store re-indexed")
 
-    def ingest_file(self, data_product_metadata_file_path: pathlib.Path) -> None:
+    def ingest_file(self, data_product_metadata_file_path: pathlib.Path) -> uuid.UUID:
         """
         Ingests a data product file by loading its metadata, structuring the information,
         and inserting it into the metadata store.
@@ -229,15 +246,21 @@ class PostgresConnector(MetadataStore):
         Args:
             data_product_metadata_file_path (pathlib.Path): The path to the data file.
         """
-        data_product_metadata_instance: DataProductMetadata = DataProductMetadata()
-        data_product_metadata_instance.load_metadata_from_yaml_file(
-            data_product_metadata_file_path
-        )
+        try:
+            data_product_metadata_instance: DataProductMetadata = DataProductMetadata()
+            data_product_metadata_instance.load_metadata_from_yaml_file(
+                data_product_metadata_file_path
+            )
+        except Exception as error:
+            logger.error(
+                "Failed to ingest dataproduct %s in list of products paths. Error: %s",
+                data_product_metadata_file_path,
+                error,
+            )
+            raise error
 
         try:
-            self.save_metadata_to_postgresql(
-                metadata_file_dict=data_product_metadata_instance.metadata_dict
-            )
+            self.save_metadata_to_postgresql(data_product_metadata_instance)
 
         except Exception as error:  # pylint: disable=broad-exception-caught
             logger.error(
@@ -246,6 +269,7 @@ class PostgresConnector(MetadataStore):
                 error,
             )
         self.update_data_store_date_modified()
+        return data_product_metadata_instance.data_product_uuid
 
     def calculate_metadata_hash(self, metadata_file_json: dict) -> str:
         """Calculates a SHA256 hash of the given metadata JSON."""
@@ -259,6 +283,13 @@ json_hash = %s)"
         with self._postgresql_query(query=query_string, params=(json_hash,)) as cursor:
             return cursor.fetchone()[0]
 
+    def check_metadata_exists_by_uuid(self, data_product_uuid: str) -> bool:
+        """Checks if metadata exists based on the given execution block."""
+        query_string = f"SELECT id FROM {self.schema}.{self.table_name} WHERE uuid = %s"
+        with self._postgresql_query(query=query_string, params=(data_product_uuid,)) as cursor:
+            result = cursor.fetchone()
+            return result[0] if result else None
+
     def check_metadata_exists_by_execution_block(self, execution_block: str) -> int:
         """Checks if metadata exists based on the given execution block."""
         query_string = f"SELECT id FROM {self.schema}.{self.table_name} WHERE execution_block = %s"
@@ -266,61 +297,94 @@ json_hash = %s)"
             result = cursor.fetchone()
             return result[0] if result else None
 
-    def update_metadata(self, metadata_file_json: str, id_field: int) -> None:
+    def update_metadata(
+        self, data_product_metadata_instance: DataProductMetadata, id_field: int
+    ) -> None:
         """Updates existing metadata with the given data and hash."""
-        json_hash = self.calculate_metadata_hash(metadata_file_json)
-        query_string = f"UPDATE {self.schema}.{self.table_name} SET data = %s, json_hash = %s \
-WHERE id = %s"
+        query_string = f"UPDATE {self.schema}.{self.table_name} SET data = %s, json_hash = %s, \
+uuid = %s WHERE id = %s"
         with self._postgresql_query(
-            query=query_string, params=(metadata_file_json, json_hash, id_field)
+            query=query_string,
+            params=(
+                json.dumps(data_product_metadata_instance.metadata_dict),
+                data_product_metadata_instance.metadata_dict_hash,
+                str(data_product_metadata_instance.data_product_uuid),
+                id_field,
+            ),
         ) as _:
             self.conn.commit()
 
-    def insert_metadata(self, metadata_file_json: str, execution_block: str) -> None:
+    def insert_metadata(self, data_product_metadata_instance: DataProductMetadata) -> None:
         """Inserts new metadata into the database."""
-        json_hash = self.calculate_metadata_hash(metadata_file_json)
         table: str = self.schema + "." + self.table_name
-        query_string = f"INSERT INTO {table} (data, json_hash, execution_block) VALUES \
-(%s, %s, %s)"
+        query_string = f"INSERT INTO {table} (data, json_hash, execution_block, uuid) VALUES \
+(%s, %s, %s, %s)"
         with self._postgresql_query(
-            query=query_string, params=(metadata_file_json, json_hash, execution_block)
+            query=query_string,
+            params=(
+                json.dumps(data_product_metadata_instance.metadata_dict),
+                data_product_metadata_instance.metadata_dict_hash,
+                data_product_metadata_instance.execution_block,
+                str(data_product_metadata_instance.data_product_uuid),
+            ),
         ) as _:
             self.conn.commit()
 
-    def ingest_metadata(self, metadata_file_dict: dict) -> None:
+    def ingest_metadata(self, metadata_file_dict: dict) -> uuid.UUID:
         """Saves or update metadata to PostgreSQL."""
-        self.save_metadata_to_postgresql(metadata_file_dict)
+        try:
+            data_product_metadata_instance: DataProductMetadata = DataProductMetadata()
+            data_product_metadata_instance.load_metadata_from_class(metadata_file_dict)
+        except Exception as error:
+            logger.error(
+                "Failed to ingest dataproduct metadata: %s. Error: %s",
+                metadata_file_dict,
+                error,
+            )
+            raise error
 
-    def save_metadata_to_postgresql(self, metadata_file_dict: dict) -> None:
+        self.save_metadata_to_postgresql(data_product_metadata_instance)
+        return data_product_metadata_instance.data_product_uuid
+
+    def save_metadata_to_postgresql(
+        self, data_product_metadata_instance: DataProductMetadata
+    ) -> None:
         """Saves metadata to PostgreSQL."""
         try:
             if not self.postgresql_running:
                 logger.error("Error saving metadata to PostgreSQL, instance not available")
                 return
 
-            data_product_metadata_instance: DataProductMetadata = DataProductMetadata()
-            data_product_metadata_instance.load_metadata_from_class(metadata_file_dict)
-
-            json_hash = self.calculate_metadata_hash(data_product_metadata_instance.metadata_dict)
-            execution_block = data_product_metadata_instance.metadata_dict["execution_block"]
-
-            if self.check_metadata_exists_by_hash(json_hash):
-                logger.info("Metadata with hash %s already exists.", json_hash)
+            if self.check_metadata_exists_by_hash(
+                data_product_metadata_instance.metadata_dict_hash
+            ):
+                logger.info(
+                    "Metadata with hash %s already exists.",
+                    data_product_metadata_instance.metadata_dict_hash,
+                )
                 return
 
-            metadata_id = self.check_metadata_exists_by_execution_block(execution_block)
-            if metadata_id:
-                self.update_metadata(
-                    json.dumps(data_product_metadata_instance.metadata_dict), metadata_id
+            # Update if uuid exist
+            metadata_table_id = self.check_metadata_exists_by_uuid(
+                str(data_product_metadata_instance.data_product_uuid)
+            )
+
+            if metadata_table_id:
+                self.update_metadata(data_product_metadata_instance, metadata_table_id)
+                logger.info(
+                    "Updated metadata with execution_block %s",
+                    data_product_metadata_instance.execution_block,
                 )
-                logger.info("Updated metadata with execution_block %s", execution_block)
                 self.count_jsonb_objects()
-            else:
-                self.insert_metadata(
-                    json.dumps(data_product_metadata_instance.metadata_dict), execution_block
-                )
-                logger.info("Inserted new metadata with execution_block %s", execution_block)
-                self.count_jsonb_objects()
+                return
+
+            # Add if neither uuid or execution_block exist
+            self.insert_metadata(data_product_metadata_instance)
+            logger.info(
+                "Inserted new metadata with execution_block %s",
+                data_product_metadata_instance.execution_block,
+            )
+            self.count_jsonb_objects()
 
         except psycopg.Error as error:
             logger.error("Error saving metadata to PostgreSQL: %s", error)
@@ -437,7 +501,33 @@ WHERE id = %s"
             )
             return {}
 
-    def get_data_product_file_paths(self, execution_block: str) -> pathlib.Path:
+    def get_data_by_uuid(self, data_product_uuid: str) -> dict[str, Any] | None:
+        """Retrieves data from the PostgreSQL table based on the uuid.
+
+        Args:
+            data_product_uuid: The uuid string.
+
+        Returns:
+            The data (JSONB) associated with the uuid, or None if not found.
+        """
+        try:
+            query_string = f"SELECT data FROM {self.schema}.{self.table_name} WHERE uuid = %s"
+            with self._postgresql_query(query=query_string, params=(data_product_uuid,)) as cursor:
+                result = cursor.fetchone()
+                if result[0]:
+                    return result[0]
+                return {}
+
+        except (psycopg.OperationalError, psycopg.DatabaseError) as error:
+            logger.error("Database error: %s", error)
+            return {}
+        except (IndexError, TypeError) as error:
+            logger.warning("Metadata not found for uuid: %s, error: %s", data_product_uuid, error)
+            return {}
+
+    def get_data_product_file_paths(
+        self, data_product_identifier: DataProductIdentifier
+    ) -> list[pathlib.Path]:
         """Retrieves the file path to the data product for the given execution block.
 
         Args:
@@ -446,12 +536,31 @@ WHERE id = %s"
         Returns:
             The file path as a pathlib.Path object, or {} if not found.
         """
+        try:
+            validate_data_product_identifier(data_product_identifier)
+        except ValueError as error:
+            logger.warning(
+                "File path not found for data product, error: %s",
+                error,
+            )
+            return []
 
         try:
-            data_product_metadata = self.get_data_by_execution_block(execution_block)
-            if data_product_metadata:
-                return pathlib.Path(data_product_metadata["dataproduct_file"])
-            return {}
+            if data_product_identifier.execution_block:
+                data_product_metadata = self.get_data_by_execution_block(
+                    data_product_identifier.execution_block
+                )
+                if data_product_metadata:
+                    return pathlib.Path(data_product_metadata["dataproduct_file"])
+            if data_product_identifier.uuid:
+                data_product_metadata = self.get_data_by_uuid(data_product_identifier.uuid)
+                if data_product_metadata:
+                    return pathlib.Path(data_product_metadata["dataproduct_file"])
+
+            return []
         except KeyError:
-            logger.warning("File path not found for execution block: %s", execution_block)
-            return {}
+            logger.warning(
+                "File path not found for execution block: %s",
+                data_product_identifier.uuid or data_product_identifier.execution_block,
+            )
+            return []

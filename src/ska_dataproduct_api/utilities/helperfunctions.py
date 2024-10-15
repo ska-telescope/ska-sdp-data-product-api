@@ -95,6 +95,14 @@ class DataProductIdentifier(BaseModel):
     execution_block: str | None = None
 
 
+def validate_data_product_identifier(data_product_identifier: DataProductIdentifier) -> bool:
+    """
+    Verify that there are either a UUID or execution_block given to identify a data product with
+    """
+    if not data_product_identifier.uuid and not data_product_identifier.execution_block:
+        raise ValueError("No valid data_product_identifier found")
+
+
 class SearchParametersClass(BaseModel):
     """Class for defining search parameters"""
 

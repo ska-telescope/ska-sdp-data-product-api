@@ -291,11 +291,22 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
         """
         try:
             if self.index_metadata_to_elasticsearch(self.indices, metadata_dict):
-                self.number_of_dataproducts = self.number_of_dataproducts + 1
+                self.number_of_dataproducts = self.count_documents(self.indices)
             else:
                 logger.warning("Inserting into search store failed for: %s", metadata_dict)
         except Exception as exception:  # pylint: disable=broad-exception-caught
             logger.error("Error inserting metadata into search store: %s", exception)
+
+    def count_documents(self, indices):
+        """Counts the number of documents in the specified Elasticsearch indices.
+
+        Args:
+            indices: The Elasticsearch indices to count documents in.
+
+        Returns:
+            The number of documents in each index.
+        """
+        return self.es_client.count(index=indices)["count"]
 
     def index_metadata_to_elasticsearch(self, index: str, metadata_dict: dict) -> bool:
         """Indexes metadata into Elasticsearch.
@@ -310,11 +321,11 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
         """
 
         try:
-            execution_block = metadata_dict.get("execution_block")
-            if not execution_block:
-                raise ValueError("Missing 'execution_block' in metadata")
+            data_product_uuid = metadata_dict.get("uuid")
+            if not data_product_uuid:
+                raise ValueError("Missing 'data_product_uuid' in metadata")
 
-            response = self.es_client.index(index=index, id=execution_block, body=metadata_dict)
+            response = self.es_client.index(index=index, id=data_product_uuid, body=metadata_dict)
             if response["result"] == "created" or response["result"] == "updated":
                 return True
             logger.warning("Error inserting metadata into Elasticsearch: %s", str(response))
@@ -348,7 +359,13 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
         Raises:
             ValueError: If the provided metadata_file is not a dictionary.
         """
-        required_keys = {"execution_block", "date_created", "dataproduct_file", "metadata_file"}
+        required_keys = {
+            "execution_block",
+            "date_created",
+            "dataproduct_file",
+            "metadata_file",
+            "data_product_uuid",
+        }
         data_product_details = {}
 
         # Handle top-level required keys
