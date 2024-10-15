@@ -551,11 +551,11 @@ uuid = %s WHERE id = %s"
                     data_product_identifier.execution_block
                 )
                 if data_product_metadata:
-                    return pathlib.Path(data_product_metadata["dataproduct_file"])
+                    return [pathlib.Path(data_product_metadata["dataproduct_file"])]
             if data_product_identifier.uuid:
                 data_product_metadata = self.get_data_by_uuid(data_product_identifier.uuid)
                 if data_product_metadata:
-                    return pathlib.Path(data_product_metadata["dataproduct_file"])
+                    return [pathlib.Path(data_product_metadata["dataproduct_file"])]
 
             return []
         except KeyError:

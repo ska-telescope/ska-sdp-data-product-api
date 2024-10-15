@@ -170,13 +170,13 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
         return data_product_metadata_instance.data_product_uuid
 
     def get_metadata(self, data_product_uuid: str) -> dict[str, Any]:
-        """Retrieves metadata for the given execution block.
+        """Retrieves metadata for the given uuid.
 
         Args:
-            execution_block: The execution block identifier.
+            data_product_uuid: The data product uuid identifier.
 
         Returns:
-            A dictionary containing the metadata for the execution block, or None if not found.
+            A dictionary containing the metadata for the uuid, or None if not found.
         """
         if not data_product_uuid:
             logger.warning("Metadata not found for uuid: %s", data_product_uuid)
