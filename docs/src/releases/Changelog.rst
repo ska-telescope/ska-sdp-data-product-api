@@ -5,9 +5,16 @@ Changelog
 Current Development
 -------------------
 
+* `NAL-1254 <https://jira.skatelescope.org/browse/NAL-1254>`_ 
+
+ - [Changed] Changed the unique ID of data products from the execution_block_id to a UUID. This allows sub products of an execution_block to be loaded as a separate data product on the DPD.
+ - [Fixed] Updated the in memory search store that failed to load new data on a re-index of the PV.
+ - [Changed] Changed the /dataproductmetadata endpoint to expect a data products UUID instead of a execution_block_id, which is not unique in the case where there are sub products inside a data product.
+ - [Changed] Updated the /download endpoint to accept either the execution_block_id or a UUID. The UUID is used to differentiate between sub products inside a data product when downloading from the dashboard. If there are more than one match for data products of an execution_block_id, they will all be downloaded when calling the endpoint with an execution_block_id.
+ - [Changed] Updated the response of the /ingestnewdataproduct and /ingestnewmetadata endpoint to reply with an http response and uuid of the product submitted.
 
 v0.10.0
-------
+-------
 
 * `NAL-1228 <https://jira.skatelescope.org/browse/NAL-1228>`_ 
 
@@ -33,9 +40,7 @@ v0.9.0
 
 * `NAL-1146 <https://jira.skatelescope.org/browse/NAL-1146>`_ 
 
-  - **BREAKING** [Added] Added the concept of access_group to the metadata. This limits the access to data products if the user, authenticated with MS Entra, has not been assigned to the access_group of the data product. When using the API with the Data Product Dashboard, the user can authenticate with MS Entra. When loading the data products (using the filterdataproducts endpoint) the users access token will be used to retrieve the users assigned user groups, and that will be used as access list to determine which data products the user have access to. 
-  Data products that does not have an access_group assigned, will be open access to all users.
-  Note: When using the API for scripted access to data products with the dataproductsearch endpoint, only data products with open access will be accessible.
+  - **BREAKING** [Added] Added the concept of access_group to the metadata. This limits the access to data products if the user, authenticated with MS Entra, has not been assigned to the access_group of the data product. When using the API with the Data Product Dashboard, the user can authenticate with MS Entra. When loading the data products (using the filterdataproducts endpoint) the users access token will be used to retrieve the users assigned user groups, and that will be used as access list to determine which data products the user have access to. Data products that does not have an access_group assigned, will be open access to all users. Note: When using the API for scripted access to data products all data products will be accessible as it is assume the the user inside the VPN have access to all the data.
   - **BREAKING** [Added] Integrated the API with the SKA Permissions API to enable it to obtain the users assigned user groups from MS Entra.
   - [Changed] Changed the Elasticsearch schema date_created field to date, and updated the query_body size to 100.
   - [Changed] The Elasticsearch http CA certificate needs to be loaded when deployed from the vault. To maintain the correct formatting, the certificate needs to be Base64 encoded before it is saved in the vault. The DPD API will now load the certificate from the vault into an environment variable, then decode it and save it in the format required for Elasticsearch.

@@ -48,6 +48,9 @@
         "execution_block": {
             "type": "string"
         },
+        "uuid": {
+            "type": "string"
+        },
         "files": {
             "type": "array",
             "items": {
@@ -277,6 +280,7 @@
         }
     },
     "required": [
-        "execution_block"
+        "execution_block",
+        "uuid"
     ]
 }

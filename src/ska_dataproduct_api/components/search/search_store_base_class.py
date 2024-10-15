@@ -25,6 +25,7 @@ class MetadataSearchStore:
     """
 
     def __init__(self, metadata_store: Union[PostgresConnector, InMemoryVolumeIndexMetadataStore]):
+        self.number_of_dataproducts: int = 0
         self.metadata_store: Union[
             PostgresConnector, InMemoryVolumeIndexMetadataStore
         ] = metadata_store
@@ -55,7 +56,8 @@ class MetadataSearchStore:
         for (
             data_product
         ) in self.metadata_store.load_data_products_from_persistent_metadata_store():
-            self.insert_metadata_in_search_store(data_product["data"])
+            if data_product["data"]:
+                self.insert_metadata_in_search_store(data_product["data"])
 
     def load_in_memory_volume_index_metadata_store_data(self):
         """
@@ -65,13 +67,13 @@ class MetadataSearchStore:
         and extracts the metadata dictionary for insertion into the search store.
         """
         for (
-            execution_block,
+            data_product_uuid,
             data_product,
         ) in self.metadata_store.dict_of_data_products_metadata.items():
-            print("Loading execution_block %s into search store", execution_block)
+            logger.debug("Loading UUID %s into search store", data_product_uuid)
             self.insert_metadata_in_search_store(data_product.metadata_dict)
 
-    def insert_metadata_in_search_store(self, metadata_dict: dict) -> dict:
+    def insert_metadata_in_search_store(self, metadata_dict: dict) -> None:
         """
         Inserts the provided metadata dictionary into the search store.
 

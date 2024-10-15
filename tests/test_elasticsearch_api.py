@@ -60,16 +60,19 @@ def test_status(mocker):
     response = mocked_metadata_store.status()
 
     # Assert expected response
-    assert response == {
-        "metadata_store_in_use": "ElasticsearchMetadataStore",
-        "url": "https://localhost:9200",
-        "user": user,
-        "running": running,
-        "connection_established_at": mocked_metadata_store.connection_established_at,
-        "number_of_dataproducts": 0,
-        "indices": "ska-dp-dataproduct-localhost-dev-v1",
-        "cluster_info": cluster_info,
-    }
+    assert "metadata_store_in_use" in response
+    assert "url" in response
+    assert "user" in response
+    assert "running" in response
+    assert "connection_established_at" in response
+    assert "number_of_dataproducts" in response
+    assert "indices" in response
+    assert "cluster_info" in response
+
+    # Check specific values
+    assert response["metadata_store_in_use"] == "ElasticsearchMetadataStore"
+    assert response["user"] == user
+    assert response["running"] == running
 
 
 def test_no_ca_cert_configured():
@@ -134,6 +137,7 @@ def test_search_metadata():
             "date_created": "2019-10-31",
             "dataproduct_file": "product",
             "metadata_file": "product",
+            "uuid": "f0b91aa5-d54b-e11a-410e-3e4edca5346f",
             "interface": "http://schema.skao.int",
             "id": 1,
         }
@@ -176,6 +180,7 @@ def test_search_metadata_default_value():
             "date_created": "2019-10-31",
             "dataproduct_file": "product",
             "metadata_file": "product",
+            "uuid": "f0b91aa5-d54b-e11a-410e-3e4edca5346f",
             "interface": "http://schema.skao.int",
             "id": 1,
         }

@@ -35,12 +35,11 @@ class InMemoryDataproductSearch(MetadataSearchStore):
         metadata_store: Union[PostgresConnector, InMemoryVolumeIndexMetadataStore],
     ) -> None:
         super().__init__(metadata_store)
-        self.number_of_dataproducts: int = 0
         muiDataGridInstance.flattened_set_of_keys.clear()
         muiDataGridInstance.flattened_list_of_dataproducts_metadata.clear()
         self.load_metadata_from_store()
 
-    def insert_metadata_in_search_store(self, metadata_dict: dict):
+    def insert_metadata_in_search_store(self, metadata_dict: dict) -> None:
         """This method loads the metadata file of a data product, creates a
         list of keys used in it, and then adds it to the flattened_list_of_dataproducts_metadata"""
         # generate a list of keys from this object
@@ -53,7 +52,9 @@ class InMemoryDataproductSearch(MetadataSearchStore):
             list_of_dict=muiDataGridInstance.flattened_list_of_dataproducts_metadata
         )
 
-        self.number_of_dataproducts = self.number_of_dataproducts + 1
+        self.number_of_dataproducts = len(
+            muiDataGridInstance.flattened_list_of_dataproducts_metadata
+        )
 
     def sort_list_of_dict(
         self, list_of_dict: list[dict], key: str = "date_created", reverse: bool = True

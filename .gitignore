@@ -50,6 +50,7 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+tests/test_files/product/eb-largefiletest-20241009-00001/ska-sub-system/random_noise.bin
 
 # Translations
 *.mo

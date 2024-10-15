@@ -2,7 +2,7 @@
 
 import logging
 
-from fastapi import BackgroundTasks, Request
+from fastapi import BackgroundTasks, Request, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 
@@ -22,8 +22,8 @@ from ska_dataproduct_api.configuration.settings import (
     app,
 )
 from ska_dataproduct_api.utilities.helperfunctions import (
+    DataProductIdentifier,
     DPDAPIStatus,
-    ExecutionBlock,
     FilePaths,
     SearchParametersClass,
     download_file,
@@ -41,6 +41,12 @@ DPD_API_Status = DPDAPIStatus(
 )
 
 
+def reindex_data_products_stores() -> None:
+    """Background tasks to reindex the data products on the persistent volume"""
+    metadata_store.reindex_persistent_volume()
+    search_store.load_metadata_from_store()
+
+
 @app.get("/status")
 async def root():
     """An enpoint that just returns confirmation that the
@@ -52,7 +58,7 @@ async def root():
 async def reindex_data_products(background_tasks: BackgroundTasks):
     """This endpoint clears the list of data products from memory and
     re-ingest the metadata of all data products found"""
-    background_tasks.add_task(metadata_store.reindex_persistent_volume)
+    background_tasks.add_task(reindex_data_products_stores)
     logger.info("Metadata search_store re-indexed")
     return "Metadata is set to be re-indexed"
 
@@ -147,21 +153,38 @@ async def get_muidatagridconfig() -> dict:
 
 
 @app.post("/download", response_class=StreamingResponse)
-async def download(data: ExecutionBlock):
-    """This API endpoint returns a FileResponse that is used by a
-    frontend to download a file"""
-    if not data.execution_block:
-        raise HTTPException(status_code=400, detail="Missing execution_block field in request")
-    return download_file(metadata_store.get_data_product_file_path(data.execution_block))
+async def download(data_product_identifier: DataProductIdentifier) -> StreamingResponse:
+    """
+    Downloads a file based on the provided UUID or ExecutionBlock information.
+
+    Raises:
+        HTTPException: If the required data is missing or there's an error
+                       retrieving or accessing the file.
+    """
+
+    if not data_product_identifier.uuid and not data_product_identifier.execution_block:
+        raise HTTPException(status_code=400, detail="Missing UUID or ExecutionBlock")
+
+    try:
+        file_path_list = metadata_store.get_data_product_file_paths(data_product_identifier)
+        return download_file(file_path_list)
+    except (FileNotFoundError, PermissionError) as error:
+        raise HTTPException(status_code=404, detail=f"Failed to access file: {error}") from error
 
 
 @app.post("/dataproductmetadata")
-async def data_product_metadata(data: ExecutionBlock):
-    """This API endpoint returns the data products metadata in json format of a specified data
-    product."""
-    if not data.execution_block:
-        raise HTTPException(status_code=400, detail="Missing execution_block field in request")
-    return metadata_store.get_metadata(data.execution_block)
+async def data_product_metadata(data_product_identifier: DataProductIdentifier) -> dict:
+    """
+    This API endpoint retrieves and returns the data product metadata in JSON format
+    for a specified data product identified by its UUID, or {} if no metadata is found.
+
+    Raises:
+        HTTPException: 400 Bad Request if the request body is missing the "uuid" field.
+    """
+    if not data_product_identifier.uuid:
+        raise HTTPException(status_code=400, detail="Missing uuid field in request")
+
+    return metadata_store.get_metadata(data_product_identifier.uuid)
 
 
 @app.post("/ingestnewdataproduct")
@@ -170,25 +193,63 @@ async def ingest_new_data_product(
 ):
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
-    metadata_store.ingest_file(
-        ABSOLUTE_PERSISTENT_STORAGE_PATH / file_object.execution_block / METADATA_FILE_NAME
-    )
-    metadata_store.update_data_store_date_modified()
-    logger.info("New data product metadata file loaded and search_store index updated")
-    return "New data product metadata file loaded and search_store index updated"
+    try:
+        data_product_uuid = metadata_store.ingest_file(
+            ABSOLUTE_PERSISTENT_STORAGE_PATH / file_object.execution_block / METADATA_FILE_NAME
+        )
+        metadata_store.update_data_store_date_modified()
+        return {
+            "status": "success",
+            "message": "New data product received and search store index updated",
+            "uuid": data_product_uuid,
+        }, status.HTTP_201_CREATED
+    except Exception as error:
+        logger.error("Error ingesting metadata: %s", error)
+        raise HTTPException(
+            status_code=500, detail="Internal server error during metadata ingestion."
+        ) from error
 
 
 @app.post("/ingestnewmetadata")
 async def ingest_new_metadata(
     metadata: dict,
 ):
-    """This API endpoint takes JSON data product metadata and ingests into
-    the appropriate search_store."""
-    metadata_store.ingest_metadata(metadata)
-    search_store.insert_metadata_in_search_store(metadata)
-    metadata_store.update_data_store_date_modified()
-    logger.info("New data product metadata received and search_store index updated")
-    return "New data product metadata received and search store index updated"
+    """
+    This API endpoint ingests new data product metadata in JSON format and
+    updates the search store index. Raises a 400 Bad Request exception
+    if the provided metadata is not a valid dictionary.
+
+    Args:
+        metadata (dict[str, str]): The data product metadata in JSON format.
+
+    Raises:
+        HTTPException: Raised if the provided metadata is not a valid dictionary.
+
+    Returns:
+        dict: A JSON response containing a success message and the ingested metadata.
+    """
+
+    if not isinstance(metadata, dict):
+        raise HTTPException(
+            status_code=400, detail="Invalid metadata format. Must be a dictionary."
+        )
+
+    try:
+        data_product_uuid = metadata_store.ingest_metadata(metadata)
+        search_store.insert_metadata_in_search_store(metadata)
+        metadata_store.update_data_store_date_modified()
+        logger.info("New data product metadata received and search_store index updated")
+        return {
+            "status": "success",
+            "message": "New data product metadata received and search store index updated",
+            "uuid": data_product_uuid,
+        }, status.HTTP_201_CREATED
+
+    except Exception as error:
+        logger.error("Error ingesting metadata: %s", error)
+        raise HTTPException(
+            status_code=500, detail="Internal server error during metadata ingestion."
+        ) from error
 
 
 @app.get("/layout")

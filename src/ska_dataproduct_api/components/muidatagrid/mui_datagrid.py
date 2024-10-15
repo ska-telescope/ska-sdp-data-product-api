@@ -1,8 +1,12 @@
 """This module contains the class object used with the MUI DataGrid component in front end
 applications"""
+
+import logging
 from collections.abc import MutableMapping
 
 # pylint: disable=too-many-instance-attributes
+
+logger = logging.getLogger(__name__)
 
 
 class MuiDataGrid:
@@ -172,9 +176,11 @@ class MuiDataGrid:
                 result[new_key] = value
         return result
 
-    def update_flattened_list_of_dataproducts_metadata(self, data_product_details):
+    def update_flattened_list_of_dataproducts_metadata(self, data_product_details: dict) -> None:
         """
-        Updates the internal list of data products with the provided metadata.
+        Updates the internal list of data products with the provided metadata, ensuring
+        no duplicates based on `uuid`. If a duplicate is found, it updates the existing
+        dictionary with the new values.
 
         This method adds the provided `data_product_details` dictionary to the internal
         `metadata_list` attribute. If the list is empty, it assigns an "id" of 1 to the
@@ -187,7 +193,16 @@ class MuiDataGrid:
         Returns:
             None
         """
-        # Adds the first dictionary to the list
+        if "uuid" not in data_product_details:
+            return
+
+        for item in muiDataGridInstance.flattened_list_of_dataproducts_metadata:
+            if item["uuid"] == data_product_details["uuid"]:
+                # Update the existing dictionary with new values
+                item.update(data_product_details)
+                return
+
+        # If no duplicate found, add the new dictionary
         if len(muiDataGridInstance.flattened_list_of_dataproducts_metadata) == 0:
             data_product_details["id"] = 1
         else:
