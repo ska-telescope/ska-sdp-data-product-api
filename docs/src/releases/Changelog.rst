@@ -5,6 +5,10 @@ Changelog
 Current Development
 -------------------
 
+
+v0.11.0
+-------
+
 * `NAL-1254 <https://jira.skatelescope.org/browse/NAL-1254>`_ 
 
  - [Changed] Changed the unique ID of data products from the execution_block_id to a UUID. This allows sub products of an execution_block to be loaded as a separate data product on the DPD.
