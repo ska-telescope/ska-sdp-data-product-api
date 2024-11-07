@@ -473,8 +473,6 @@ uuid = %s WHERE id = %s"
         Returns:
             The file path as a pathlib.Path object, or {} if not found.
         """
-        logger.debug("###################data_product_identifier")
-        logger.debug(data_product_identifier)
 
         try:
             validate_data_product_identifier(data_product_identifier)
