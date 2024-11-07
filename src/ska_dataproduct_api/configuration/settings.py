@@ -3,19 +3,24 @@
 import logging
 import pathlib
 
-import uvicorn
+import ska_ser_logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from ska_ser_logging import configure_logging
 from starlette.config import Config
 
 # pylint: disable=consider-using-from-import
 import ska_dataproduct_api.api as api
 
-configure_logging(level=uvicorn.config.LOGGING_CONFIG["loggers"]["uvicorn.error"]["level"])
 logger = logging.getLogger(__name__)
 
 config = Config(".env")
+
+DEBUG: bool = config("API_VERBOSE", cast=bool, default=False)
+LOGGING_LEVEL = logging.DEBUG if DEBUG else logging.WARNING
+ska_ser_logging.configure_logging(LOGGING_LEVEL)
+logger = logging.getLogger(__name__)
+logger.info("Logging started for ska_dataproduct_api at level %s", LOGGING_LEVEL)
+
 
 SECRETS_FILE_PATH: pathlib.Path = pathlib.Path(
     config("SKA_DATAPRODUCT_API_SECRETS_FILE_PATH", default=".secrets")
@@ -120,7 +125,7 @@ ELASTICSEARCH_INDICES: str = config(
 # PostgreSQL Variables
 POSTGRESQL_HOST: str = config(
     "SKA_DATAPRODUCT_API_POSTGRESQL_HOST",
-    default="localhost",
+    default="",
 )
 
 POSTGRESQL_PORT: int = int(

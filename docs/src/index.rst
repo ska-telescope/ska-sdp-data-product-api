@@ -20,4 +20,4 @@ The `ska-dataproduct-api` repository contains the code for the API that is used 
   :maxdepth: 1
   :caption: Releases
 
-  releases/Changelog
+  CHANGELOG.md

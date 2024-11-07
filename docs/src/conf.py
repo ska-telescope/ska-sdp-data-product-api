@@ -49,6 +49,7 @@ extensions = [
     "sphinx.ext.autosectionlabel",
     "sphinx_copybutton",
     "sphinx_new_tab_link",
+    "recommonmark",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -57,8 +58,7 @@ templates_path = []
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-# source_suffix = ['.rst', '.md']
-source_suffix = ".rst"
+source_suffix = ['.rst', '.md']
 
 # The master toctree document.
 master_doc = "index"
