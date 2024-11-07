@@ -255,7 +255,6 @@ json_hash = %s)"
                 result = cur.fetchone()
                 return result[0] if result else None
 
-
     def update_metadata(
         self, data_product_metadata_instance: DataProductMetadata, id_field: int
     ) -> None:
@@ -357,7 +356,7 @@ uuid = %s WHERE id = %s"
         except (psycopg.OperationalError, psycopg.DatabaseError) as error:
             self.postgresql_running = False
             logger.error("Database error: %s", error)
-            return self.number_of_dataproducts # Count failed , retuning previous count
+            return self.number_of_dataproducts  # Count failed , returning previous count
 
     def load_data_products_from_persistent_metadata_store(self) -> list[dict[str, any]]:
         """Fetches JSONB data from Postgresql table.
@@ -378,7 +377,7 @@ uuid = %s WHERE id = %s"
         except (psycopg.OperationalError, psycopg.DatabaseError) as error:
             self.postgresql_running = False
             logger.error("Database error: %s", error)
-            return []        
+            return []
 
     def get_metadata(self, data_product_uuid: str) -> dict[str, Any]:
         """Retrieves metadata for the given uuid.
@@ -401,7 +400,6 @@ uuid = %s WHERE id = %s"
         except (psycopg.OperationalError, psycopg.DatabaseError) as error:
             logger.error("Database error: %s", error)
             return {"Error": "Failed to retrieve data, database not available"}
-        
 
     def get_data_by_execution_block(self, execution_block: str) -> dict[str, Any] | None:
         """Retrieves data from the PostgreSQL table based on the execution_block.
@@ -475,10 +473,13 @@ uuid = %s WHERE id = %s"
         Returns:
             The file path as a pathlib.Path object, or {} if not found.
         """
+        logger.debug("###################data_product_identifier")
+        logger.debug(data_product_identifier)
+
         try:
             validate_data_product_identifier(data_product_identifier)
-        except ValueError as error:
-            logger.warning(
+        except Exception as error:  # pylint: disable=broad-exception-caught
+            logger.error(
                 "File path not found for data product, error: %s",
                 error,
             )

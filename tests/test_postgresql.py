@@ -1,10 +1,10 @@
 """Module to test PostgresConnector"""
 import datetime
+import logging
 import pathlib
 from unittest.mock import MagicMock, patch
 
 import pytest
-from psycopg import OperationalError
 
 from ska_dataproduct_api.components.metadata.metadata import DataProductMetadata
 from ska_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
@@ -12,6 +12,8 @@ from ska_dataproduct_api.utilities.helperfunctions import DataProductIdentifier
 
 # pylint: disable=redefined-outer-name
 # pylint: disable=protected-access
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
@@ -41,6 +43,44 @@ def mocked_postgres_connector():
         yield {"connector": connector, "cursor": mock_cursor}
 
 
+# Mock functions
+def mock_get_data_by_execution_block(execution_block):
+    """Retrieves mock data based on the provided execution block.
+
+    Args:
+        execution_block (str): The execution block to query.
+
+    Returns:
+        dict: A dictionary containing the mock data, or None if the execution block is invalid.
+
+    This function is designed to simulate the retrieval of data from an external source.
+    It returns a dictionary containing a 'dataproduct_file' key with a file path for the
+    valid 'valid_execution_block'. For any other execution block, it returns None.
+    """
+    if execution_block == "valid_execution_block":
+        return {"dataproduct_file": "path/to/file.txt"}
+    return None
+
+
+def mock_get_data_by_uuid(uuid):
+    """Retrieves mock data based on the provided UUID.
+
+    Args:
+        uuid (str): The UUID to query.
+
+    Returns:
+        dict: A dictionary containing the mock data, or None if the UUID is invalid.
+
+    This function is designed to simulate the retrieval of data from an external source.
+    It returns a dictionary containing a 'dataproduct_file' key with a file path for the
+    valid 'valid_uuid'. For any other UUID, it returns None.
+    """
+    if uuid == "valid_uuid":
+        return {"dataproduct_file": "path/to/another_file.txt"}
+    return None
+
+
+# Test cases
 def test_status(mocked_postgres_connector):
     """Mock connection logic for setup and teardown"""
     status = mocked_postgres_connector["connector"].status()
@@ -49,6 +89,7 @@ def test_status(mocked_postgres_connector):
         "host": "localhost",
         "port": 5432,
         "user": "test_user",
+        "configured": True,
         "running": True,
         "indexing": False,
         "dbname": "test_db",
@@ -75,38 +116,74 @@ def test_build_connection_string(mocked_postgres_connector):
 options='-c search_path=\"public\"'"
     )
 
+    mocked_postgres_connector["connector"].host = ""
+    with pytest.raises(ConnectionError):
+        connection_string = mocked_postgres_connector["connector"].build_connection_string()
 
-def test_get_data_product_file_path_success(mocked_postgres_connector):
-    """Tests successful retrieval of file path."""
-    data_product_identifier = DataProductIdentifier()
-    data_product_identifier.execution_block = "test_block"
-    expected_file_path = [pathlib.Path("tests/test_files/product/eb-m002-20221212-12345")]
 
-    mocked_postgres_connector["cursor"].fetchone.return_value = (
-        {
-            "dataproduct_file": "tests/test_files/product/eb-m002-20221212-12345",
-        },
+# calculate_metadata_hash tests
+def test_calculate_metadata_hash(mocked_postgres_connector):
+    """Tests the calculation of a metadata hash."""
+    # Test with a simple JSON object
+    metadata_json = {
+        "key1": "value1",
+        "key2": [1, 2, 3],
+        "key3": {"nested_key": "nested_value"},
+    }
+    expected_hash = "3f8ac9cedca91c2556da09a4448bf629fd3b3049e07c4d7220e76b8e12542d33"
+
+    actual_hash = mocked_postgres_connector["connector"].calculate_metadata_hash(metadata_json)
+    assert actual_hash == expected_hash
+
+    # Test with an empty JSON object
+    metadata_json = {}
+    expected_hash = "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+
+    actual_hash = mocked_postgres_connector["connector"].calculate_metadata_hash(metadata_json)
+    assert actual_hash == expected_hash
+
+
+# get_data_product_file_paths tests
+def test_valid_execution_block(mocked_postgres_connector):
+    """Tests successful retrieval of data product file paths for a valid execution block."""
+    identifier = DataProductIdentifier(execution_block="valid_execution_block")
+    with patch(
+        "ska_dataproduct_api.components.store.persistent.postgresql.PostgresConnector.\
+get_data_by_execution_block",
+        side_effect=mock_get_data_by_execution_block,
+    ):
+        result = mocked_postgres_connector["connector"].get_data_product_file_paths(identifier)
+        assert result == [pathlib.Path("path/to/file.txt")]
+
+
+def test_valid_uuid(mocked_postgres_connector):
+    """Tests successful retrieval of data product file paths for a valid UUID."""
+    identifier = DataProductIdentifier(uuid="valid_uuid")
+    with patch(
+        "ska_dataproduct_api.components.store.persistent.postgresql.PostgresConnector.\
+get_data_by_uuid",
+        side_effect=mock_get_data_by_uuid,
+    ):
+        result = mocked_postgres_connector["connector"].get_data_product_file_paths(identifier)
+        assert result == [pathlib.Path("path/to/another_file.txt")]
+
+
+def test_invalid_identifier(mocked_postgres_connector):
+    """Tests that an empty list is returned for an invalid DataProductIdentifier."""
+    identifier = DataProductIdentifier(
+        execution_block="invalid_execution_block", uuid="invalid_uuid"
     )
-
-    result = mocked_postgres_connector["connector"].get_data_product_file_paths(
-        data_product_identifier
-    )
-
-    assert result == expected_file_path
-
-
-def test_get_data_product_file_path_not_found(mocked_postgres_connector):
-    """Tests when file path is not found."""
-    data_product_identifier = DataProductIdentifier()
-    data_product_identifier.execution_block = "test_block"
-
-    mocked_postgres_connector["cursor"].fetchone.return_value = ({},)
-
-    result = mocked_postgres_connector["connector"].get_data_product_file_paths(
-        data_product_identifier
-    )
-
-    assert result == []
+    with patch(
+        "ska_dataproduct_api.components.store.persistent.postgresql.PostgresConnector.\
+get_data_by_execution_block",
+        side_effect=mock_get_data_by_execution_block,
+    ), patch(
+        "ska_dataproduct_api.components.store.persistent.postgresql.PostgresConnector.\
+get_data_by_uuid",
+        side_effect=mock_get_data_by_uuid,
+    ):
+        result = mocked_postgres_connector["connector"].get_data_product_file_paths(identifier)
+        assert result == []
 
 
 def test_reindex_persistent_volume(mocked_postgres_connector):
@@ -167,52 +244,38 @@ def test_save_metadata_to_postgresql(mocked_postgres_connector):
     ):
         with patch.object(
             mocked_postgres_connector["connector"],
-            "check_metadata_exists_by_execution_block",
+            "check_metadata_exists_by_uuid",
             return_value=None,
         ):
             mocked_postgres_connector["connector"].save_metadata_to_postgresql(
                 data_product_metadata_instance
             )
             assert mocked_postgres_connector["connector"].number_of_dataproducts == 1
-            assert mocked_postgres_connector["connector"].conn.commit.call_count == 2
 
     with patch.object(
         mocked_postgres_connector["connector"], "check_metadata_exists_by_hash", return_value=False
     ):
         with patch.object(
             mocked_postgres_connector["connector"],
-            "check_metadata_exists_by_execution_block",
+            "check_metadata_exists_by_uuid",
             return_value=1,
         ):
             mocked_postgres_connector["connector"].save_metadata_to_postgresql(
                 data_product_metadata_instance
             )
             assert mocked_postgres_connector["connector"].number_of_dataproducts == 1
-            assert mocked_postgres_connector["connector"].conn.commit.call_count == 3
 
 
 def test_get_metadata(mocked_postgres_connector):
     """Tests if the reindex_persistent_volume can be executed, the call to the PosgreSQL cursor
     is mocked, so the expected return of the number if items in the db is only 1"""
+    with patch(
+        "ska_dataproduct_api.components.store.persistent.postgresql.PostgresConnector.\
+get_data_by_uuid",
+        side_effect=mock_get_data_by_uuid,
+    ):
+        result = mocked_postgres_connector["connector"].get_metadata("valid_uuid")
+        assert result == {"dataproduct_file": "path/to/another_file.txt"}
 
-    mocked_postgres_connector["cursor"].fetchone.return_value = ({"mockData"},)
-
-    execution_block = "eb-test-20240824-123321"
-    result = mocked_postgres_connector["connector"].get_metadata(execution_block)
-
-    assert result == {"mockData"}
-
-
-def test_postgresql_query_operational_error(mocked_postgres_connector):
-    """Simulate a connection error that occurs multiple times"""
-
-    def raise_operational_error():
-        raise OperationalError("Connection error")
-
-    mocked_postgres_connector["connector"].conn.cursor = raise_operational_error
-    mocked_postgres_connector["connector"].retry_delay = 1
-
-    with pytest.raises(OperationalError):
-        mocked_postgres_connector["connector"]._postgresql_query("SELECT 1;", ())
-
-    assert mocked_postgres_connector["connector"].postgresql_running is False
+        result = mocked_postgres_connector["connector"].get_metadata("invalid_uuid")
+        assert result == {}

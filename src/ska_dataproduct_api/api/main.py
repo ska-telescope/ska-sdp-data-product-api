@@ -209,7 +209,8 @@ async def ingest_new_data_product(
     except Exception as error:
         logger.error("Error ingesting metadata: %s", error)
         raise HTTPException(
-            status_code=500, detail=f"Internal server error during metadata ingestion. Error: {error}"
+            status_code=500,
+            detail=f"Internal server error during metadata ingestion. Error: {error}",
         ) from error
 
 
@@ -251,7 +252,8 @@ async def ingest_new_metadata(
     except Exception as error:
         logger.error("Error ingesting metadata: %s", error)
         raise HTTPException(
-            status_code=500, detail=f"Internal server error during metadata ingestion. Error: {error}"
+            status_code=500,
+            detail=f"Internal server error during metadata ingestion. Error: {error}",
         ) from error
 
 
