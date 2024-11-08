@@ -11,8 +11,6 @@ from starlette.config import Config
 # pylint: disable=consider-using-from-import
 import ska_dataproduct_api.api as api
 
-logger = logging.getLogger(__name__)
-
 config = Config(".env")
 
 DEBUG: bool = config("API_VERBOSE", cast=bool, default=False)
