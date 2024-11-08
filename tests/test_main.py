@@ -18,7 +18,9 @@ def test_reindex_data_products(test_app):
     """Test to see if a file list can be retrieved"""
     response = test_app.get("/reindexdataproducts")
     assert response.status_code == 202
-    assert "Metadata is set to be re-indexed" in str(response.json())
+    assert "Metadata re-index request has been added to the background tasks" in str(
+        response.json()
+    )
 
 
 def test_download_file(test_app):

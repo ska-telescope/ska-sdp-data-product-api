@@ -48,7 +48,6 @@ def select_metadata_store_class() -> Union[PostgresConnector, InMemoryVolumeInde
     """
 
     try:
-
         persistent_metadata_store = PostgresConnector(
             host=POSTGRESQL_HOST,
             port=POSTGRESQL_PORT,
@@ -58,19 +57,10 @@ def select_metadata_store_class() -> Union[PostgresConnector, InMemoryVolumeInde
             dbname=POSTGRESQL_DBNAME,
             table_name=POSTGRESQL_TABLE_NAME,
         )
-
-        if persistent_metadata_store.postgresql_running:
-            logger.info(
-                "PostgreSQL reachable, setting metadata store to obtain data from PostgreSQL"
-            )
-            return persistent_metadata_store
-        logger.warning(
-            "PostgreSQL not available, loading metadata from persistent volume into in memory \
-            store."
-        )
-        return InMemoryVolumeIndexMetadataStore()
+        logger.info("PostgreSQL reachable, setting metadata store to obtain data from PostgreSQL")
+        return persistent_metadata_store
     except Exception as exception:  # pylint: disable=broad-exception-caught
-        logger.error("Failed to connect to PostgreSQL with exception: %s", exception)
+        logger.exception("Failed to connect to PostgreSQL with error: %s", exception)
         logger.warning("Using InMemoryVolumeIndexMetadataStore store.")
         return InMemoryVolumeIndexMetadataStore()
 

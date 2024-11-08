@@ -100,7 +100,7 @@ def validate_data_product_identifier(data_product_identifier: DataProductIdentif
     Verify that there are either a UUID or execution_block given to identify a data product with
     """
     if not data_product_identifier.uuid and not data_product_identifier.execution_block:
-        raise ValueError("No valid data_product_identifier found")
+        raise AttributeError("No valid data_product_identifier found")
 
 
 class SearchParametersClass(BaseModel):

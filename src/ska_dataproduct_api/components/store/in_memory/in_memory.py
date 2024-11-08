@@ -41,7 +41,6 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
 
     def __init__(self):
         super().__init__()
-        self.postgresql_running: bool = False
         self.number_of_dataproducts: int = 0
         self.number_of_metadata_files: int = 0
         self.list_of_data_product_paths: list[pathlib.Path] = []

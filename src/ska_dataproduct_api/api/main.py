@@ -43,8 +43,12 @@ DPD_API_Status = DPDAPIStatus(
 
 def reindex_data_products_stores() -> None:
     """Background tasks to reindex the data products on the persistent volume"""
-    metadata_store.reindex_persistent_volume()
-    search_store.load_metadata_from_store()
+    try:
+        metadata_store.reindex_persistent_volume()
+        search_store.load_metadata_from_store()
+        logger.info("Metadata re-indexed")
+    except Exception as exception:  # pylint: disable=broad-exception-caught
+        logger.exception("Metadata re-index failed: %s", exception)
 
 
 @app.get("/status")
@@ -59,8 +63,7 @@ async def reindex_data_products(background_tasks: BackgroundTasks):
     """This endpoint clears the list of data products from memory and
     re-ingest the metadata of all data products found"""
     background_tasks.add_task(reindex_data_products_stores)
-    logger.info("Metadata search_store re-indexed")
-    return "Metadata is set to be re-indexed"
+    return "Metadata re-index request has been added to the background tasks"
 
 
 @app.post("/dataproductsearch")
@@ -206,7 +209,8 @@ async def ingest_new_data_product(
     except Exception as error:
         logger.error("Error ingesting metadata: %s", error)
         raise HTTPException(
-            status_code=500, detail="Internal server error during metadata ingestion."
+            status_code=500,
+            detail=f"Internal server error during metadata ingestion. Error: {error}",
         ) from error
 
 
@@ -248,7 +252,8 @@ async def ingest_new_metadata(
     except Exception as error:
         logger.error("Error ingesting metadata: %s", error)
         raise HTTPException(
-            status_code=500, detail="Internal server error during metadata ingestion."
+            status_code=500,
+            detail=f"Internal server error during metadata ingestion. Error: {error}",
         ) from error
 
 
