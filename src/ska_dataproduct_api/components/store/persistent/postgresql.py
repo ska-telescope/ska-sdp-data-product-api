@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=too-many-arguments
+# pylint: disable=too-many-positional-arguments
 # pylint: disable=too-many-public-methods
 # pylint: disable=duplicate-code
 # pylint: disable=not-context-manager
@@ -171,8 +172,8 @@ class PostgresConnector(MetadataStore):
                 )
 
     def create_annotations_table(self) -> None:
-        """Creates the annotations table named as defined in the env variable self.annotations_table_name
-        if it doesn't exist.
+        """Creates the annotations table named as defined in the env variable
+        self.annotations_table_name if it doesn't exist.
 
         Raises:
             psycopg.Error: If there's an error executing the SQL query.
@@ -185,12 +186,13 @@ class PostgresConnector(MetadataStore):
         )
 
         query_string = f"""
-            CREATE TABLE IF NOT EXISTS {self.schema}.{self.table_name} (
+            CREATE TABLE IF NOT EXISTS {self.schema}.{self.annotations_table_name} (
                 id SERIAL PRIMARY KEY,
                 uuid CHAR(64),
                 annotation_text TEXT,
                 user_principal_name VARCHAR(255),
-                creation_timestamp TIMESTAMP WITH TIME ZONE
+                timestamp_created TIMESTAMP,
+                timestamp_modified TIMESTAMP
             );
             """
 
@@ -199,7 +201,7 @@ class PostgresConnector(MetadataStore):
                 cur.execute(query=query_string)
                 conn.commit()
                 logger.info(
-                    "PostgreSQL metadata table %s created in schema: %s.",
+                    "PostgreSQL annotations table %s created in schema: %s.",
                     self.annotations_table_name,
                     self.schema,
                 )

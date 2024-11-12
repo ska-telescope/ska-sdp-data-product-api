@@ -49,6 +49,7 @@ def select_metadata_store_class() -> Union[PostgresConnector, InMemoryVolumeInde
     """
 
     try:
+        logger.error(POSTGRESQL_DBNAME)
         persistent_metadata_store = PostgresConnector(
             host=POSTGRESQL_HOST,
             port=POSTGRESQL_PORT,

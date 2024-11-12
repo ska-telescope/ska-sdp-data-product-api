@@ -145,10 +145,12 @@ def generate_data_stream(file_path_list: list[pathlib.Path]) -> Generator[bytes,
     file_paths_str = temp_file.name
 
     # create a subprocess to run the tar command
+
     with subprocess.Popen(
         ["tar", "-C", PERSISTENT_STORAGE_PATH.resolve(), "-c", "-T", file_paths_str],
         stdout=subprocess.PIPE,
     ) as process:
+        # pylint: disable=use-yield-from
         for chunk in iter(lambda: process.stdout.read(STREAM_CHUNK_SIZE), b""):
             yield chunk
 
