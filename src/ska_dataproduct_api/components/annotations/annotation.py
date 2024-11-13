@@ -17,8 +17,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# pylint: disable=too-many-instance-attributes
-
 
 class DataProductAnnotation:
     """
