@@ -157,6 +157,11 @@ POSTGRESQL_TABLE_NAME: str = config(
     "SKA_DATAPRODUCT_API_POSTGRESQL_TABLE_NAME",
     default=("data_products_metadata_v1"),
 )
+
+POSTGRESQL_ANNOTATIONS_TABLE_NAME: str = config(
+    "SKA_DATAPRODUCT_API_POSTGRESQL_ANNOTATIONS_TABLE_NAME",
+    default=("data_products_annotations_v1"),
+)
 # ----
 # SKA Permissions API
 SKA_PERMISSIONS_API_HOST: str = config(

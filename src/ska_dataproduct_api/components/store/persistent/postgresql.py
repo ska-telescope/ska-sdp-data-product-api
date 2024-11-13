@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=too-many-arguments
+# pylint: disable=too-many-positional-arguments
 # pylint: disable=too-many-public-methods
 # pylint: disable=duplicate-code
 # pylint: disable=not-context-manager
@@ -40,6 +41,7 @@ class PostgresConnector(MetadataStore):
         dbname: str,
         schema: str,
         table_name: str,
+        annotations_table_name: str,
     ):
         super().__init__()
         self.host = host
@@ -49,6 +51,7 @@ class PostgresConnector(MetadataStore):
         self.dbname = dbname
         self.schema = schema
         self.table_name = table_name
+        self.annotations_table_name = annotations_table_name
         self.conn = None
         self.max_retries = 3  # The maximum number of retries
         self.retry_delay = 5  # The delay between retries in seconds
@@ -76,6 +79,7 @@ class PostgresConnector(MetadataStore):
             "dbname": self.dbname,
             "schema": self.schema,
             "table_name": self.table_name,
+            "annotations_table_name": self.annotations_table_name,
             "number_of_dataproducts": self.number_of_dataproducts,
             "postgresql_version": self.postgresql_version,
             "last_metadata_update_time": self.date_modified,
@@ -85,12 +89,13 @@ class PostgresConnector(MetadataStore):
         """Connects to the PostgreSQL database and performs initialization tasks.
 
         This method establishes a connection to the PostgreSQL database, retrieves the
-        PostgreSQL version, creates the metadata table if it doesn't exist, and counts
-        the number of data products stored as JSONB objects.
+        PostgreSQL version, creates the metadata table and annotations table if they
+        do not exist, and counts the number of data products stored as JSONB objects.
         """
         self.postgresql_version: str = self.get_postgresql_version()
         if self.postgresql_running:
             self.create_metadata_table()
+            self.create_annotations_table()
             self.number_of_dataproducts = self.count_jsonb_objects()
 
     def build_connection_string(self) -> str:
@@ -163,6 +168,41 @@ class PostgresConnector(MetadataStore):
                 logger.info(
                     "PostgreSQL metadata table %s created in schema: %s.",
                     self.table_name,
+                    self.schema,
+                )
+
+    def create_annotations_table(self) -> None:
+        """Creates the annotations table named as defined in the env variable
+        self.annotations_table_name if it doesn't exist.
+
+        Raises:
+            psycopg.Error: If there's an error executing the SQL query.
+        """
+
+        logger.info(
+            "Creating PostgreSQL annotations table: %s, in schema: %s",
+            self.annotations_table_name,
+            self.schema,
+        )
+
+        query_string = f"""
+            CREATE TABLE IF NOT EXISTS {self.schema}.{self.annotations_table_name} (
+                id SERIAL PRIMARY KEY,
+                uuid CHAR(64),
+                annotation_text TEXT,
+                user_principal_name VARCHAR(255),
+                timestamp_created TIMESTAMP,
+                timestamp_modified TIMESTAMP
+            );
+            """
+
+        with psycopg.connect(self.connection_string) as conn:
+            with conn.cursor() as cur:
+                cur.execute(query=query_string)
+                conn.commit()
+                logger.info(
+                    "PostgreSQL annotations table %s created in schema: %s.",
+                    self.annotations_table_name,
                     self.schema,
                 )
 

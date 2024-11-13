@@ -31,6 +31,7 @@ def mocked_postgres_connector():
             dbname="test_db",
             schema="public",
             table_name="my_table",
+            annotations_table_name="annotations_table",
         )
 
         # Set any additional properties you want to control
@@ -95,6 +96,7 @@ def test_status(mocked_postgres_connector):
         "dbname": "test_db",
         "schema": "public",
         "table_name": "my_table",
+        "annotations_table_name": "annotations_table",
         "number_of_dataproducts": 1,
         "postgresql_version": "mocked",
         "last_metadata_update_time": mocked_postgres_connector["connector"].date_modified,

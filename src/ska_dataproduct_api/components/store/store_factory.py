@@ -20,6 +20,7 @@ from ska_dataproduct_api.configuration.settings import (
     ELASTICSEARCH_PASSWORD,
     ELASTICSEARCH_PORT,
     ELASTICSEARCH_USER,
+    POSTGRESQL_ANNOTATIONS_TABLE_NAME,
     POSTGRESQL_DBNAME,
     POSTGRESQL_HOST,
     POSTGRESQL_PASSWORD,
@@ -56,6 +57,7 @@ def select_metadata_store_class() -> Union[PostgresConnector, InMemoryVolumeInde
             password=POSTGRESQL_PASSWORD,
             dbname=POSTGRESQL_DBNAME,
             table_name=POSTGRESQL_TABLE_NAME,
+            annotations_table_name=POSTGRESQL_ANNOTATIONS_TABLE_NAME,
         )
         logger.info("PostgreSQL reachable, setting metadata store to obtain data from PostgreSQL")
         return persistent_metadata_store

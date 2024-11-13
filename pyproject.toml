@@ -34,12 +34,13 @@ psycopg = {extras = ["binary"], version = "^3.2.1"}
 [tool.poetry.dev-dependencies]
 isort = "^5.10.1"
 black = "^22.6.0"
-flake8 = "^4.0.1"
-pylint = "^2.12.2"
+flake8 = "^7.1.1"
+pylint = "^3.1.1"
 pylint-junit = "^0.3.2"
 pytest = "7.1.2"
 pytest-cov = "^3.0.0"
 build = "^0.8.0"
+astroid= "^3.3.5"
 
 [tool.poetry.group.docs.dependencies]
 sphinx = "^7.2.6"
