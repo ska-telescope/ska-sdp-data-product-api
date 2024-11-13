@@ -6,6 +6,7 @@ from fastapi import BackgroundTasks, Request, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 
+from ska_dataproduct_api.components.annotations.annotation import DataProductAnnotation
 from ska_dataproduct_api.components.authorisation.authorisation import (
     extract_token,
     get_user_groups,
@@ -28,7 +29,6 @@ from ska_dataproduct_api.utilities.helperfunctions import (
     SearchParametersClass,
     download_file,
 )
-from ska_dataproduct_api.components.annotations.annotation import DataProductAnnotation
 
 logger = logging.getLogger(__name__)
 

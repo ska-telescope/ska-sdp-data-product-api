@@ -1,8 +1,9 @@
 """
 Module for handling data product annotations.
 
-This module provides a class for encapsulating and managing annotations associated with data products.
-It offers functionalities to validate annotations linked to a specific data product.
+This module provides a class for encapsulating and managing annotations
+associated with data products. It offers functionalities to validate
+annotations linked to a specific data product.
 
 Classes:
     DataProductAnnotations: Encapsulates annotations for a data product.
@@ -39,7 +40,6 @@ class DataProductAnnotation(BaseModel):
     timestamp_created: str = None
     timestamp_modified: str = None
 
-
     def load_annotation_from_json(self, annotation: str) -> None:
         """
         Loads annotation from a json string.
@@ -50,10 +50,12 @@ class DataProductAnnotation(BaseModel):
         Returns:
             None.
         """
-        
+
         annotation = json.loads(annotation)
 
-        self.annotation_id = annotation["annotation_id"]
+        if "annotation_id" in annotation:
+            self.annotation_id = annotation["annotation_id"]
+
         self.data_product_uuid = annotation["data_product_uuid"]
         self.annotation_text = annotation["annotation_text"]
         self.user_principal_name = annotation["user_principal_name"]

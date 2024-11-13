@@ -546,14 +546,13 @@ uuid = %s WHERE id = %s"
         except (psycopg.OperationalError, psycopg.DatabaseError) as error:
             logger.error("Database error: %s", error)
             return []
-        
-    
+
     def insert_annotation(self, data_product_annotation: DataProductAnnotation) -> None:
         """Inserts new annotation into the database."""
         table: str = self.schema + "." + self.annotations_table_name
         query_string = f"INSERT INTO {table} \
-            (id, uuid, annotation_text, user_principal_name, timestamp_created, timestamp_modified)\
-                VALUES (NULL, %s, %s, %s, %s, %s)"
+            (uuid, annotation_text, user_principal_name, timestamp_created, timestamp_modified)\
+                VALUES (%s, %s, %s, %s, %s)"
         with psycopg.connect(self.connection_string) as conn:
             with conn.cursor() as cur:
                 cur.execute(
@@ -563,7 +562,7 @@ uuid = %s WHERE id = %s"
                         data_product_annotation.annotation_text,
                         data_product_annotation.user_principal_name,
                         data_product_annotation.timestamp_created,
-                        data_product_annotation.timestamp_modified
+                        data_product_annotation.timestamp_modified,
                     ),
                 )
                 conn.commit()
