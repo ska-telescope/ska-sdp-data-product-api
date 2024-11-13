@@ -11,14 +11,15 @@ Functions:
     None
 """
 
-import datetime
 import json
 import logging
+
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
 
-class DataProductAnnotation:
+class DataProductAnnotation(BaseModel):
     """
     Encapsulates annotations for a data product.
 
@@ -31,13 +32,12 @@ class DataProductAnnotation:
         timestamp_modified (str): Date and time when annotation was modified.
     """
 
-    def __init__(self):
-        self.annotation_id: str  = None
-        self.data_product_uuid: str = None
-        self.annotation_text: str = None
-        self.user_principal_name: str = None
-        self.timestamp_created: str = None
-        self.timestamp_modified: str = None
+    annotation_id: str | None = None
+    data_product_uuid: str = None
+    annotation_text: str = None
+    user_principal_name: str = None
+    timestamp_created: str = None
+    timestamp_modified: str = None
 
 
     def load_annotation_from_json(self, annotation: str) -> None:
