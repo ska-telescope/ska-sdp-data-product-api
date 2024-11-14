@@ -9,6 +9,7 @@ from typing import Any
 
 import psycopg
 
+from ska_dataproduct_api.components.annotations.annotation import DataProductAnnotation
 from ska_dataproduct_api.components.metadata.metadata import DataProductMetadata
 from ska_dataproduct_api.components.store.metadata_store_base_class import MetadataStore
 from ska_dataproduct_api.configuration.settings import PERSISTENT_STORAGE_PATH
@@ -545,3 +546,23 @@ uuid = %s WHERE id = %s"
         except (psycopg.OperationalError, psycopg.DatabaseError) as error:
             logger.error("Database error: %s", error)
             return []
+
+    def insert_annotation(self, data_product_annotation: DataProductAnnotation) -> None:
+        """Inserts new annotation into the database."""
+        table: str = self.schema + "." + self.annotations_table_name
+        query_string = f"INSERT INTO {table} \
+            (uuid, annotation_text, user_principal_name, timestamp_created, timestamp_modified)\
+                VALUES (%s, %s, %s, %s, %s)"
+        with psycopg.connect(self.connection_string) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    query=query_string,
+                    params=(
+                        data_product_annotation.data_product_uuid,
+                        data_product_annotation.annotation_text,
+                        data_product_annotation.user_principal_name,
+                        data_product_annotation.timestamp_created,
+                        data_product_annotation.timestamp_modified,
+                    ),
+                )
+                conn.commit()

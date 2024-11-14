@@ -6,6 +6,7 @@ from fastapi import BackgroundTasks, Request, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 
+from ska_dataproduct_api.components.annotations.annotation import DataProductAnnotation
 from ska_dataproduct_api.components.authorisation.authorisation import (
     extract_token,
     get_user_groups,
@@ -263,3 +264,9 @@ async def layout():
     as well as their current width. In future I would like it to also
     return a user specific layout (possibly something the user has saved?)"""
     return DEFAULT_DISPLAY_LAYOUT
+
+
+@app.post("/annotation")
+async def annotation(data_product_annotation: DataProductAnnotation):
+    """API endpoint to create new annotations linked to a data product."""
+    metadata_store.insert_annotation(data_product_annotation)
