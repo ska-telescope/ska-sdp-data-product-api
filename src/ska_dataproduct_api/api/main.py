@@ -5,6 +5,7 @@ import logging
 from fastapi import BackgroundTasks, Request, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
+from typing import List
 
 from ska_dataproduct_api.components.annotations.annotation import DataProductAnnotation
 from ska_dataproduct_api.components.authorisation.authorisation import (
@@ -270,3 +271,15 @@ async def layout():
 async def annotation(data_product_annotation: DataProductAnnotation):
     """API endpoint to create new annotations linked to a data product."""
     metadata_store.insert_annotation(data_product_annotation)
+
+
+@app.get("/annotation/{annotation_id}", response_model=DataProductAnnotation)
+async def get_annotation_by_id(annotation_id: int) -> DataProductAnnotation:
+    """API GET endpoint to retrieve annotation by id."""
+    return metadata_store.retrieve_annotation_by_id(annotation_id)
+
+
+@app.get("/annotation/{data_product_uuid}", response_model=list[DataProductAnnotation])
+async def get_annotation_by_uuid(data_product_uuid: str) -> List[DataProductAnnotation]:
+    """API GET endpoint to retrieve all annotations linked to a data product."""
+    return metadata_store.retrieve_annotations_by_uuid(data_product_uuid)

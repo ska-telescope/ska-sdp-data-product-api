@@ -9,6 +9,9 @@ from typing import Any
 
 import psycopg
 
+from psycopg.rows import class_row
+from typing import List
+
 from ska_dataproduct_api.components.annotations.annotation import DataProductAnnotation
 from ska_dataproduct_api.components.metadata.metadata import DataProductMetadata
 from ska_dataproduct_api.components.store.metadata_store_base_class import MetadataStore
@@ -566,3 +569,61 @@ uuid = %s WHERE id = %s"
                     ),
                 )
                 conn.commit()
+
+    def retrieve_annotation_by_id(self, annotation_id: int) -> DataProductAnnotation:
+        """Returns a specific annotation based on annotation_id."""
+        table: str = self.schema + "." + self.annotations_table_name
+        query_string = f"SELECT id as annotation_id, \
+                            uuid as data_product_uuid, \
+                            annotation_text, \
+                            user_principal_name, \
+                            timestamp_created, \
+                            timestamp_modified \
+                        from {table} WHERE id = %s"
+        try:
+            with psycopg.connect(self.connection_string) as conn:
+                with conn.cursor(row_factory=class_row(DataProductAnnotation)) as cur:
+                    try:
+                        cur.execute(query_string, [annotation_id])
+                        result = cur.fetchone()
+                        if result is not None:
+                            logger.error(type(result))
+                            return result
+                        return None
+                    except (IndexError, TypeError) as error:
+                        logger.warning(
+                            "Annotation not found for id: %s, error: %s", annotation_id, error
+                        )
+                        return None
+        except (psycopg.OperationalError, psycopg.DatabaseError) as error:
+            self.postgresql_running = False
+            raise error
+
+
+    def retrieve_annotations_by_uuid(self, data_product_uuid: str) -> List[DataProductAnnotation]:
+        """Returns all annotations associated with a data product uuid."""
+        table: str = self.schema + "." + self.annotations_table_name
+        query_string = f"SELECT id as annotation_id, \
+                            uuid as data_product_uuid, \
+                            annotation_text, \
+                            user_principal_name, \
+                            time_created, \
+                            time_modified \
+                        from {table} WHERE uuid = %s"
+        try:
+            with psycopg.connect(self.connection_string) as conn:
+                with conn.cursor(row_factory=class_row(DataProductAnnotation)) as cur:
+                    try:
+                        cur.execute(query=query_string, params=(data_product_uuid))
+                        result = cur.fetchone()
+                        if result.length > 0:
+                            return result
+                        return None
+                    except (IndexError, TypeError) as error:
+                        logger.warning(
+                            "Annotations not found for uuid: %s, error: %s", data_product_uuid, error
+                        )
+                        return None
+        except (psycopg.OperationalError, psycopg.DatabaseError) as error:
+            self.postgresql_running = False
+            raise error

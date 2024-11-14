@@ -3,10 +3,17 @@
 
 ## Current Development
 
+- [NAL-1296](https://jira.skatelescope.org/browse/NAL-1296)
+    - [Added] Added a method to retrieve an annotation based on id from metastore.
+    - [Added] Added a new method to retrieve all annotations associated with a data product uuid from metastore.
+    - [Added] Added a GET method to get an annotation from metastore by id.
+    - [Added] Added a GET method to get all annotations associated with data product uuid from metastore.
+    - [Changed] Updated the DataProductAnnotations class to all for conversion from database results.
+
 - [NAL-1295](https://jira.skatelescope.org/browse/NAL-1295)
     - [Added] Added a class to represent the new annotations table.
-    - [Added] Added a new method to insert annotations into data product database annotations table.
-    - [Added] Added a new POST method to add new annotation data product database
+    - [Added] Added a new method to insert annotations into data product metastore annotations table.
+    - [Added] Added a new POST method to add new annotation data product metastore.
 
 
 - [NAL-1294](https://jira.skatelescope.org/browse/NAL-1294)
