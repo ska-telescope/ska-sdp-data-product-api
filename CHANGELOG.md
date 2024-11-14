@@ -3,6 +3,10 @@
 
 ## Current Development
 
+- [NAL-1282](https://jira.skatelescope.org/browse/NAL-1282)
+
+    - [Changed] Addition of a MuiDataGridColumn class and reintroduced dynamic addition of columns.
+
 - [NAL-1280](https://jira.skatelescope.org/browse/NAL-1280)
 
     - [Changed] Updated changelog to match guidelines in developer portal.
