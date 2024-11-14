@@ -3,6 +3,16 @@
 
 ## Current Development
 
+- [NAL-1295](https://jira.skatelescope.org/browse/NAL-1295)
+    - [Added] Added a class to represent the new annotations table.
+    - [Added] Added a new method to insert annotations into data product database annotations table.
+    - [Added] Added a new POST method to add new annotation data product database
+
+
+- [NAL-1294](https://jira.skatelescope.org/browse/NAL-1294)
+    - [Added] Added a method to create the annotations table in the Postgres database.
+    - [Changed] Updated the connector method to create the new table.
+
 - [NAL-1280](https://jira.skatelescope.org/browse/NAL-1280)
 
     - [Changed] Updated changelog to match guidelines in developer portal.

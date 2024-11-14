@@ -333,6 +333,43 @@ For example, the POST request body:
         201
     ]
 
+Annotation endpoint
+~~~~~~~~~~~~~~~~~~~~
+
+Annotations are used to add notes to specific data products and are stored in the metadata store in a separate table.
+
+Sending a POST request to the /annotation endpoint will parse the supplied JSON data as data product annotation, and add the annotation to the Postgres database.
+
+For example, the POST request body:
+
+*Request*
+
+.. code-block:: bash
+
+    POST /annotation
+
+*Body*
+
+.. code-block:: bash
+
+    { 
+        "data_product_uuid": "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c",
+        "annotation_text": "Example annotation text message.",
+        "user_principal_name": "test.user@skao.int",
+        "timestamp_created": "2024-11-13:14:32:00",
+        "timestamp_modified": "2024-11-13:14:32:00"
+    }
+
+*Response*
+
+.. code-block:: bash
+
+    [
+        200
+    ]
+
+
+
 API User
 --------
 
