@@ -16,6 +16,7 @@ import json
 import logging
 
 from pydantic import BaseModel
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -37,8 +38,8 @@ class DataProductAnnotation(BaseModel):
     data_product_uuid: str = None
     annotation_text: str = None
     user_principal_name: str = None
-    timestamp_created: str = None
-    timestamp_modified: str = None
+    timestamp_created: datetime = None
+    timestamp_modified: datetime = None
 
     def load_annotation_from_json(self, annotation: str) -> None:
         """
