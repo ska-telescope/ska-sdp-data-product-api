@@ -1,11 +1,11 @@
 """This API exposes SKA Data Products to the SKA Data Product Dashboard."""
 
 import logging
+from typing import List
 
 from fastapi import BackgroundTasks, Request, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
-from typing import List
 
 from ska_dataproduct_api.components.annotations.annotation import DataProductAnnotation
 from ska_dataproduct_api.components.authorisation.authorisation import (
@@ -273,13 +273,13 @@ async def annotation(data_product_annotation: DataProductAnnotation):
     metadata_store.insert_annotation(data_product_annotation)
 
 
-@app.get("/annotation/{annotation_id}", response_model=DataProductAnnotation)
-async def get_annotation_by_id(annotation_id: int) -> DataProductAnnotation:
+@app.get("/annotation/{annotation_id}", response_model=DataProductAnnotation | dict)
+async def get_annotation_by_id(annotation_id: int) -> DataProductAnnotation | dict:
     """API GET endpoint to retrieve annotation by id."""
     return metadata_store.retrieve_annotation_by_id(annotation_id)
 
 
-@app.get("/annotation/{data_product_uuid}", response_model=list[DataProductAnnotation])
-async def get_annotation_by_uuid(data_product_uuid: str) -> List[DataProductAnnotation]:
+@app.get("/annotations/{data_product_uuid}", response_model=list[DataProductAnnotation] | list)
+async def get_annotation_by_uuid(data_product_uuid: str) -> List[DataProductAnnotation] | list:
     """API GET endpoint to retrieve all annotations linked to a data product."""
     return metadata_store.retrieve_annotations_by_uuid(data_product_uuid)

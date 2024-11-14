@@ -5,12 +5,10 @@ import json
 import logging
 import pathlib
 import uuid
-from typing import Any
+from typing import Any, List
 
 import psycopg
-
 from psycopg.rows import class_row
-from typing import List
 
 from ska_dataproduct_api.components.annotations.annotation import DataProductAnnotation
 from ska_dataproduct_api.components.metadata.metadata import DataProductMetadata
@@ -192,7 +190,7 @@ class PostgresConnector(MetadataStore):
         query_string = f"""
             CREATE TABLE IF NOT EXISTS {self.schema}.{self.annotations_table_name} (
                 id SERIAL PRIMARY KEY,
-                uuid CHAR(64),
+                uuid VARCHAR(64),
                 annotation_text TEXT,
                 user_principal_name VARCHAR(255),
                 timestamp_created TIMESTAMP,
@@ -589,16 +587,15 @@ uuid = %s WHERE id = %s"
                         if result is not None:
                             logger.error(type(result))
                             return result
-                        return None
+                        return {}
                     except (IndexError, TypeError) as error:
                         logger.warning(
                             "Annotation not found for id: %s, error: %s", annotation_id, error
                         )
-                        return None
+                        return {}
         except (psycopg.OperationalError, psycopg.DatabaseError) as error:
             self.postgresql_running = False
             raise error
-
 
     def retrieve_annotations_by_uuid(self, data_product_uuid: str) -> List[DataProductAnnotation]:
         """Returns all annotations associated with a data product uuid."""
@@ -607,23 +604,25 @@ uuid = %s WHERE id = %s"
                             uuid as data_product_uuid, \
                             annotation_text, \
                             user_principal_name, \
-                            time_created, \
-                            time_modified \
+                            timestamp_created, \
+                            timestamp_modified \
                         from {table} WHERE uuid = %s"
         try:
             with psycopg.connect(self.connection_string) as conn:
                 with conn.cursor(row_factory=class_row(DataProductAnnotation)) as cur:
                     try:
-                        cur.execute(query=query_string, params=(data_product_uuid))
-                        result = cur.fetchone()
+                        cur.execute(query=query_string, params=[data_product_uuid])
+                        result = cur.fetchall()
                         if result.length > 0:
                             return result
-                        return None
+                        return []
                     except (IndexError, TypeError) as error:
                         logger.warning(
-                            "Annotations not found for uuid: %s, error: %s", data_product_uuid, error
+                            "Annotations not found for uuid: %s, error: %s",
+                            data_product_uuid,
+                            error,
                         )
-                        return None
+                        return []
         except (psycopg.OperationalError, psycopg.DatabaseError) as error:
             self.postgresql_running = False
             raise error
