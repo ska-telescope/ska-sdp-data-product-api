@@ -5,30 +5,53 @@ import logging
 from collections.abc import MutableMapping
 
 # pylint: disable=too-many-instance-attributes
+# pylint: disable=too-few-public-methods
 
 logger = logging.getLogger(__name__)
 
 
-class MuiDataGrid:
-    """Class containing components used with the MUI DataGrid"""
+class MuiDataGridColumn:
+    """
+    Represents a column in a Material-UI Data Grid.
 
-    def __init__(self) -> None:
+    Attributes:
+        width: The width of the column in pixels.
+        minWidth: The minimum width of the column in pixels.
+        maxWidth: The maximum width of the column in pixels.
+        hideable: Whether the column can be hidden by the user.
+        sortable: Whether the column can be sorted.
+        resizable: Whether the column can be resized by the user.
+        filterable: Whether the column can be filtered.
+        groupable: Whether the column can be grouped.
+        pinnable: Whether the column can be pinned.
+        aggregable: Whether the column can be aggregated.
+        editable: Whether the column is editable.
+        type: The data type of the column.
+        align: The alignment of the column content.
+        filterOperators: A list of available filter operators for the column.
+        field: The field name in the data source.
+        headerName: The display name of the column.
+        hide: Whether the column is initially hidden.
+    """
 
-        self.default_column: dict = {
-            "width": 100,
-            "minWidth": 50,
-            "maxWidth": None,  # None represents null in Python
-            "hideable": True,
-            "sortable": True,
-            "resizable": True,
-            "filterable": True,
-            "groupable": True,
-            "pinnable": True,
-            "aggregable": True,
-            "editable": False,
-            "type": "string",
-            "align": "left",
-            "filterOperators": [
+    # Note: Intentionally matching name to expected field in React, so disabling invalid-name
+    def __init__(self, **kwargs):
+        self.width = kwargs.get("width", 100)
+        self.minWidth = kwargs.get("minWidth", 50)  # pylint: disable=invalid-name
+        self.maxWidth = kwargs.get("maxWidth", None)  # pylint: disable=invalid-name
+        self.hideable = kwargs.get("hideable", True)
+        self.sortable = kwargs.get("sortable", True)
+        self.resizable = kwargs.get("resizable", True)
+        self.filterable = kwargs.get("filterable", True)
+        self.groupable = kwargs.get("groupable", True)
+        self.pinnable = kwargs.get("pinnable", True)
+        self.aggregable = kwargs.get("aggregable", True)
+        self.editable = kwargs.get("editable", False)
+        self.type = kwargs.get("type", "string")
+        self.align = kwargs.get("align", "left")
+        self.filterOperators = kwargs.get(  # pylint: disable=invalid-name
+            "filterOperators",
+            [
                 {"value": "contains"},
                 {"value": "equals"},
                 {"value": "startsWith"},
@@ -37,68 +60,47 @@ class MuiDataGrid:
                 {"value": "isNotEmpty", "requiresFilterValue": False},
                 {"value": "isAnyOf"},
             ],
-            "field": "default_field",
-            "headerName": "Default Field Name",
-            "hide": True,
+        )
+        self.field = kwargs.get("field", "default_field")
+        self.headerName = kwargs.get(  # pylint: disable=invalid-name
+            "headerName", "Default Field Name"
+        )  # pylint: disable=invalid-name
+        self.hide = kwargs.get("hide", True)
+
+    def basic_column(self) -> dict:
+        """
+        Returns a basic column configuration for the Data Grid.
+
+        Returns:
+            A dictionary representing the basic column configuration.
+        """
+        return {
+            "field": self.field,
+            "headerName": self.headerName,
+            "width": self.width,
+            "hide": self.hide,
         }
 
-        self.initial_column_config: list[dict] = [
-            {
-                "field": "execution_block",
-                "headerName": "Execution Block",
-                "width": 250,
-                "hide": False,
-            },
-            {"field": "date_created", "headerName": "Date Created", "width": 150, "hide": False},
-            {"field": "context.observer", "headerName": "Observer", "width": 150, "hide": False},
-            {
-                "field": "config.processing_block",
-                "headerName": "Processing Block",
-                "width": 250,
-                "hide": False,
-            },
-            {"field": "context.intent", "headerName": "Intent", "width": 300, "hide": False},
-            {"field": "context.notes", "headerName": "Notes", "width": 500, "hide": False},
-            {"field": "size", "headerName": "File size", "width": 80, "hide": False},
-            {"field": "status", "headerName": "Status", "width": 80, "hide": False},
+
+class MuiDataGrid:
+    """Class containing components used with the MUI DataGrid"""
+
+    def __init__(self) -> None:
+        self.columns = [
+            MuiDataGridColumn(
+                field=field, headerName=header_name, width=width, hide=False
+            ).basic_column()
+            for field, header_name, width in [
+                ("execution_block", "Execution Block", 250),
+                ("date_created", "Date Created", 150),
+                ("context.observer", "Observer", 150),
+                ("config.processing_block", "Processing Block", 250),
+                ("context.intent", "Intent", 150),
+                ("context.notes", "Notes", 500),
+                ("size", "File size", 80),
+                ("status", "Status", 80),
+            ]
         ]
-
-        self.columns: list[dict] = []
-
-        # This is to be used to programatically add new columns, method still to be created.
-        self.columns_with_default_col_def: list[dict] = [
-            {
-                "width": 100,
-                "minWidth": 50,
-                "maxWidth": None,  # None represents null in Python
-                "hideable": True,
-                "sortable": True,
-                "resizable": True,
-                "filterable": True,
-                "groupable": True,
-                "pinnable": True,
-                "aggregable": True,
-                "editable": False,
-                "type": "string",
-                "align": "left",
-                "filterOperators": [
-                    {"value": "contains"},
-                    {"value": "equals"},
-                    {"value": "startsWith"},
-                    {"value": "endsWith"},
-                    {"value": "isEmpty", "requiresFilterValue": False},
-                    {"value": "isNotEmpty", "requiresFilterValue": False},
-                    {"value": "isAnyOf"},
-                ],
-                "field": "id",
-                "hide": True,
-            }
-        ]
-
-        self.initial_state: dict = {"columns": {"columnVisibilityModel": {"id": False}}}
-
-        for item in self.initial_column_config:
-            self.columns.append(item)
 
         self.table_config: dict = {}
         self.table_config["columns"] = self.columns
@@ -106,6 +108,19 @@ class MuiDataGrid:
         self.flattened_set_of_keys = set()
         self.flattened_list_of_dataproducts_metadata: list[dict] = []
         self.rows: list[dict] = []
+
+    def update_columns(self, key: str) -> None:
+        """
+        Updates the columns with a new key if it doesn't exist.
+
+        Args:
+            key: The field name of the new column.
+        """
+
+        if not any(col.get("field") == key for col in self.columns):
+            self.columns.append(
+                MuiDataGridColumn(field=key, headerName=key, width=150, hide=False).basic_column()
+            )
 
     def add_datagrid_row(self, row: dict) -> None:
         """Adds a dict of data to the datagrid row object.
@@ -141,6 +156,7 @@ class MuiDataGrid:
         """
         for key in self.generate_metadata_keys_list(metadata_file, [], "", "."):
             self.flattened_set_of_keys.add(key)
+            self.update_columns(key)
 
     def generate_metadata_keys_list(self, metadata: dict, ignore_keys, parent_key="", sep="."):
         """Given a nested dict, return the flattened list of keys"""
