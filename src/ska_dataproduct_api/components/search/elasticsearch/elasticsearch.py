@@ -68,6 +68,7 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
                     "should": [],
                 }
             },
+            "sort": [{"date_created": {"order": "desc"}}],
         }
         self.number_of_dataproducts: int = 0
 
@@ -435,6 +436,7 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
         self.add_search_panel_options_to_es_query(search_panel_options)
         self.add_mui_data_grid_filter_model_to_es_query(mui_data_grid_filter_model)
         self.add_access_group_to_query_body(users_user_group_list)
+        self.default_date_created_sort()
         self.search_metadata()
         muiDataGridInstance.rows.clear()
         muiDataGridInstance.flattened_list_of_dataproducts_metadata.clear()
@@ -447,6 +449,50 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
             muiDataGridInstance.flattened_list_of_dataproducts_metadata
         )
         return muiDataGridInstance.rows
+
+    def default_date_created_sort(self):
+        """
+        Adds a default sort by `date_created` in descending order to the query body if the
+        current query body matches the default query body.
+
+        This function is useful for scenarios where a default sort order is desired, especially
+        when the user has not specified a specific sort.
+        """
+        default_query_body = {
+            "size": 100,
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "range": {
+                                "date_created": {
+                                    "gte": "1970-01-01",
+                                    "lte": "2050-12-31",
+                                    "format": "yyyy-MM-dd",
+                                }
+                            }
+                        },
+                        {
+                            "bool": {
+                                "should": [
+                                    {
+                                        "bool": {
+                                            "must_not": [
+                                                {"exists": {"field": "context.access_group"}}
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                    ],
+                    "should": [],
+                }
+            },
+        }
+
+        if default_query_body == self.query_body:
+            self.query_body["sort"] = [{"date_created": {"order": "desc"}}]
 
     def add_access_group_to_query_body(self, users_user_groups: list[str]) -> None:
         """

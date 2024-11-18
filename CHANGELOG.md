@@ -3,6 +3,9 @@
 
 ## Current Development
 
+- [NAL-1279](https://jira.skatelescope.org/browse/NAL-1279)
+    - [Changed] Set the default sort order for Elasticsearch to descending based on date created.
+
 - [NAL-1282](https://jira.skatelescope.org/browse/NAL-1282)
     - [Changed] Addition of a MuiDataGridColumn class and reintroduced dynamic addition of columns.
 
