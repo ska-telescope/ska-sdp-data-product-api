@@ -93,8 +93,9 @@ class MuiDataGrid:
             for field, header_name, width in [
                 ("execution_block", "Execution Block", 250),
                 ("date_created", "Date Created", 150),
-                ("context.observer", "Observer", 150),
                 ("config.processing_block", "Processing Block", 250),
+                ("config.processing_script", "Processing script", 150),
+                ("context.observer", "Observer", 150),
                 ("context.intent", "Intent", 150),
                 ("context.notes", "Notes", 500),
                 ("size", "File size", 80),
