@@ -12,11 +12,8 @@ Functions:
     None
 """
 
-import logging
 from dataclasses import dataclass
 from datetime import datetime
-
-logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -33,9 +30,9 @@ class DataProductAnnotation:
         timestamp_modified (str): Date and time when annotation was modified.
     """
 
-    annotation_id: int | None = None
-    data_product_uuid: str = None
-    annotation_text: str = None
-    user_principal_name: str = None
-    timestamp_created: datetime = None
-    timestamp_modified: datetime = None
+    data_product_uuid: str
+    annotation_text: str
+    user_principal_name: str
+    timestamp_created: datetime
+    timestamp_modified: datetime
+    annotation_id: int = None

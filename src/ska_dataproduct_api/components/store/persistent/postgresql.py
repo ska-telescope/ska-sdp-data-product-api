@@ -583,16 +583,12 @@ uuid = %s WHERE id = %s"
                 with conn.cursor(row_factory=class_row(DataProductAnnotation)) as cur:
                     try:
                         cur.execute(query_string, [annotation_id])
-                        result = cur.fetchone()
-                        if result is not None:
-                            logger.error(type(result))
-                            return result
-                        return {}
+                        return cur.fetchone()
                     except (IndexError, TypeError) as error:
-                        logger.warning(
+                        logger.error(
                             "Annotation not found for id: %s, error: %s", annotation_id, error
                         )
-                        return {}
+                        raise error
         except (psycopg.OperationalError, psycopg.DatabaseError) as error:
             self.postgresql_running = False
             raise error
@@ -612,17 +608,14 @@ uuid = %s WHERE id = %s"
                 with conn.cursor(row_factory=class_row(DataProductAnnotation)) as cur:
                     try:
                         cur.execute(query=query_string, params=[data_product_uuid])
-                        result = cur.fetchall()
-                        if result.length > 0:
-                            return result
-                        return []
+                        return cur.fetchall()
                     except (IndexError, TypeError) as error:
-                        logger.warning(
+                        logger.error(
                             "Annotations not found for uuid: %s, error: %s",
                             data_product_uuid,
                             error,
                         )
-                        return []
+                        raise error
         except (psycopg.OperationalError, psycopg.DatabaseError) as error:
             self.postgresql_running = False
             raise error

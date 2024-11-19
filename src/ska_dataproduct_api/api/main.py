@@ -3,7 +3,7 @@
 import logging
 from typing import List
 
-from fastapi import BackgroundTasks, Request, status
+from fastapi import BackgroundTasks, Request, Response, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 
@@ -268,18 +268,60 @@ async def layout():
 
 
 @app.post("/annotation")
-async def annotation(data_product_annotation: DataProductAnnotation):
+async def annotation(data_product_annotation: DataProductAnnotation, response: Response):
     """API endpoint to create new annotations linked to a data product."""
-    metadata_store.insert_annotation(data_product_annotation)
+
+    try:
+        metadata_store.insert_annotation(data_product_annotation)
+        logger.info("New annotation successfully created.")
+        response.status_code = status.HTTP_201_CREATED
+        return {
+            "status": "success",
+            "message": "New annotation received and successfully saved.",
+        }
+    except Exception as error:
+        logger.error("Error saving annotation: %s", error)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error while saving new annotation. Error: {error}",
+        ) from error
 
 
 @app.get("/annotation/{annotation_id}", response_model=DataProductAnnotation | dict)
-async def get_annotation_by_id(annotation_id: int) -> DataProductAnnotation | dict:
+async def get_annotation_by_id(
+    annotation_id: int, response: Response
+) -> DataProductAnnotation | dict:
     """API GET endpoint to retrieve annotation by id."""
-    return metadata_store.retrieve_annotation_by_id(annotation_id)
+    try:
+        result = metadata_store.retrieve_annotation_by_id(annotation_id)
+        logger.warning(result)
+        if result is None:
+            response.status_code = status.HTTP_204_NO_CONTENT
+            return {}
+        return result
+
+    except Exception as error:
+        logger.error("Error retrieving annotation: %s", error)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error while retrieving annotation. Error: {error}",
+        ) from error
 
 
 @app.get("/annotations/{data_product_uuid}", response_model=list[DataProductAnnotation] | list)
-async def get_annotation_by_uuid(data_product_uuid: str) -> List[DataProductAnnotation] | list:
+async def get_annotation_by_uuid(
+    data_product_uuid: str, response: Response
+) -> List[DataProductAnnotation] | list:
     """API GET endpoint to retrieve all annotations linked to a data product."""
-    return metadata_store.retrieve_annotations_by_uuid(data_product_uuid)
+    try:
+        data_product_annotations = metadata_store.retrieve_annotations_by_uuid(data_product_uuid)
+        if len(data_product_annotations) == 0:
+            response.status_code = status.HTTP_204_NO_CONTENT
+            return []
+        return data_product_annotations
+    except Exception as error:
+        logger.error("Error retrieving annotations: %s", error)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error while retrieving annotations. Error: {error}",
+        ) from error

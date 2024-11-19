@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 """Basic test for the ska_dataproduct_api fastapi module."""
 
+from unittest.mock import patch
+
+from tests.mock_postgressql import MockPostgresSQL
+
+mock_db = MockPostgresSQL()
+mock_db.initialize_database()
+
 
 def test_ping_main(test_app):
     """Can we hit the ping endpoint"""
@@ -161,3 +168,91 @@ def test_filterdataproducts_invalid_token(test_app):
     assert "eb-test-20240513-47584" not in list_of_data_products
     assert "eb-m005-20231031-12345" in list_of_data_products
     assert "eb-test-20200325-00001" in list_of_data_products
+
+
+def test_save_new_annotation(test_app):
+    """Test if annotation can be saved via the REST API"""
+    data = {
+        "data_product_uuid": "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c",
+        "annotation_text": "test annotation",
+        "user_principal_name": "test.user@skao.int",
+        "timestamp_created": "2024-11-13T14:35:00",
+        "timestamp_modified": "2024-11-13T14:35:00",
+    }
+
+    with patch("ska_dataproduct_api.api.main.metadata_store", side_effect=mock_db):
+
+        response = test_app.post("/annotation", json=data)
+        assert response.status_code == 201
+        assert "New annotation received and successfully saved." in str(response.json())
+
+
+def test_save_new_annotation_invalid_json(test_app):
+    """Test if invalid annotation is not saved via the REST API"""
+    data = {
+        "user_principal_name": "test.user@skao.int",
+        "timestamp_created": "2024-11-13T14:35:00",
+        "timestamp_modified": "2024-11-13T14:35:00",
+    }
+
+    with patch("ska_dataproduct_api.api.main.metadata_store", side_effect=mock_db):
+
+        response = test_app.post("/annotation", json=data)
+        assert response.status_code == 422
+
+
+def test_get_annotation_by_id(test_app):
+    """Test if annotation is retrieved when given a valid id."""
+
+    with patch("ska_dataproduct_api.api.main.metadata_store", side_effect=mock_db):
+        with patch(
+            "ska_dataproduct_api.api.main.metadata_store.retrieve_annotation_by_id",
+            side_effect=mock_db.retrieve_annotation_by_id,
+        ):
+            response = test_app.get("/annotation/1")
+            assert response.status_code == 200
+            assert "annotation_id" in response.json()
+
+
+def test_get_annotation_by_id_invalid(test_app):
+    """Test if annotations are not retrieved when given an invalid id."""
+
+    with patch("ska_dataproduct_api.api.main.metadata_store", side_effect=mock_db):
+        with patch(
+            "ska_dataproduct_api.api.main.metadata_store.retrieve_annotation_by_id",
+            side_effect=mock_db.retrieve_annotation_by_id,
+        ):
+            response = test_app.get("annotation/45")
+            assert response.status_code == 204
+
+            response = test_app.get("/annotation/hello")
+            assert response.status_code == 422
+
+
+def test_get_annotations_by_uuid(test_app):
+    """Test if annotations are retrieved when given a valid uuid."""
+
+    with patch("ska_dataproduct_api.api.main.metadata_store", side_effect=mock_db):
+        with patch(
+            "ska_dataproduct_api.api.main.metadata_store.retrieve_annotations_by_uuid",
+            side_effect=mock_db.retrieve_annotations_by_uuid,
+        ):
+
+            response = test_app.get("/annotations/1f8250d0-0e2f-2269-1d9a-ad465ae15d5c")
+            assert response.status_code == 200
+            assert len(response.json()) > 0
+
+            for annotation in response.json():
+                assert annotation["data_product_uuid"] == "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c"
+
+
+def test_get_annotations_by_uuid_invalid(test_app):
+    """Test if annotations are not retrieved when given an invalid uuid."""
+
+    with patch("ska_dataproduct_api.api.main.metadata_store", side_effect=mock_db):
+        with patch(
+            "ska_dataproduct_api.api.main.metadata_store.retrieve_annotations_by_uuid",
+            side_effect=mock_db.retrieve_annotations_by_uuid,
+        ):
+            response = test_app.get("/annotations/if8250d0-0e2f-969-1d9a-ad465ae15d5c")
+            assert response.status_code == 204
