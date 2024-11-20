@@ -356,8 +356,8 @@ For example, the POST request body:
         "data_product_uuid": "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c",
         "annotation_text": "Example annotation text message.",
         "user_principal_name": "test.user@skao.int",
-        "timestamp_created": "2024-11-13:14:32:00",
-        "timestamp_modified": "2024-11-13:14:32:00"
+        "timestamp_created": "2024-11-13T14:32:00",
+        "timestamp_modified": "2024-11-13T14:32:00"
     }
 
 *Response*
@@ -389,8 +389,8 @@ Sending a GET request to the /annotation endpoint will retrieve the annotation l
             "data_product_uuid": "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c",
             "annotation_text": "Example annotation text message.",
             "user_principal_name": "test.user@skao.int",
-            "timestamp_created": "2024-11-13:14:32:00",
-            "timestamp_modified": "2024-11-13:14:32:00"
+            "timestamp_created": "2024-11-13T14:32:00",
+            "timestamp_modified": "2024-11-13T14:32:00"
         },
         200
     ]
@@ -418,7 +418,7 @@ Sending a GET request to the /annotations endpoint will retrieve a list of the a
                 "annotation_text": "Example annotation text message.",
                 "user_principal_name": "test.user@skao.int",
                 "timestamp_created": "2024-11-13:14:32:00",
-                "timestamp_modified": "2024-11-13:14:32:00"
+                "timestamp_modified": "2024-11-13T14:32:00"
             },
             {
                 "annotation_id": 36, 
@@ -426,7 +426,7 @@ Sending a GET request to the /annotations endpoint will retrieve a list of the a
                 "annotation_text": "Example annotation text message.",
                 "user_principal_name": "test.user@skao.int",
                 "timestamp_created": "2024-11-13:14:45:00",
-                "timestamp_modified": "2024-11-13:14:45:00"
+                "timestamp_modified": "2024-11-13T14:45:00"
             }
         ],
         200

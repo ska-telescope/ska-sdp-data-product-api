@@ -294,7 +294,6 @@ async def get_annotation_by_id(
     """API GET endpoint to retrieve annotation by id."""
     try:
         result = metadata_store.retrieve_annotation_by_id(annotation_id)
-        logger.warning(result)
         if result is None:
             response.status_code = status.HTTP_204_NO_CONTENT
             return {}
