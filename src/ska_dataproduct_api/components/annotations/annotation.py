@@ -12,16 +12,12 @@ Functions:
     None
 """
 
-import json
-import logging
+from dataclasses import dataclass
 from datetime import datetime
 
-from pydantic import BaseModel
 
-logger = logging.getLogger(__name__)
-
-
-class DataProductAnnotation(BaseModel):
+@dataclass
+class DataProductAnnotation:
     """
     Encapsulates annotations for a data product.
 
@@ -34,31 +30,9 @@ class DataProductAnnotation(BaseModel):
         timestamp_modified (str): Date and time when annotation was modified.
     """
 
-    annotation_id: str | None = None
-    data_product_uuid: str = None
-    annotation_text: str = None
-    user_principal_name: str = None
-    timestamp_created: datetime = None
-    timestamp_modified: datetime = None
-
-    def load_annotation_from_json(self, annotation: str) -> None:
-        """
-        Loads annotation from a json string.
-
-        Args:
-            annotation: The json string of the annotation data.
-
-        Returns:
-            None.
-        """
-
-        annotation = json.loads(annotation)
-
-        if "annotation_id" in annotation:
-            self.annotation_id = annotation["annotation_id"]
-
-        self.data_product_uuid = annotation["data_product_uuid"]
-        self.annotation_text = annotation["annotation_text"]
-        self.user_principal_name = annotation["user_principal_name"]
-        self.timestamp_created = annotation["timestamp_created"]
-        self.timestamp_modified = annotation["timestamp_modified"]
+    data_product_uuid: str
+    annotation_text: str
+    user_principal_name: str
+    timestamp_created: datetime
+    timestamp_modified: datetime
+    annotation_id: int = None
