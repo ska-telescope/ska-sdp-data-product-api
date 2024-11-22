@@ -119,6 +119,11 @@ ELASTICSEARCH_INDICES: str = config(
     "SKA_DATAPRODUCT_API_ELASTIC_INDICES",
     default=("ska-dp-dataproduct-localhost-dev-v1"),
 )
+
+ELASTICSEARCH_QUERY_BODY_SIZE: int = int(
+    config("SKA_DATAPRODUCT_API_ELASTICSEARCH_QUERY_BODY_SIZE", default=1000),
+)
+
 # ----
 # PostgreSQL Variables
 POSTGRESQL_HOST: str = config(

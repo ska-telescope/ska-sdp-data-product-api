@@ -19,6 +19,7 @@ from ska_dataproduct_api.configuration.settings import (
     CONFIGURATION_FILES_PATH,
     ELASTIC_HTTP_CA_BASE64_CERT,
     ELASTIC_HTTP_CA_FILE_NAME,
+    ELASTICSEARCH_QUERY_BODY_SIZE,
 )
 from ska_dataproduct_api.utilities.helperfunctions import find_metadata
 
@@ -61,7 +62,7 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
 
         self.metadata_list = []
         self.query_body = {
-            "size": 100,
+            "size": ELASTICSEARCH_QUERY_BODY_SIZE,
             "query": {
                 "bool": {
                     "must": [],
@@ -425,7 +426,7 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
             Filtered data.
         """
         self.query_body = {
-            "size": 100,
+            "size": ELASTICSEARCH_QUERY_BODY_SIZE,
             "query": {
                 "bool": {
                     "must": [],
@@ -459,7 +460,7 @@ class ElasticsearchMetadataStore(MetadataSearchStore):
         when the user has not specified a specific sort.
         """
         default_query_body = {
-            "size": 100,
+            "size": ELASTICSEARCH_QUERY_BODY_SIZE,
             "query": {
                 "bool": {
                     "must": [
