@@ -336,6 +336,8 @@ For example, the POST request body:
 Annotation POST endpoint
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. note:: Annotation functionality is only available if the API is running with a PostgreSQL persistent metadata store.
+
 Annotations are used to add notes to specific data products and are stored in the metadata store in a separate table.
 
 Sending a POST request to the /annotation endpoint will parse the supplied JSON data as data product annotation, and add the annotation to the Postgres database.
