@@ -3,6 +3,9 @@
 
 ## Current Development
 
+- [NAL-1309](https://jira.skatelescope.org/browse/NAL-1309)
+    - [Changed] Made the Elasticsearch query body size configurable from environment variable SKA_DATAPRODUCT_API_ELASTIC_QUERY_BODY_SIZE.
+
 - [NAL-1296](https://jira.skatelescope.org/browse/NAL-1296)
     - [Added] Added a method to retrieve an annotation based on id from metastore.
     - [Added] Added a new method to retrieve all annotations associated with a data product uuid from metastore.

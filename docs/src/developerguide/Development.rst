@@ -72,6 +72,7 @@ Configure the environmental variables in the .env file under the root folder acc
     SKA_DATAPRODUCT_API_ELASTIC_HTTP_CA_FILE_NAME=http_ca.crt
     SKA_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE=./src/ska_dataproduct_api/components/search/elasticsearch/data_product_metadata_schema.json
     SKA_DATAPRODUCT_API_ELASTIC_INDICES=ska-dp-dataproduct-localhost-dev-v1
+    SKA_DATAPRODUCT_API_ELASTIC_QUERY_BODY_SIZE=1000
 
 
 Configure the application secrets in the .secrets file under the root folder according to your requirements and environment.
