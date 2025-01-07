@@ -30,9 +30,9 @@ class DataProductAnnotation:
         timestamp_modified (str): Date and time when annotation was modified.
     """
 
-    data_product_uuid: str
     annotation_text: str
     user_principal_name: str
-    timestamp_created: datetime
     timestamp_modified: datetime
+    timestamp_created: datetime = None
+    data_product_uuid: str = None
     annotation_id: int = None

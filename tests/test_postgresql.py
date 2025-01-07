@@ -86,23 +86,6 @@ def mock_get_data_by_uuid(uuid):
     return None
 
 
-def mock_get_annotation_by_id(annotation_id):
-    """Retrieves mock annotation based on the provided id.
-
-    Args:
-        annotation_id (int): The annotation id.
-
-    Returns:
-        DataProductAnnotation if id is valid or None if the id is invalid.
-
-    This function is designed to simulate the retrieval of data from an external source.
-    It returns an instance of the DataProductAnnotation class. For any other id, it returns None.
-    """
-    if annotation_id == 1:
-        return mock_db.retrieve_annotation_by_id(1)
-    return None
-
-
 def mock_get_annotations_by_uuid(uuid):
     """Retrieves mock annotation based on the provided uuid.
 
@@ -323,7 +306,7 @@ get_data_by_uuid",
         assert result == {}
 
 
-def test_insert_annotation(mocked_postgres_connector):
+def test_save_annotation_create(mocked_postgres_connector):
     """Tests if annotation is successfully saved in database."""
     data_product_annotation = {
         "data_product_uuid": "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c",
@@ -334,37 +317,30 @@ def test_insert_annotation(mocked_postgres_connector):
     }
     with patch(
         "ska_dataproduct_api.components.store.persistent.postgresql.PostgresConnector.\
-insert_annotation",
+save_annotation",
         return_value=None,
     ):
         assert (
-            mocked_postgres_connector["connector"].insert_annotation(data_product_annotation)
-            is None
+            mocked_postgres_connector["connector"].save_annotation(data_product_annotation) is None
         )
 
 
-def test_retrieve_annotation_by_id_valid_id(mocked_postgres_connector):
-    """Tests if annotation is successfully retrieved given a valid id."""
+def test_save_annotation_update(mocked_postgres_connector):
+    """Tests if annotation is successfully saved in database."""
+    data_product_annotation = {
+        "annotation_text": "Updated text test annotation testjkuhkuhkjhk",
+        "user_principal_name": "test.user@skao.int",
+        "timestamp_modified": "2024-11-25T14:35:00",
+        "annotation_id": 1,
+    }
     with patch(
         "ska_dataproduct_api.components.store.persistent.postgresql.PostgresConnector.\
-retrieve_annotation_by_id",
-        side_effect=mock_get_annotation_by_id,
+save_annotation",
+        return_value=None,
     ):
-        result = mocked_postgres_connector["connector"].retrieve_annotation_by_id(1)
-        assert isinstance(result, DataProductAnnotation)
-        assert result.annotation_id == 1
-        assert result.data_product_uuid == "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c"
-
-
-def test_retrieve_annotation_by_id_invalid_id(mocked_postgres_connector):
-    """Tests if annotation is successfully retrieved given a valid id."""
-    with patch(
-        "ska_dataproduct_api.components.store.persistent.postgresql.PostgresConnector.\
-retrieve_annotation_by_id",
-        side_effect=mock_get_annotation_by_id,
-    ):
-        result = mocked_postgres_connector["connector"].retrieve_annotation_by_id(25)
-        assert result is None
+        assert (
+            mocked_postgres_connector["connector"].save_annotation(data_product_annotation) is None
+        )
 
 
 def test_retrieve_annotations_by_uuid_valid_uuid(mocked_postgres_connector):

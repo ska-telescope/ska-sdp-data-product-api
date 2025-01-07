@@ -272,38 +272,18 @@ async def annotation(data_product_annotation: DataProductAnnotation, response: R
     """API endpoint to create new annotations linked to a data product."""
 
     try:
-        metadata_store.insert_annotation(data_product_annotation)
+        metadata_store.save_annotation(data_product_annotation)
         logger.info("New annotation successfully created.")
         response.status_code = status.HTTP_201_CREATED
         return {
             "status": "success",
-            "message": "New annotation received and successfully saved.",
+            "message": "Annotation received and successfully saved.",
         }
     except Exception as error:
         logger.error("Error saving annotation: %s", error)
         raise HTTPException(
             status_code=500,
             detail=f"Internal server error while saving new annotation. Error: {error}",
-        ) from error
-
-
-@app.get("/annotation/{annotation_id}", response_model=DataProductAnnotation | dict)
-async def get_annotation_by_id(
-    annotation_id: int, response: Response
-) -> DataProductAnnotation | dict:
-    """API GET endpoint to retrieve annotation by id."""
-    try:
-        result = metadata_store.retrieve_annotation_by_id(annotation_id)
-        if result is None:
-            response.status_code = status.HTTP_204_NO_CONTENT
-            return {}
-        return result
-
-    except Exception as error:
-        logger.error("Error retrieving annotation: %s", error)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Internal server error while retrieving annotation. Error: {error}",
         ) from error
 
 

@@ -548,50 +548,44 @@ uuid = %s WHERE id = %s"
             logger.error("Database error: %s", error)
             return []
 
-    def insert_annotation(self, data_product_annotation: DataProductAnnotation) -> None:
+    def save_annotation(self, data_product_annotation: DataProductAnnotation) -> None:
         """Inserts new annotation into the database."""
         table: str = self.schema + "." + self.annotations_table_name
-        query_string = f"INSERT INTO {table} \
-            (uuid, annotation_text, user_principal_name, timestamp_created, timestamp_modified)\
-                VALUES (%s, %s, %s, %s, %s)"
-        with psycopg.connect(self.connection_string) as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    query=query_string,
-                    params=(
-                        data_product_annotation.data_product_uuid,
-                        data_product_annotation.annotation_text,
-                        data_product_annotation.user_principal_name,
-                        data_product_annotation.timestamp_created,
-                        data_product_annotation.timestamp_modified,
-                    ),
-                )
-                conn.commit()
 
-    def retrieve_annotation_by_id(self, annotation_id: int) -> DataProductAnnotation:
-        """Returns a specific annotation based on annotation_id."""
-        table: str = self.schema + "." + self.annotations_table_name
-        query_string = f"SELECT id as annotation_id, \
-                            uuid as data_product_uuid, \
-                            annotation_text, \
-                            user_principal_name, \
-                            timestamp_created, \
-                            timestamp_modified \
-                        from {table} WHERE id = %s"
-        try:
+        if data_product_annotation.annotation_id is None:
+            query_string = f"INSERT INTO {table} \
+                (uuid, annotation_text, \
+                  user_principal_name, timestamp_created, timestamp_modified)\
+                VALUES (%s, %s, %s, %s, %s)"
             with psycopg.connect(self.connection_string) as conn:
-                with conn.cursor(row_factory=class_row(DataProductAnnotation)) as cur:
-                    try:
-                        cur.execute(query_string, [annotation_id])
-                        return cur.fetchone()
-                    except (IndexError, TypeError) as error:
-                        logger.error(
-                            "Annotation not found for id: %s, error: %s", annotation_id, error
-                        )
-                        raise error
-        except (psycopg.OperationalError, psycopg.DatabaseError) as error:
-            self.postgresql_running = False
-            raise error
+                with conn.cursor() as cur:
+                    cur.execute(
+                        query=query_string,
+                        params=(
+                            data_product_annotation.data_product_uuid,
+                            data_product_annotation.annotation_text,
+                            data_product_annotation.user_principal_name,
+                            data_product_annotation.timestamp_created,
+                            data_product_annotation.timestamp_modified,
+                        ),
+                    )
+                    conn.commit()
+        else:
+            query_string = f"UPDATE {table} \
+                    SET annotation_text = %s, user_principal_name = %s, timestamp_modified = %s\
+                    WHERE id = %s"
+            with psycopg.connect(self.connection_string) as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        query=query_string,
+                        params=(
+                            data_product_annotation.annotation_text,
+                            data_product_annotation.user_principal_name,
+                            data_product_annotation.timestamp_modified,
+                            data_product_annotation.annotation_id,
+                        ),
+                    )
+                    conn.commit()
 
     def retrieve_annotations_by_uuid(self, data_product_uuid: str) -> List[DataProductAnnotation]:
         """Returns all annotations associated with a data product uuid."""
