@@ -181,10 +181,9 @@ def test_save_new_annotation(test_app):
     }
 
     with patch("ska_dataproduct_api.api.main.metadata_store", side_effect=mock_db):
-
         response = test_app.post("/annotation", json=data)
         assert response.status_code == 201
-        assert "New annotation received and successfully saved." in str(response.json())
+        assert "New Data Annotation received and successfully saved." in str(response.json())
 
 
 def test_save_new_annotation_invalid_json(test_app):
@@ -196,37 +195,38 @@ def test_save_new_annotation_invalid_json(test_app):
     }
 
     with patch("ska_dataproduct_api.api.main.metadata_store", side_effect=mock_db):
-
         response = test_app.post("/annotation", json=data)
         assert response.status_code == 422
 
 
-def test_get_annotation_by_id(test_app):
-    """Test if annotation is retrieved when given a valid id."""
+def test_update_annotation(test_app):
+    """Test if annotation can be saved via the REST API"""
+    data = {
+        "annotation_text": "Update text test annotation",
+        "user_principal_name": "test.user@skao.int",
+        "timestamp_modified": "2024-11-13T14:35:00",
+        "annotation_id": 1,
+    }
 
     with patch("ska_dataproduct_api.api.main.metadata_store", side_effect=mock_db):
-        with patch(
-            "ska_dataproduct_api.api.main.metadata_store.retrieve_annotation_by_id",
-            side_effect=mock_db.retrieve_annotation_by_id,
-        ):
-            response = test_app.get("/annotation/1")
-            assert response.status_code == 200
-            assert "annotation_id" in response.json()
+        response = test_app.post("/annotation", json=data)
+        assert response.status_code == 200
+        assert "Data Annotation received and updated successfully." in str(response.json())
 
 
-def test_get_annotation_by_id_invalid(test_app):
-    """Test if annotations are not retrieved when given an invalid id."""
+def test_save_annotation_no_postgressql(test_app):
+    """Test if correct message is returned when PostgresSQL is not available."""
+    data = {
+        "data_product_uuid": "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c",
+        "annotation_text": "test annotation",
+        "user_principal_name": "test.user@skao.int",
+        "timestamp_created": "2024-11-13T14:35:00",
+        "timestamp_modified": "2024-11-13T14:35:00",
+    }
 
-    with patch("ska_dataproduct_api.api.main.metadata_store", side_effect=mock_db):
-        with patch(
-            "ska_dataproduct_api.api.main.metadata_store.retrieve_annotation_by_id",
-            side_effect=mock_db.retrieve_annotation_by_id,
-        ):
-            response = test_app.get("annotation/45")
-            assert response.status_code == 204
-
-            response = test_app.get("/annotation/hello")
-            assert response.status_code == 422
+    response = test_app.post("/annotation", json=data)
+    assert response.status_code == 202
+    assert "PostgresSQL is not available, cannot access data annotations." in str(response.json())
 
 
 def test_get_annotations_by_uuid(test_app):
@@ -256,3 +256,11 @@ def test_get_annotations_by_uuid_invalid(test_app):
         ):
             response = test_app.get("/annotations/if8250d0-0e2f-969-1d9a-ad465ae15d5c")
             assert response.status_code == 204
+
+
+def test_get_annotations_by_uuid_no_postgressql(test_app):
+    """Test if annotations are not retrieved when given an invalid uuid."""
+
+    response = test_app.get("/annotations/if8250d0-0e2f-969-1d9a-ad465ae15d5c")
+    assert response.status_code == 202
+    assert "PostgresSQL is not available, cannot access data annotations." in str(response.json())
