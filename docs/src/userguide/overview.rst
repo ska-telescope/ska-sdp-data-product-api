@@ -341,8 +341,9 @@ Annotation POST endpoint
 Annotations are used to add notes to specific data products and are stored in the metadata store in a separate table.
 
 Sending a POST request to the /annotation endpoint will parse the supplied JSON data as data product annotation, and add the annotation to the Postgres database.
+This method can be used to create a data annotation or update and existing data annotation. The method used depends on the existence of the annotation_id.
 
-For example, the POST request body:
+For example, the POST request body for a create request:
 
 *Request*
 
@@ -367,19 +368,31 @@ For example, the POST request body:
 .. code-block:: bash
 
     [
-        200
+        {
+            "status": "success",
+            "message": "New Data Annotation received and successfully saved."
+        },
+        201
     ]
 
-Annotation GET endpoint
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-Sending a GET request to the /annotation endpoint will retrieve the annotation linked to the specified id.
+An example of a POST request body for an update request:
 
 *Request*
 
 .. code-block:: bash
 
-    GET /annotation/21
+    POST /annotation
+
+*Body*
+
+.. code-block:: bash
+
+    { 
+        "annotation_text": "Example annotation text message.",
+        "user_principal_name": "test.user@skao.int",
+        "timestamp_modified": "2024-11-13T14:32:00",
+        "annotation_id": 23
+    }
 
 *Response*
 
@@ -387,20 +400,35 @@ Sending a GET request to the /annotation endpoint will retrieve the annotation l
 
     [
         {
-            "annotation_id": 21, 
-            "data_product_uuid": "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c",
-            "annotation_text": "Example annotation text message.",
-            "user_principal_name": "test.user@skao.int",
-            "timestamp_created": "2024-11-13T14:32:00",
-            "timestamp_modified": "2024-11-13T14:32:00"
+            "status": "success",
+            "message": "Data Annotation received and updated successfully."
         },
         200
     ]
 
+An example of a response when PostgresSQL is not available:
+
+*Response*
+
+.. code-block:: bash
+
+    [
+        {
+            "status": "Received but not processed",
+            "message": "PostgresSQL is not available, cannot access data annotations.",
+        },
+        202
+    ]
+
+
+
 Annotations GET endpoint
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. note:: Annotation functionality is only available if the API is running with a PostgreSQL persistent metadata store.
+
 Sending a GET request to the /annotations endpoint will retrieve a list of the annotations linked to the specified data product uuid.
+If PostgreSQL is not available, an status code of 202 will be received.
 
 *Request*
 
@@ -433,6 +461,22 @@ Sending a GET request to the /annotations endpoint will retrieve a list of the a
         ],
         200
     ]
+    
+
+An example of a response when PostgresSQL is not available:
+
+*Response*
+
+.. code-block:: bash
+
+    [
+        {
+            "status": "Received but not processed",
+            "message": "PostgresSQL is not available, cannot access data annotations.",
+        },
+        202
+    ]
+
 
 API User
 --------

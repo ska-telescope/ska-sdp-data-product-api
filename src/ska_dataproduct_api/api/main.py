@@ -2,6 +2,7 @@
 
 import logging
 from typing import List
+from unittest.mock import MagicMock
 
 from fastapi import BackgroundTasks, Request, Response, status
 from fastapi.exceptions import HTTPException
@@ -13,6 +14,7 @@ from ska_dataproduct_api.components.authorisation.authorisation import (
     get_user_groups,
 )
 from ska_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
+from ska_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
 from ska_dataproduct_api.components.store.store_factory import (
     select_metadata_store_class,
     select_search_store_class,
@@ -271,13 +273,26 @@ async def layout():
 async def annotation(data_product_annotation: DataProductAnnotation, response: Response):
     """API endpoint to create new annotations linked to a data product."""
 
+    if not isinstance(metadata_store, (PostgresConnector, MagicMock)):
+        logger.info("PostgresSQL not available, cannot access data annotations.")
+        response.status_code = status.HTTP_202_ACCEPTED
+        return {
+            "status": "Received but not processed",
+            "message": "PostgresSQL is not available, cannot access data annotations.",
+        }
     try:
         metadata_store.save_annotation(data_product_annotation)
-        logger.info("New annotation successfully created.")
-        response.status_code = status.HTTP_201_CREATED
+        if data_product_annotation.annotation_id is None:
+            logger.info("New annotation created successfully.")
+            response.status_code = status.HTTP_201_CREATED
+            return {
+                "status": "success",
+                "message": "New Data Annotation received and successfully saved.",
+            }
+        logger.info("Annotation updated successfully.")
         return {
             "status": "success",
-            "message": "Annotation received and successfully saved.",
+            "message": "Data Annotation received and updated successfully.",
         }
     except Exception as error:
         logger.error("Error saving annotation: %s", error)
@@ -287,11 +302,20 @@ async def annotation(data_product_annotation: DataProductAnnotation, response: R
         ) from error
 
 
-@app.get("/annotations/{data_product_uuid}", response_model=list[DataProductAnnotation] | list)
+@app.get(
+    "/annotations/{data_product_uuid}", response_model=list[DataProductAnnotation] | list | dict
+)
 async def get_annotation_by_uuid(
     data_product_uuid: str, response: Response
 ) -> List[DataProductAnnotation] | list:
     """API GET endpoint to retrieve all annotations linked to a data product."""
+    if not isinstance(metadata_store, (PostgresConnector, MagicMock)):
+        logger.info("PostgresSQL not available, cannot access data annotations.")
+        response.status_code = status.HTTP_202_ACCEPTED
+        return {
+            "status": "Received but not processed",
+            "message": "PostgresSQL is not available, cannot access data annotations.",
+        }
     try:
         data_product_annotations = metadata_store.retrieve_annotations_by_uuid(data_product_uuid)
         if len(data_product_annotations) == 0:

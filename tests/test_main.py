@@ -183,7 +183,7 @@ def test_save_new_annotation(test_app):
     with patch("ska_dataproduct_api.api.main.metadata_store", side_effect=mock_db):
         response = test_app.post("/annotation", json=data)
         assert response.status_code == 201
-        assert "Annotation received and successfully saved." in str(response.json())
+        assert "New Data Annotation received and successfully saved." in str(response.json())
 
 
 def test_save_new_annotation_invalid_json(test_app):
@@ -210,8 +210,23 @@ def test_update_annotation(test_app):
 
     with patch("ska_dataproduct_api.api.main.metadata_store", side_effect=mock_db):
         response = test_app.post("/annotation", json=data)
-        assert response.status_code == 201
-        assert "Annotation received and successfully saved." in str(response.json())
+        assert response.status_code == 200
+        assert "Data Annotation received and updated successfully." in str(response.json())
+
+
+def test_save_annotation_no_postgressql(test_app):
+    """Test if correct message is returned when PostgresSQL is not available."""
+    data = {
+        "data_product_uuid": "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c",
+        "annotation_text": "test annotation",
+        "user_principal_name": "test.user@skao.int",
+        "timestamp_created": "2024-11-13T14:35:00",
+        "timestamp_modified": "2024-11-13T14:35:00",
+    }
+
+    response = test_app.post("/annotation", json=data)
+    assert response.status_code == 202
+    assert "PostgresSQL is not available, cannot access data annotations." in str(response.json())
 
 
 def test_get_annotations_by_uuid(test_app):
@@ -241,3 +256,11 @@ def test_get_annotations_by_uuid_invalid(test_app):
         ):
             response = test_app.get("/annotations/if8250d0-0e2f-969-1d9a-ad465ae15d5c")
             assert response.status_code == 204
+
+
+def test_get_annotations_by_uuid_no_postgressql(test_app):
+    """Test if annotations are not retrieved when given an invalid uuid."""
+
+    response = test_app.get("/annotations/if8250d0-0e2f-969-1d9a-ad465ae15d5c")
+    assert response.status_code == 202
+    assert "PostgresSQL is not available, cannot access data annotations." in str(response.json())

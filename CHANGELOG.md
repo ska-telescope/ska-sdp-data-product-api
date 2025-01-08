@@ -3,6 +3,10 @@
 
 ## Current Development
 
+- [NAL-1323](https://jira.skatelescope.org/browse/NAL-1323)
+    - [Changed] Added the functionality to allow annotations to be updated.
+    - [Changed] Added a check to return nothing if PostgresSQL is not available when attempting to use annotation endpoints.
+
 - [NAL-1309](https://jira.skatelescope.org/browse/NAL-1309)
     - [Changed] Made the Elasticsearch query body size configurable from environment variable SKA_DATAPRODUCT_API_ELASTIC_QUERY_BODY_SIZE.
 
