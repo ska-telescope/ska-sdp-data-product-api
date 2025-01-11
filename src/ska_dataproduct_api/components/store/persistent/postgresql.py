@@ -1,6 +1,5 @@
 """Module adds a PostgreSQL interface for persistent storage of metadata files"""
 
-import hashlib
 import json
 import logging
 import pathlib
@@ -274,10 +273,6 @@ class PostgresConnector(MetadataStore):
         self.save_metadata_to_postgresql(data_product_metadata_instance)
         self.update_data_store_date_modified()
         return data_product_metadata_instance.data_product_uuid
-
-    def calculate_metadata_hash(self, metadata_file_json: dict) -> str:
-        """Calculates a SHA256 hash of the given metadata JSON."""
-        return hashlib.sha256(json.dumps(metadata_file_json).encode("utf-8")).hexdigest()
 
     def check_metadata_exists_by_hash(self, json_hash: str) -> bool:
         """Checks if metadata exists based on the given hash."""

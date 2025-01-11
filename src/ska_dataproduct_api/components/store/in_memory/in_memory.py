@@ -230,21 +230,3 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
                 data_product_identifier.uuid or data_product_identifier.execution_block,
             )
             return []
-
-    def check_file_exists(self, file_object: pathlib.Path) -> bool:
-        """
-        Checks if the given file path points to an existing file.
-
-        Args:
-            file_object (pathlib.Path): The full path to the file.
-
-        Returns:
-            Bool: True if the file exists, otherwise False.
-        """
-        if not file_object.is_file():
-            logger.warning(
-                "Metadata file path '%s' not pointing to a file.",
-                str(file_object),
-            )
-            return False
-        return True
