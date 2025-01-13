@@ -196,7 +196,6 @@ def test_reindex_persistent_volume(mocked_postgres_connector):
     mocked_postgres_connector["connector"].reindex_persistent_volume()
 
     assert mocked_postgres_connector["connector"].number_of_dataproducts == 1
-    assert len(mocked_postgres_connector["connector"].list_of_data_product_paths) == 18
     assert mocked_postgres_connector["connector"].indexing is False
 
 

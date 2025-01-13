@@ -136,7 +136,7 @@ class PVInterface:
                 )
                 self.pv_index.index_time_modified = datetime.now(tz=timezone.utc)
             else:
-                logger.warning(
+                logger.debug(
                     "This item was already loaded, but might need to be reloaded?????: %s",  # TODO
                     str(data_product_file_path),
                 )

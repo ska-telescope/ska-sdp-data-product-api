@@ -53,7 +53,8 @@ DPD_API_Status = DPDAPIStatus(
 def reindex_data_products_stores() -> None:
     """Background tasks to reindex the data products on the persistent volume"""
     try:
-        metadata_store.reindex_persistent_volume()
+        pv_interface.index_all_data_product_files_on_pv()
+        metadata_store.reindex_persistent_volume(pv_index=pv_interface.pv_index)
         search_store.load_metadata_from_store()
         logger.info("Metadata re-indexed")
     except Exception as exception:  # pylint: disable=broad-exception-caught
