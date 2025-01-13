@@ -60,18 +60,18 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
             "indexing": self.indexing,
         }
 
-    def reindex_persistent_volume(self, pv_index: PVIndex) -> None:
+    def reload_all_data_products_in_index(self, pv_index: PVIndex) -> None:
         """This method resets and recreates the flattened_list_of_dataproducts_metadata. This is
         added to enable the user to reindex if the data products were changed or
         appended since the initial load of the data"""
         try:
-            logger.info("Re-indexing persistent volume store...")
+            logger.info("Reloading all data products from PV index into metadata store...")
             self.indexing = True
             self.number_of_metadata_files = len(pv_index)
             self.ingest_list_of_data_product_paths(pv_index=pv_index)
             self.update_data_store_date_modified()
             self.indexing = False
-            logger.info("Metadata store re-indexed")
+            logger.info("Reloading into metadata store completed.")
         except Exception as exception:
             self.indexing = False
             raise exception

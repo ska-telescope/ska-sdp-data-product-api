@@ -44,7 +44,7 @@ except Exception as exception:  # pylint: disable=broad-exception-caught
 
 PVCNAME: str = config(
     "PVCNAME",
-    default="None, using local test data",
+    default="None (using local test data)",
 )
 
 CONFIGURATION_FILES_PATH: pathlib.Path = pathlib.Path(__file__).parent

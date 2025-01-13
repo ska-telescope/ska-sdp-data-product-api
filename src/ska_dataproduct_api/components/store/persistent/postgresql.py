@@ -206,7 +206,7 @@ class PostgresConnector(MetadataStore):
                     self.schema,
                 )
 
-    def reindex_persistent_volume(self, pv_index: PVIndex) -> None:
+    def reload_all_data_products_in_index(self, pv_index: PVIndex) -> None:
         """
         Reindexes the persistent volume by ingesting all data product files.
 
@@ -216,7 +216,7 @@ class PostgresConnector(MetadataStore):
         Raises:
             Exception: If an error occurs during the reindexing process.
         """
-        logger.info("Re-indexing persistent volume store...")
+        logger.info("Reloading all data products from PV index into metadata store...")
         if not self.postgresql_running and self.postgresql_configured:
             self.connect()
 
@@ -242,7 +242,7 @@ class PostgresConnector(MetadataStore):
 
         self.number_of_dataproducts = self.count_jsonb_objects()
         self.indexing = False
-        logger.info("Metadata store re-indexed")
+        logger.info("Reloading into metadata store completed.")
 
     def ingest_file(self, data_product_metadata_file_path: pathlib.Path) -> uuid.UUID:
         """

@@ -54,9 +54,9 @@ def reindex_data_products_stores() -> None:
     """Background tasks to reindex the data products on the persistent volume"""
     try:
         pv_interface.index_all_data_product_files_on_pv()
-        metadata_store.reindex_persistent_volume(pv_index=pv_interface.pv_index)
+        metadata_store.reload_all_data_products_in_index(pv_index=pv_interface.pv_index)
         search_store.load_metadata_from_store()
-        logger.info("Metadata re-indexed")
+        logger.info("Persistent volume re-indexed and stores updated.")
     except Exception as exception:  # pylint: disable=broad-exception-caught
         logger.exception("Metadata re-index failed: %s", exception)
 

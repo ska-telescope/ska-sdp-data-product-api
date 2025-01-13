@@ -37,7 +37,7 @@ class MetadataSearchStore:
         This method delegates the loading logic to the appropriate method based on the
         type of the metadata store.
         """
-
+        logger.info("Loading metadata into search store.")
         if (
             isinstance(self.metadata_store, PostgresConnector)
             and self.metadata_store.postgresql_running
@@ -45,6 +45,7 @@ class MetadataSearchStore:
             self.load_persistent_metadata_store_data()
         else:
             self.load_in_memory_volume_index_metadata_store_data()
+        logger.info("Search store updated with the latest data.")
 
     def load_persistent_metadata_store_data(self):
         """

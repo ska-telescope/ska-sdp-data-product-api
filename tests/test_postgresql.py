@@ -190,10 +190,10 @@ get_data_by_uuid",
 
 
 def test_reindex_persistent_volume(mocked_postgres_connector):
-    """Tests if the reindex_persistent_volume can be executed, the call to the PosgreSQL cursor
-    is mocked, so the expected return of the number if items in the db is only 1"""
+    """Tests if the reload_all_data_products_in_index can be executed, the call to the PosgreSQL
+    cursor is mocked, so the expected return of the number if items in the db is only 1"""
 
-    mocked_postgres_connector["connector"].reindex_persistent_volume()
+    mocked_postgres_connector["connector"].reload_all_data_products_in_index()
 
     assert mocked_postgres_connector["connector"].number_of_dataproducts == 1
     assert mocked_postgres_connector["connector"].indexing is False
@@ -269,8 +269,8 @@ def test_save_metadata_to_postgresql(mocked_postgres_connector):
 
 
 def test_get_metadata(mocked_postgres_connector):
-    """Tests if the reindex_persistent_volume can be executed, the call to the PosgreSQL cursor
-    is mocked, so the expected return of the number if items in the db is only 1"""
+    """Tests if the reload_all_data_products_in_index can be executed, the call to the PosgreSQL
+    cursor is mocked, so the expected return of the number if items in the db is only 1"""
     with patch(
         "ska_dataproduct_api.components.store.persistent.postgresql.PostgresConnector.\
 get_data_by_uuid",
