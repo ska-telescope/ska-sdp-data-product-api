@@ -14,6 +14,7 @@ from ska_dataproduct_api.components.authorisation.authorisation import (
     get_user_groups,
 )
 from ska_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
+from ska_dataproduct_api.components.pv_interface.pv_interface import PVInterface
 from ska_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
 from ska_dataproduct_api.components.store.store_factory import (
     select_metadata_store_class,
@@ -35,11 +36,15 @@ from ska_dataproduct_api.utilities.helperfunctions import (
 
 logger = logging.getLogger(__name__)
 
+pv_interface = PVInterface()
+pv_interface.index_all_data_product_files_on_pv()
+
 metadata_store = select_metadata_store_class()
 
 search_store = select_search_store_class(metadata_store)
 
 DPD_API_Status = DPDAPIStatus(
+    pv_interface_status=pv_interface.status,
     search_store_status=search_store.status,
     metadata_store_status=metadata_store.status,
 )
