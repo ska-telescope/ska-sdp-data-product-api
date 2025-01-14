@@ -42,7 +42,6 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
     def __init__(self):
         super().__init__()
         self.number_of_dataproducts: int = 0
-        self.number_of_metadata_files: int = 0
         self.dict_of_data_products_metadata: dict[DataProductMetadata] = {}
 
     def status(self) -> dict:
@@ -55,7 +54,6 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
         return {
             "store_type": "In memory volume index metadata store",
             "number_of_dataproducts_loaded": self.number_of_dataproducts,
-            "number_of_metadata_files_found": self.number_of_metadata_files,
             "last_metadata_update_time": self.date_modified,
             "indexing": self.indexing,
         }
@@ -67,7 +65,6 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
         try:
             logger.info("Reloading all data products from PV index into metadata store...")
             self.indexing = True
-            self.number_of_metadata_files = len(pv_index)
             self.ingest_list_of_data_product_paths(pv_index=pv_index)
             self.update_data_store_date_modified()
             self.indexing = False

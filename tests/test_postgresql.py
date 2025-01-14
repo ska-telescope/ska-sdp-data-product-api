@@ -8,6 +8,7 @@ import pytest
 
 from ska_dataproduct_api.components.annotations.annotation import DataProductAnnotation
 from ska_dataproduct_api.components.metadata.metadata import DataProductMetadata
+from ska_dataproduct_api.components.pv_interface.pv_interface import PVInterface
 from ska_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
 from ska_dataproduct_api.utilities.helperfunctions import DataProductIdentifier
 from tests.mock_postgressql import MockPostgresSQL
@@ -192,8 +193,10 @@ get_data_by_uuid",
 def test_reindex_persistent_volume(mocked_postgres_connector):
     """Tests if the reload_all_data_products_in_index can be executed, the call to the PosgreSQL
     cursor is mocked, so the expected return of the number if items in the db is only 1"""
-
-    mocked_postgres_connector["connector"].reload_all_data_products_in_index()
+    pv_interface = PVInterface()
+    mocked_postgres_connector["connector"].reload_all_data_products_in_index(
+        pv_index=pv_interface.pv_index
+    )
 
     assert mocked_postgres_connector["connector"].number_of_dataproducts == 1
     assert mocked_postgres_connector["connector"].indexing is False
