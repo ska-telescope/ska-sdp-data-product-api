@@ -176,11 +176,16 @@ class PVInterface:
         that the re-indexing operation is complete.
         """
 
-        if not verify_persistent_storage_file_path(self.data_product_root_directory):
+        try:
+            verify_persistent_storage_file_path(self.data_product_root_directory)
+        except Exception as error:
             self.pv_available = False
-            raise ValueError(
-                f"Invalid data_product_root_directory: {self.data_product_root_directory}"
-            )  # TODO - Change the function above to raise a error and give better desc.
+            logger.error(
+                "Invalid persistent volume storage path %s, error: %s",
+                self.data_product_root_directory,
+                error,
+            )
+            raise error
 
         self.pv_available = True
         self.pv_index.reindex_running = True

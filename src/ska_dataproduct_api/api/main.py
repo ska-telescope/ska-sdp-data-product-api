@@ -37,7 +37,10 @@ from ska_dataproduct_api.utilities.helperfunctions import (
 logger = logging.getLogger(__name__)
 
 pv_interface = PVInterface()
-pv_interface.index_all_data_product_files_on_pv()
+try:
+    pv_interface.index_all_data_product_files_on_pv()
+except Exception as exception:  # pylint: disable=broad-exception-caught
+    logger.exception("Reading from persistent volume failed: %s", exception)
 
 metadata_store = select_metadata_store_class()
 
