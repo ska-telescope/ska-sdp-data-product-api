@@ -12,7 +12,7 @@ from ska_dataproduct_api.configuration.settings import (
 )
 from ska_dataproduct_api.utilities.helperfunctions import verify_persistent_storage_file_path
 
-# pylint: disable=too-few-public-methods  #TODO Remove when more objects methods have been added
+# pylint: disable=too-few-public-methods
 
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,75 @@ class PVDataProduct:
     def __init__(self):
         self.path: pathlib.Path = None
         self.size_on_disk: int = None
-        self.date_changed: datetime = None
+        self.timestamp_modified: datetime = None
+
+    def get_folder_size(self, folder_path: pathlib.Path) -> int:
+        """
+        Calculates the size on disk of the given folder in bytes.
+
+        Args:
+            folder_path: The path to the folder containing the data product.
+
+        Returns:
+            The size of the folder in bytes.
+        """
+
+        total_size = 0
+        for data_product in pathlib.Path(folder_path).rglob("*"):
+            if data_product.is_file():
+                try:
+                    total_size += data_product.stat().st_size
+                except OSError:
+                    logger.error(
+                        "Error accessing %s, could not calculate product size", data_product
+                    )
+
+        logger.debug("Size on disk %s for %s", total_size, folder_path)
+        return total_size
+
+    def get_latest_modification_time(self, folder_path: pathlib.Path) -> datetime:
+        """
+        Finds the latest modification time among all files and subfolders within the given
+        folder.
+
+        Args:
+            folder_path: The path to the folder containing the data product to check.
+
+        Returns:
+            datetime.datetime object representing the latest modification time,
+            or None if no files or folders are found.
+        """
+
+        latest_time = None
+
+        for data_product in folder_path.iterdir():
+            try:
+                modified_time = datetime.fromtimestamp(data_product.stat().st_mtime)
+                if not latest_time or modified_time > latest_time:
+                    latest_time = modified_time
+            except OSError:
+                logger.error(
+                    "Error accessing %s, could not calculate product modified_time", data_product
+                )
+
+        logger.debug("Date modified on disk %s for %s", str(latest_time), folder_path)
+        return latest_time
+
+    def load_product_details(self) -> None:
+        """
+        Updates the derived metadata of a data product.
+
+        This method calculates and sets the size on disk and
+        latest modification timestamp for the given data product.
+
+        Raises:
+            FileNotFoundError: If the directory containing the data product does not exist.
+        """
+        try:
+            self.size_on_disk = self.get_folder_size(self.path.parent)
+            self.timestamp_modified = self.get_latest_modification_time(self.path.parent)
+        except FileNotFoundError as error:
+            logger.error("Load of product details failed due to error: %s", error)
 
 
 class PVIndex:
@@ -101,9 +169,7 @@ class PVInterface:
             * If the file path is not already present in the `dict_of_data_products_on_pv`
                 dictionary of the `pv_index` object, a new `PVDataProduct` object is created and
                 added to the index.
-            * If the file path is already present in the dictionary, a warning message is logged
-                indicating that the item was already loaded, but it might need to be reloaded
-                (the logic for reloading is not implemented yet). #TODO
+            * If the file path is already present in the dictionary, its details will be reloaded.
 
         Finally, the `time_of_last_index_run` attribute of the `pv_index` object is set to the
         current UTC time, and the `reindex_running` attribute is set back to `False` to indicate
@@ -134,11 +200,16 @@ class PVInterface:
                 self.pv_index.number_of_date_products_on_pv = len(
                     self.pv_index.dict_of_data_products_on_pv
                 )
-                self.pv_index.index_time_modified = datetime.now(tz=timezone.utc)
             else:
+                pv_data_product: PVDataProduct = self.pv_index.dict_of_data_products_on_pv[
+                    str(data_product_file_path)
+                ]
                 logger.debug(
-                    "This item was already loaded, but might need to be reloaded?????: %s",  # TODO
+                    "This item was already loaded, details updated: %s",
                     str(data_product_file_path),
                 )
+            pv_data_product.load_product_details()
+            self.pv_index.index_time_modified = datetime.now(tz=timezone.utc)
+
         self.pv_index.time_of_last_index_run = datetime.now(tz=timezone.utc)
         self.pv_index.reindex_running = False
