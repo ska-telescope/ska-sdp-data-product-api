@@ -43,9 +43,9 @@ pv_interface = PVInterface()
 async def startup_event():
     """This function will execute a background tasks to reindex of the data product when the
     application starts."""
-    background_tasks = BackgroundTasks()  # Create a BackgroundTasks instance
+    background_tasks = BackgroundTasks()
     background_tasks.add_task(reindex_data_products_stores)
-    await background_tasks()  # Execute the background tasks
+    await background_tasks()
 
 
 metadata_store = select_metadata_store_class()
