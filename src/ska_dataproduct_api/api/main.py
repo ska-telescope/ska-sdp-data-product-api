@@ -37,10 +37,16 @@ from ska_dataproduct_api.utilities.helperfunctions import (
 logger = logging.getLogger(__name__)
 
 pv_interface = PVInterface()
-try:
-    pv_interface.index_all_data_product_files_on_pv()
-except Exception as exception:  # pylint: disable=broad-exception-caught
-    logger.exception("Reading from persistent volume failed: %s", exception)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """This function will execute a background tasks to reindex of the data product when the
+    application starts."""
+    background_tasks = BackgroundTasks()  # Create a BackgroundTasks instance
+    background_tasks.add_task(reindex_data_products_stores)
+    await background_tasks()  # Execute the background tasks
+
 
 metadata_store = select_metadata_store_class()
 
