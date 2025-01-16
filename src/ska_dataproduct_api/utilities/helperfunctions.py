@@ -1,6 +1,7 @@
 """Module to insert data into Elasticsearch instance."""
 import datetime
 import logging
+import os
 import pathlib
 import subprocess
 import tempfile
@@ -499,3 +500,19 @@ def verify_persistent_storage_file_path(path: pathlib.Path) -> None:
 
     if path.is_symlink():
         raise OSError(f"Symbolic links are not supported: {path}")
+
+
+def walk_folder(folder_path: str) -> Generator[str, None, None]:
+    """
+    Walks through a directory and its subdirectories recursively, yielding the full path of each
+    file.
+
+    Args:
+        folder_path: The path to the root directory to start the walk from.
+
+    Yields:
+        The full path of each file found during the walk.
+    """
+    for root, _, files in os.walk(folder_path):
+        for file in files:
+            yield os.path.join(root, file)

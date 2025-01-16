@@ -1,6 +1,7 @@
 """This module contains the methods used for loading data products directly from an accessible
 Persistent Volume"""
 import logging
+import os
 import pathlib
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -10,7 +11,10 @@ from ska_dataproduct_api.configuration.settings import (
     PERSISTENT_STORAGE_PATH,
     PVCNAME,
 )
-from ska_dataproduct_api.utilities.helperfunctions import verify_persistent_storage_file_path
+from ska_dataproduct_api.utilities.helperfunctions import (
+    verify_persistent_storage_file_path,
+    walk_folder,
+)
 
 # pylint: disable=too-few-public-methods
 
@@ -41,14 +45,11 @@ class PVDataProduct:
         """
 
         total_size = 0
-        for data_product in pathlib.Path(folder_path).rglob("*"):
-            if data_product.is_file():
-                try:
-                    total_size += data_product.stat().st_size
-                except OSError:
-                    logger.error(
-                        "Error accessing %s, could not calculate product size", data_product
-                    )
+        for data_product in walk_folder(folder_path):
+            try:
+                total_size += os.path.getsize(data_product)
+            except OSError:
+                logger.error("Error accessing %s, could not calculate product size", data_product)
 
         logger.debug("Size on disk %s for %s", total_size, folder_path)
         return total_size
