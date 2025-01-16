@@ -26,10 +26,14 @@ logger = logging.getLogger(__name__)
 class PVDataProduct:
     """
     This class contains the information related to the data product saved on a PV
+
+    Args:
+        path: The path to the folder containing the data product.
+
     """
 
-    def __init__(self):
-        self.path: pathlib.Path = None
+    def __init__(self, path: pathlib.Path = None):
+        self.path: pathlib.Path = path
         self.size_on_disk: int = None
         self.timestamp_modified: datetime = None
 
@@ -202,8 +206,7 @@ class PVInterface:
 
         for data_product_file_path in self.data_product_root_directory.rglob(METADATA_FILE_NAME):
             if str(data_product_file_path) not in self.pv_index.dict_of_data_products_on_pv:
-                pv_data_product = PVDataProduct()
-                pv_data_product.path = data_product_file_path
+                pv_data_product = PVDataProduct(path=data_product_file_path)
                 self.pv_index.dict_of_data_products_on_pv[
                     str(data_product_file_path)
                 ] = pv_data_product
