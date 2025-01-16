@@ -88,9 +88,6 @@ class PVDataProduct:
 
         This method calculates and sets the size on disk and
         latest modification timestamp for the given data product.
-
-        Raises:
-            FileNotFoundError: If the directory containing the data product does not exist.
         """
         try:
             self.size_on_disk = self.get_folder_size(self.path.parent)
@@ -118,10 +115,17 @@ class PVIndex:
 
     def __init__(self):
         self.dict_of_data_products_on_pv: dict[str, PVDataProduct] = {}
-        self.number_of_date_products_on_pv: int = None
         self.time_of_last_index_run: datetime = None
         self.reindex_running: bool = False
         self.index_time_modified: datetime = None
+
+    @property
+    def number_of_date_products_on_pv(self) -> int:
+        """
+        Returns the number of data products that have been loaded into the dictionary of data
+        products.
+        """
+        return len(self.dict_of_data_products_on_pv)
 
 
 class PVInterface:
@@ -203,9 +207,6 @@ class PVInterface:
                 self.pv_index.dict_of_data_products_on_pv[
                     str(data_product_file_path)
                 ] = pv_data_product
-                self.pv_index.number_of_date_products_on_pv = len(
-                    self.pv_index.dict_of_data_products_on_pv
-                )
             else:
                 pv_data_product: PVDataProduct = self.pv_index.dict_of_data_products_on_pv[
                     str(data_product_file_path)
