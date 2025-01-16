@@ -1,6 +1,7 @@
 """Module to insert data into Elasticsearch instance."""
 import datetime
 import logging
+import os
 import pathlib
 import subprocess
 import tempfile
@@ -27,11 +28,17 @@ class DPDAPIStatus:  # pylint: disable=too-many-instance-attributes
     """This class contains the status and methods related to the Data Product
     dashboard's API"""
 
-    def __init__(self, search_store_status: object = None, metadata_store_status: object = None):
+    def __init__(
+        self,
+        pv_interface_status: object = None,
+        search_store_status: object = None,
+        metadata_store_status: object = None,
+    ):
         self.api_running = True
 
         self.date_modified: datetime = datetime.datetime.now()
         self.version: str = VERSION
+        self.pv_interface_status: object = pv_interface_status
         self.metadata_store_status: object = metadata_store_status
         self.search_store_status: object = search_store_status
         self.startup_time: datetime = datetime.datetime.now()  # Added: Time API started
@@ -45,6 +52,7 @@ class DPDAPIStatus:  # pylint: disable=too-many-instance-attributes
             "api_version": self.version,
             "startup_time": self.startup_time.isoformat(),
             "last_metadata_update_time": self.date_modified,
+            "self.pv_interface_status": self.pv_interface_status(),
             "metadata_store_status": self.metadata_store_status(),
             "search_store_status": self.search_store_status(),
         }
@@ -471,28 +479,40 @@ def parse_valid_date(date_string: str, expected_format: str) -> datetime.datetim
         raise error
 
 
-def verify_persistent_storage_file_path(path: pathlib.Path) -> bool:
-    """Verifies if the given path is a valid directory for persistent storage.
+def verify_persistent_storage_file_path(path: pathlib.Path) -> None:
+    """
+    Verifies if the given path is a valid directory for persistent storage.
 
-    Checks if the path is an existing directory and not a symbolic link.
+    Raises:
+        FileNotFoundError: If the path does not exist.
+        NotADirectoryError: If the path is not a directory.
+        OSError: If the path is a symbolic link.
 
     Args:
         path: The full path to the directory to be verified.
-
-    Returns:
-        True if the path is valid, False otherwise.
     """
 
     if not path.exists():
-        logger.warning("Directory does not exist: %s", path)
-        return False
+        raise FileNotFoundError(f"Directory does not exist: {path}")
 
     if not path.is_dir():
-        logger.warning("Invalid directory path: %s", path)
-        return False
+        raise NotADirectoryError(f"Invalid directory path: {path}")
 
     if path.is_symlink():
-        logger.warning("Symbolic links are not supported: %s", path)
-        return False
+        raise OSError(f"Symbolic links are not supported: {path}")
 
-    return True
+
+def walk_folder(folder_path: str) -> Generator[str, None, None]:
+    """
+    Walks through a directory and its subdirectories recursively, yielding the full path of each
+    file.
+
+    Args:
+        folder_path: The path to the root directory to start the walk from.
+
+    Yields:
+        The full path of each file found during the walk.
+    """
+    for root, _, files in os.walk(folder_path):
+        for file in files:
+            yield os.path.join(root, file)

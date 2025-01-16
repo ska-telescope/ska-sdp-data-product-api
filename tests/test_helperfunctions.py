@@ -1,5 +1,6 @@
 """Test for the helperfunctions methods."""
 
+import os
 import pathlib
 from datetime import datetime
 
@@ -11,6 +12,7 @@ from ska_dataproduct_api.utilities.helperfunctions import (
     filter_by_key_value_pair,
     get_relative_path,
     parse_valid_date,
+    walk_folder,
 )
 
 
@@ -181,3 +183,49 @@ def test_filter_by_key_value_pair_nested_match():
     ]
 
     assert filter_by_key_value_pair(data.copy(), key_value_pairs) == expected_output
+
+
+def test_walk_folder_empty_directory():
+    """Test walking an empty directory."""
+    temp_dir = "temp_test_dir"
+    os.makedirs(temp_dir)
+    file_paths = list(walk_folder(temp_dir))
+    assert len(file_paths) == 0
+    os.rmdir(temp_dir)
+
+
+def test_walk_folder_single_file():
+    """Test walking a directory with a single file."""
+    temp_dir = "temp_test_dir"
+    os.makedirs(temp_dir)
+    with open(os.path.join(temp_dir, "test_file.txt"), "w", encoding="utf-8") as f:
+        f.write("test")
+    file_paths = list(walk_folder(temp_dir))
+    assert len(file_paths) == 1
+    assert file_paths[0] == os.path.join(temp_dir, "test_file.txt")
+    os.remove(os.path.join(temp_dir, "test_file.txt"))
+    os.rmdir(temp_dir)
+
+
+def test_walk_folder_nested_directories():
+    """Test walking a directory with nested directories and files."""
+    temp_dir = "temp_test_dir"
+    os.makedirs(os.path.join(temp_dir, "subdir1"))
+    os.makedirs(os.path.join(temp_dir, "subdir2"))
+    with open(os.path.join(temp_dir, "file1.txt"), "w", encoding="utf-8") as f:
+        f.write("test")
+    with open(os.path.join(temp_dir, "subdir1", "file2.txt"), "w", encoding="utf-8") as f:
+        f.write("test")
+    with open(os.path.join(temp_dir, "subdir2", "file3.txt"), "w", encoding="utf-8") as f:
+        f.write("test")
+    file_paths = list(walk_folder(temp_dir))
+    assert len(file_paths) == 3
+    assert os.path.join(temp_dir, "file1.txt") in file_paths
+    assert os.path.join(temp_dir, "subdir1", "file2.txt") in file_paths
+    assert os.path.join(temp_dir, "subdir2", "file3.txt") in file_paths
+    os.remove(os.path.join(temp_dir, "file1.txt"))
+    os.remove(os.path.join(temp_dir, "subdir1", "file2.txt"))
+    os.remove(os.path.join(temp_dir, "subdir2", "file3.txt"))
+    os.rmdir(os.path.join(temp_dir, "subdir1"))
+    os.rmdir(os.path.join(temp_dir, "subdir2"))
+    os.rmdir(temp_dir)

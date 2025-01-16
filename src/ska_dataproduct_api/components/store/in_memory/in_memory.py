@@ -26,8 +26,8 @@ import uuid
 from typing import Any
 
 from ska_dataproduct_api.components.metadata.metadata import DataProductMetadata
+from ska_dataproduct_api.components.pv_interface.pv_interface import PVIndex
 from ska_dataproduct_api.components.store.metadata_store_base_class import MetadataStore
-from ska_dataproduct_api.configuration.settings import PERSISTENT_STORAGE_PATH
 from ska_dataproduct_api.utilities.helperfunctions import (
     DataProductIdentifier,
     validate_data_product_identifier,
@@ -42,10 +42,7 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
     def __init__(self):
         super().__init__()
         self.number_of_dataproducts: int = 0
-        self.number_of_metadata_files: int = 0
-        self.list_of_data_product_paths: list[pathlib.Path] = []
         self.dict_of_data_products_metadata: dict[DataProductMetadata] = {}
-        self.reindex_persistent_volume()
 
     def status(self) -> dict:
         """
@@ -57,32 +54,26 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
         return {
             "store_type": "In memory volume index metadata store",
             "number_of_dataproducts_loaded": self.number_of_dataproducts,
-            "number_of_metadata_files_found": self.number_of_metadata_files,
             "last_metadata_update_time": self.date_modified,
             "indexing": self.indexing,
         }
 
-    def reindex_persistent_volume(self) -> None:
+    def reload_all_data_products_in_index(self, pv_index: PVIndex) -> None:
         """This method resets and recreates the flattened_list_of_dataproducts_metadata. This is
         added to enable the user to reindex if the data products were changed or
         appended since the initial load of the data"""
         try:
-            logger.info("Re-indexing persistent volume store...")
+            logger.info("Reloading all data products from PV index into metadata store...")
             self.indexing = True
-            self.list_of_data_product_paths.clear()
-            self.list_of_data_product_paths: list[str] = self.list_all_data_product_files(
-                PERSISTENT_STORAGE_PATH
-            )
-            self.number_of_metadata_files = len(self.list_of_data_product_paths)
-            self.ingest_list_of_data_product_paths()
+            self.ingest_list_of_data_product_paths(pv_index=pv_index)
             self.update_data_store_date_modified()
             self.indexing = False
-            logger.info("Metadata store re-indexed")
+            logger.info("Reloading into metadata store completed.")
         except Exception as exception:
             self.indexing = False
             raise exception
 
-    def ingest_list_of_data_product_paths(self) -> None:
+    def ingest_list_of_data_product_paths(self, pv_index: PVIndex) -> None:
         """
         This method ingests metadata files from a specified storage location into the metadata
         store.
@@ -94,13 +85,13 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
         Returns:
             None
         """
-        for product_path in self.list_of_data_product_paths:
+        for _, pv_data_product in pv_index.dict_of_data_products_on_pv.items():
             try:
-                _ = self.ingest_file(product_path)
+                _ = self.ingest_file(pv_data_product.path)
             except Exception as error:  # pylint: disable=broad-exception-caught
                 logger.error(
                     "Failed to ingest data product at file location: %s, due to error: %s",
-                    str(product_path),
+                    str(pv_data_product.path),
                     error,
                 )
 
@@ -230,21 +221,3 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
                 data_product_identifier.uuid or data_product_identifier.execution_block,
             )
             return []
-
-    def check_file_exists(self, file_object: pathlib.Path) -> bool:
-        """
-        Checks if the given file path points to an existing file.
-
-        Args:
-            file_object (pathlib.Path): The full path to the file.
-
-        Returns:
-            Bool: True if the file exists, otherwise False.
-        """
-        if not file_object.is_file():
-            logger.warning(
-                "Metadata file path '%s' not pointing to a file.",
-                str(file_object),
-            )
-            return False
-        return True

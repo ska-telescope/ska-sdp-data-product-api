@@ -1,6 +1,7 @@
 """Module to test InMemoryDataproductSearch"""
 import json
 
+from ska_dataproduct_api.components.pv_interface.pv_interface import PVInterface
 from ska_dataproduct_api.components.search.in_memory.in_memory_search import (
     InMemoryDataproductSearch,
 )
@@ -12,7 +13,10 @@ from ska_dataproduct_api.components.store.in_memory.in_memory import (
 def test_status():
     """Tests the status method."""
     # Call the method
+    pv_interface = PVInterface()
+    pv_interface.index_all_data_product_files_on_pv()
     metadata_store = InMemoryVolumeIndexMetadataStore()
+    metadata_store.reload_all_data_products_in_index(pv_index=pv_interface.pv_index)
     mocked_search_store = InMemoryDataproductSearch(metadata_store=metadata_store)
     response = mocked_search_store.status()
 
@@ -26,7 +30,10 @@ def test_status():
 def test_search_metadata_execution_block_with_valid_date_and_no_eb():
     """Tests the search_metadata method, ensuring only one execution block entry."""
     # Call the method with expected data
+    pv_interface = PVInterface()
+    pv_interface.index_all_data_product_files_on_pv()
     metadata_store = InMemoryVolumeIndexMetadataStore()
+    metadata_store.reload_all_data_products_in_index(pv_index=pv_interface.pv_index)
     mocked_search_store = InMemoryDataproductSearch(metadata_store=metadata_store)
     expected_execution_block = "eb-notebook-20240201-54576"
 
@@ -46,7 +53,10 @@ def test_search_metadata_execution_block_with_valid_date_and_no_eb():
 def test_search_metadata_execution_block_with_valid_date_and_eb():
     """Tests the search_metadata method, ensuring only one execution block entry."""
     # Call the method with expected data
+    pv_interface = PVInterface()
+    pv_interface.index_all_data_product_files_on_pv()
     metadata_store = InMemoryVolumeIndexMetadataStore()
+    metadata_store.reload_all_data_products_in_index(pv_index=pv_interface.pv_index)
     mocked_search_store = InMemoryDataproductSearch(metadata_store=metadata_store)
     expected_execution_block = "eb-notebook-20240201-54576"
     metadata_key_value_pairs = [
@@ -70,7 +80,10 @@ def test_search_metadata_execution_block_with_valid_date_and_eb():
 
 def test_search_metadata():
     """Method to test search of metadata"""
+    pv_interface = PVInterface()
+    pv_interface.index_all_data_product_files_on_pv()
     metadata_store = InMemoryVolumeIndexMetadataStore()
+    metadata_store.reload_all_data_products_in_index(pv_index=pv_interface.pv_index)
     mocked_search_store = InMemoryDataproductSearch(metadata_store=metadata_store)
     expected_execution_block = "eb-m001-20230921-245"
     mui_data_grid_filter_model = {
@@ -108,7 +121,10 @@ def test_search_metadata():
 def test_sort_list_of_dict_default():
     """Tests sorting by default key (`date_created`) in ascending order."""
     # Simulate some data with varying "date_created" values
+    pv_interface = PVInterface()
+    pv_interface.index_all_data_product_files_on_pv()
     metadata_store = InMemoryVolumeIndexMetadataStore()
+    metadata_store.reload_all_data_products_in_index(pv_index=pv_interface.pv_index)
     mocked_search_store = InMemoryDataproductSearch(metadata_store=metadata_store)
 
     mocked_list_of_data = [

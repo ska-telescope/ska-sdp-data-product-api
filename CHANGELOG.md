@@ -3,6 +3,12 @@
 
 ## Current Development
 
+
+- [NAL-1347](https://jira.skatelescope.org/browse/NAL-1347)
+    - [Added] Added a PVDataProduct, PVIndex and PVInterface class, refactoring the PV interface in preparation to ease the integration with the DLM database.
+    - [Changed] Removed indexing from the MetadataStore store class, and integrated indexing from the PVInterface class.
+    - [Added] Added methods get_folder_size and get_latest_modification_time to the PVDataProduct class.
+
 - [NAL-1323](https://jira.skatelescope.org/browse/NAL-1323)
     - [Changed] Added the functionality to allow annotations to be updated.
     - [Changed] Added a check to return nothing if PostgresSQL is not available when attempting to use annotation endpoints.

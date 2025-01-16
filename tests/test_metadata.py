@@ -57,3 +57,25 @@ b: [2, 3, 4
         ), "Metadata should be None for invalid YAML"
     assert str(excinfo.value) == f"Error parsing YAML file: {test_file_path}"
     test_file_path.unlink()
+
+
+# calculate_metadata_hash tests
+def test_calculate_metadata_hash():
+    """Tests the calculation of a metadata hash."""
+    # Test with a simple JSON object
+    metadata_json = {
+        "key1": "value1",
+        "key2": [1, 2, 3],
+        "key3": {"nested_key": "nested_value"},
+    }
+    expected_hash = "3f8ac9cedca91c2556da09a4448bf629fd3b3049e07c4d7220e76b8e12542d33"
+
+    actual_hash = data_product_metadata_instance.calculate_metadata_hash(metadata_json)
+    assert actual_hash == expected_hash
+
+    # Test with an empty JSON object
+    metadata_json = {}
+    expected_hash = "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
+
+    actual_hash = data_product_metadata_instance.calculate_metadata_hash(metadata_json)
+    assert actual_hash == expected_hash

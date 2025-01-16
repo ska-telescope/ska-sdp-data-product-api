@@ -8,6 +8,7 @@ import pytest
 
 from ska_dataproduct_api.components.annotations.annotation import DataProductAnnotation
 from ska_dataproduct_api.components.metadata.metadata import DataProductMetadata
+from ska_dataproduct_api.components.pv_interface.pv_interface import PVInterface
 from ska_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
 from ska_dataproduct_api.utilities.helperfunctions import DataProductIdentifier
 from tests.mock_postgressql import MockPostgresSQL
@@ -146,28 +147,6 @@ options='-c search_path=\"public\"'"
         connection_string = mocked_postgres_connector["connector"].build_connection_string()
 
 
-# calculate_metadata_hash tests
-def test_calculate_metadata_hash(mocked_postgres_connector):
-    """Tests the calculation of a metadata hash."""
-    # Test with a simple JSON object
-    metadata_json = {
-        "key1": "value1",
-        "key2": [1, 2, 3],
-        "key3": {"nested_key": "nested_value"},
-    }
-    expected_hash = "3f8ac9cedca91c2556da09a4448bf629fd3b3049e07c4d7220e76b8e12542d33"
-
-    actual_hash = mocked_postgres_connector["connector"].calculate_metadata_hash(metadata_json)
-    assert actual_hash == expected_hash
-
-    # Test with an empty JSON object
-    metadata_json = {}
-    expected_hash = "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a"
-
-    actual_hash = mocked_postgres_connector["connector"].calculate_metadata_hash(metadata_json)
-    assert actual_hash == expected_hash
-
-
 # get_data_product_file_paths tests
 def test_valid_execution_block(mocked_postgres_connector):
     """Tests successful retrieval of data product file paths for a valid execution block."""
@@ -212,13 +191,14 @@ get_data_by_uuid",
 
 
 def test_reindex_persistent_volume(mocked_postgres_connector):
-    """Tests if the reindex_persistent_volume can be executed, the call to the PosgreSQL cursor
-    is mocked, so the expected return of the number if items in the db is only 1"""
-
-    mocked_postgres_connector["connector"].reindex_persistent_volume()
+    """Tests if the reload_all_data_products_in_index can be executed, the call to the PosgreSQL
+    cursor is mocked, so the expected return of the number if items in the db is only 1"""
+    pv_interface = PVInterface()
+    mocked_postgres_connector["connector"].reload_all_data_products_in_index(
+        pv_index=pv_interface.pv_index
+    )
 
     assert mocked_postgres_connector["connector"].number_of_dataproducts == 1
-    assert len(mocked_postgres_connector["connector"].list_of_data_product_paths) == 18
     assert mocked_postgres_connector["connector"].indexing is False
 
 
@@ -292,8 +272,8 @@ def test_save_metadata_to_postgresql(mocked_postgres_connector):
 
 
 def test_get_metadata(mocked_postgres_connector):
-    """Tests if the reindex_persistent_volume can be executed, the call to the PosgreSQL cursor
-    is mocked, so the expected return of the number if items in the db is only 1"""
+    """Tests if the reload_all_data_products_in_index can be executed, the call to the PosgreSQL
+    cursor is mocked, so the expected return of the number if items in the db is only 1"""
     with patch(
         "ska_dataproduct_api.components.store.persistent.postgresql.PostgresConnector.\
 get_data_by_uuid",

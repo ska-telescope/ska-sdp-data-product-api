@@ -14,6 +14,7 @@ from ska_dataproduct_api.components.authorisation.authorisation import (
     get_user_groups,
 )
 from ska_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
+from ska_dataproduct_api.components.pv_interface.pv_interface import PVInterface
 from ska_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
 from ska_dataproduct_api.components.store.store_factory import (
     select_metadata_store_class,
@@ -35,11 +36,24 @@ from ska_dataproduct_api.utilities.helperfunctions import (
 
 logger = logging.getLogger(__name__)
 
+pv_interface = PVInterface()
+
+
+@app.on_event("startup")
+async def startup_event():
+    """This function will execute a background tasks to reindex of the data product when the
+    application starts."""
+    background_tasks = BackgroundTasks()
+    background_tasks.add_task(reindex_data_products_stores)
+    await background_tasks()
+
+
 metadata_store = select_metadata_store_class()
 
 search_store = select_search_store_class(metadata_store)
 
 DPD_API_Status = DPDAPIStatus(
+    pv_interface_status=pv_interface.status,
     search_store_status=search_store.status,
     metadata_store_status=metadata_store.status,
 )
@@ -48,9 +62,10 @@ DPD_API_Status = DPDAPIStatus(
 def reindex_data_products_stores() -> None:
     """Background tasks to reindex the data products on the persistent volume"""
     try:
-        metadata_store.reindex_persistent_volume()
+        pv_interface.index_all_data_product_files_on_pv()
+        metadata_store.reload_all_data_products_in_index(pv_index=pv_interface.pv_index)
         search_store.load_metadata_from_store()
-        logger.info("Metadata re-indexed")
+        logger.info("Persistent volume re-indexed and stores updated.")
     except Exception as exception:  # pylint: disable=broad-exception-caught
         logger.exception("Metadata re-index failed: %s", exception)
 

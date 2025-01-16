@@ -42,6 +42,10 @@ except Exception as exception:  # pylint: disable=broad-exception-caught
     )
     ABSOLUTE_PERSISTENT_STORAGE_PATH = PERSISTENT_STORAGE_PATH
 
+PVCNAME: str = config(
+    "PVCNAME",
+    default="None (using local test data)",
+)
 
 CONFIGURATION_FILES_PATH: pathlib.Path = pathlib.Path(__file__).parent
 

@@ -1,6 +1,5 @@
 """Module adds a PostgreSQL interface for persistent storage of metadata files"""
 
-import hashlib
 import json
 import logging
 import pathlib
@@ -12,8 +11,8 @@ from psycopg.rows import class_row
 
 from ska_dataproduct_api.components.annotations.annotation import DataProductAnnotation
 from ska_dataproduct_api.components.metadata.metadata import DataProductMetadata
+from ska_dataproduct_api.components.pv_interface.pv_interface import PVIndex
 from ska_dataproduct_api.components.store.metadata_store_base_class import MetadataStore
-from ska_dataproduct_api.configuration.settings import PERSISTENT_STORAGE_PATH
 from ska_dataproduct_api.utilities.helperfunctions import (
     DataProductIdentifier,
     validate_data_product_identifier,
@@ -59,7 +58,6 @@ class PostgresConnector(MetadataStore):
         self.retry_delay = 5  # The delay between retries in seconds
         self.postgresql_running: bool = False
         self.number_of_dataproducts: int = 0
-        self.list_of_data_product_paths: list[pathlib.Path] = []
         self.connection_string: str = self.build_connection_string()
         self.connect()
 
@@ -208,7 +206,7 @@ class PostgresConnector(MetadataStore):
                     self.schema,
                 )
 
-    def reindex_persistent_volume(self) -> None:
+    def reload_all_data_products_in_index(self, pv_index: PVIndex) -> None:
         """
         Reindexes the persistent volume by ingesting all data product files.
 
@@ -218,18 +216,14 @@ class PostgresConnector(MetadataStore):
         Raises:
             Exception: If an error occurs during the reindexing process.
         """
-        logger.info("Re-indexing persistent volume store...")
+        logger.info("Reloading all data products from PV index into metadata store...")
         if not self.postgresql_running and self.postgresql_configured:
             self.connect()
 
         self.indexing = True
-        self.list_of_data_product_paths.clear()
-        self.list_of_data_product_paths: list[str] = self.list_all_data_product_files(
-            PERSISTENT_STORAGE_PATH
-        )
-        for product_path in self.list_of_data_product_paths:
+        for _, pv_data_product in pv_index.dict_of_data_products_on_pv.items():
             try:
-                _ = self.ingest_file(product_path)
+                _ = self.ingest_file(pv_data_product.path)
 
             except psycopg.OperationalError as error:
                 logger.error(
@@ -242,13 +236,13 @@ class PostgresConnector(MetadataStore):
             except Exception as error:  # pylint: disable=broad-exception-caught
                 logger.error(
                     "Failed to ingest data product at file location: %s, due to error: %s",
-                    str(product_path),
+                    str(pv_data_product.path),
                     error,
                 )
 
         self.number_of_dataproducts = self.count_jsonb_objects()
         self.indexing = False
-        logger.info("Metadata store re-indexed")
+        logger.info("Reloading into metadata store completed.")
 
     def ingest_file(self, data_product_metadata_file_path: pathlib.Path) -> uuid.UUID:
         """
@@ -274,10 +268,6 @@ class PostgresConnector(MetadataStore):
         self.save_metadata_to_postgresql(data_product_metadata_instance)
         self.update_data_store_date_modified()
         return data_product_metadata_instance.data_product_uuid
-
-    def calculate_metadata_hash(self, metadata_file_json: dict) -> str:
-        """Calculates a SHA256 hash of the given metadata JSON."""
-        return hashlib.sha256(json.dumps(metadata_file_json).encode("utf-8")).hexdigest()
 
     def check_metadata_exists_by_hash(self, json_hash: str) -> bool:
         """Checks if metadata exists based on the given hash."""
