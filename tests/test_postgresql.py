@@ -198,7 +198,7 @@ def test_reindex_persistent_volume(mocked_postgres_connector):
         pv_index=pv_interface.pv_index
     )
 
-    assert mocked_postgres_connector["connector"].number_of_dataproducts == 1
+    assert mocked_postgres_connector["connector"].number_of_date_products_in_table == 1
     assert mocked_postgres_connector["connector"].indexing is False
 
 
@@ -255,7 +255,7 @@ def test_save_metadata_to_postgresql(mocked_postgres_connector):
             mocked_postgres_connector["connector"].save_metadata_to_postgresql(
                 data_product_metadata_instance
             )
-            assert mocked_postgres_connector["connector"].number_of_dataproducts == 1
+            assert mocked_postgres_connector["connector"].number_of_date_products_in_table == 1
 
     with patch.object(
         mocked_postgres_connector["connector"], "check_metadata_exists_by_hash", return_value=False
@@ -268,7 +268,7 @@ def test_save_metadata_to_postgresql(mocked_postgres_connector):
             mocked_postgres_connector["connector"].save_metadata_to_postgresql(
                 data_product_metadata_instance
             )
-            assert mocked_postgres_connector["connector"].number_of_dataproducts == 1
+            assert mocked_postgres_connector["connector"].number_of_date_products_in_table == 1
 
 
 def test_get_metadata(mocked_postgres_connector):

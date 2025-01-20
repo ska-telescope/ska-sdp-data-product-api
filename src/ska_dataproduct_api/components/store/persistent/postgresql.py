@@ -57,9 +57,26 @@ class PostgresConnector(MetadataStore):
         self.max_retries = 3  # The maximum number of retries
         self.retry_delay = 5  # The delay between retries in seconds
         self.postgresql_running: bool = False
-        self.number_of_dataproducts: int = 0
         self.connection_string: str = self.build_connection_string()
         self.connect()
+
+    @property
+    def number_of_date_products_in_table(self) -> int:
+        """Counts the number of JSON objects within a JSONB column.
+
+        Returns:
+            The total count of JSON objects.
+        """
+        try:
+            query_string = f"SELECT COUNT(*) FROM {self.schema}.{self.table_name}"
+            with psycopg.connect(self.connection_string) as conn:
+                with conn.cursor() as cur:
+                    cur.execute(query=query_string)
+                    return int(cur.fetchone()[0])
+        except (psycopg.OperationalError, psycopg.DatabaseError) as error:
+            self.postgresql_running = False
+            logger.error("Database error: %s", error)
+            return None
 
     def status(self) -> dict:
         """
@@ -80,7 +97,7 @@ class PostgresConnector(MetadataStore):
             "schema": self.schema,
             "table_name": self.table_name,
             "annotations_table_name": self.annotations_table_name,
-            "number_of_dataproducts": self.number_of_dataproducts,
+            "number_of_dataproducts": self.number_of_date_products_in_table,
             "postgresql_version": self.postgresql_version,
             "last_metadata_update_time": self.date_modified,
         }
@@ -96,7 +113,6 @@ class PostgresConnector(MetadataStore):
         if self.postgresql_running:
             self.create_metadata_table()
             self.create_annotations_table()
-            self.number_of_dataproducts = self.count_jsonb_objects()
 
     def build_connection_string(self) -> str:
         """
@@ -240,7 +256,6 @@ class PostgresConnector(MetadataStore):
                     error,
                 )
 
-        self.number_of_dataproducts = self.count_jsonb_objects()
         self.indexing = False
         logger.info("Reloading into metadata store completed.")
 
@@ -362,7 +377,6 @@ uuid = %s WHERE id = %s"
                 "Updated metadata with execution_block %s",
                 data_product_metadata_instance.execution_block,
             )
-            self.number_of_dataproducts = self.count_jsonb_objects()
             return
 
         # Add if neither uuid or execution_block exist
@@ -371,24 +385,6 @@ uuid = %s WHERE id = %s"
             "Inserted new metadata with execution_block %s",
             data_product_metadata_instance.execution_block,
         )
-        self.number_of_dataproducts = self.count_jsonb_objects()
-
-    def count_jsonb_objects(self) -> int:
-        """Counts the number of JSON objects within a JSONB column.
-
-        Returns:
-            The total count of JSON objects.
-        """
-        try:
-            query_string = f"SELECT COUNT(*) FROM {self.schema}.{self.table_name}"
-            with psycopg.connect(self.connection_string) as conn:
-                with conn.cursor() as cur:
-                    cur.execute(query=query_string)
-                    return int(cur.fetchone()[0])
-        except (psycopg.OperationalError, psycopg.DatabaseError) as error:
-            self.postgresql_running = False
-            logger.error("Database error: %s", error)
-            return self.number_of_dataproducts  # Count failed , returning previous count
 
     def load_data_products_from_persistent_metadata_store(self) -> list[dict[str, any]]:
         """Fetches JSONB data from Postgresql table.
