@@ -12,7 +12,10 @@ from ska_dataproduct_api.components.search.in_memory.in_memory_search import (
 from ska_dataproduct_api.components.store.in_memory.in_memory import (
     InMemoryVolumeIndexMetadataStore,
 )
-from ska_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
+from ska_dataproduct_api.components.store.persistent.postgresql import (
+    PGMetadataStore,
+    PostgresConnector,
+)
 from ska_dataproduct_api.configuration.settings import (
     ELASTICSEARCH_HOST,
     ELASTICSEARCH_INDICES,
@@ -33,7 +36,7 @@ from ska_dataproduct_api.configuration.settings import (
 logger = logging.getLogger(__name__)
 
 
-def select_metadata_store_class() -> Union[PostgresConnector, InMemoryVolumeIndexMetadataStore]:
+def select_metadata_store_class() -> Union[PGMetadataStore, InMemoryVolumeIndexMetadataStore]:
     """
     Selects the appropriate dataproduct metadata store class based on PostgreSQL availability.
 
@@ -49,14 +52,18 @@ def select_metadata_store_class() -> Union[PostgresConnector, InMemoryVolumeInde
     """
 
     try:
-        persistent_metadata_store = PostgresConnector(
+        metadata_db = PostgresConnector(
             host=POSTGRESQL_HOST,
             port=POSTGRESQL_PORT,
             user=POSTGRESQL_USER,
             schema=POSTGRESQL_SCHEMA,
             password=POSTGRESQL_PASSWORD,
             dbname=POSTGRESQL_DBNAME,
-            table_name=POSTGRESQL_TABLE_NAME,
+        )
+
+        persistent_metadata_store = PGMetadataStore(
+            db=metadata_db,
+            science_metadata_table_name=POSTGRESQL_TABLE_NAME,
             annotations_table_name=POSTGRESQL_ANNOTATIONS_TABLE_NAME,
         )
         logger.info("PostgreSQL reachable, setting metadata store to obtain data from PostgreSQL")
@@ -68,7 +75,7 @@ def select_metadata_store_class() -> Union[PostgresConnector, InMemoryVolumeInde
 
 
 def select_search_store_class(
-    metadata_store: Union[PostgresConnector, InMemoryVolumeIndexMetadataStore],
+    metadata_store: Union[PGMetadataStore, InMemoryVolumeIndexMetadataStore],
 ) -> Union[ElasticsearchMetadataStore, InMemoryDataproductSearch]:
     """
     Selects the appropriate dataproduct search store class based on Elasticsearch availability.

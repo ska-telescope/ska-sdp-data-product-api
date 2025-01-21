@@ -9,7 +9,7 @@ from typing import Union
 from ska_dataproduct_api.components.store.in_memory.in_memory import (
     InMemoryVolumeIndexMetadataStore,
 )
-from ska_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
+from ska_dataproduct_api.components.store.persistent.postgresql import PGMetadataStore
 
 logger = logging.getLogger(__name__)
 
@@ -24,10 +24,10 @@ class MetadataSearchStore:
             representing the metadata store from which to load data.
     """
 
-    def __init__(self, metadata_store: Union[PostgresConnector, InMemoryVolumeIndexMetadataStore]):
+    def __init__(self, metadata_store: Union[PGMetadataStore, InMemoryVolumeIndexMetadataStore]):
         self.number_of_dataproducts: int = 0
         self.metadata_store: Union[
-            PostgresConnector, InMemoryVolumeIndexMetadataStore
+            PGMetadataStore, InMemoryVolumeIndexMetadataStore
         ] = metadata_store
 
     def load_metadata_from_store(self) -> None:
@@ -39,8 +39,8 @@ class MetadataSearchStore:
         """
         logger.info("Loading metadata into search store.")
         if (
-            isinstance(self.metadata_store, PostgresConnector)
-            and self.metadata_store.postgresql_running
+            isinstance(self.metadata_store, PGMetadataStore)
+            and self.metadata_store.db.postgresql_running
         ):
             self.load_persistent_metadata_store_data()
         else:
