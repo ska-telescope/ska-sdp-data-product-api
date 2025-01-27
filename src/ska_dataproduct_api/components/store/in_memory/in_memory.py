@@ -1,8 +1,7 @@
 """
 Module for in-memory volume index metadata store.
 
-This module implements the `InMemoryVolumeIndexMetadataStore` class,
-which inherits from the base `MetadataStore` class. It provides functionalities
+This module implements the `InMemoryVolumeIndexMetadataStore` class. It provides functionalities
 for managing data product metadata in an in-memory store with the ability to
 reindex from persistent storage.
 
@@ -23,11 +22,11 @@ persistent PostgreSQL deployments.
 import logging
 import pathlib
 import uuid
+from datetime import datetime, timezone
 from typing import Any
 
 from ska_dataproduct_api.components.metadata.metadata import DataProductMetadata
 from ska_dataproduct_api.components.pv_interface.pv_interface import PVIndex
-from ska_dataproduct_api.components.store.metadata_store_base_class import MetadataStore
 from ska_dataproduct_api.utilities.helperfunctions import (
     DataProductIdentifier,
     validate_data_product_identifier,
@@ -36,13 +35,13 @@ from ska_dataproduct_api.utilities.helperfunctions import (
 logger = logging.getLogger(__name__)
 
 
-class InMemoryVolumeIndexMetadataStore(MetadataStore):
+class InMemoryVolumeIndexMetadataStore:
     """Class to handle data ingest from various sources"""
 
     def __init__(self):
-        super().__init__()
         self.number_of_dataproducts: int = 0
         self.dict_of_data_products_metadata: dict[DataProductMetadata] = {}
+        self.date_modified = datetime.now(tz=timezone.utc)
 
     def status(self) -> dict:
         """
@@ -55,7 +54,6 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
             "store_type": "In memory volume index metadata store",
             "number_of_dataproducts_loaded": self.number_of_dataproducts,
             "last_metadata_update_time": self.date_modified,
-            "indexing": self.indexing,
         }
 
     def reload_all_data_products_in_index(self, pv_index: PVIndex) -> None:
@@ -64,13 +62,10 @@ class InMemoryVolumeIndexMetadataStore(MetadataStore):
         appended since the initial load of the data"""
         try:
             logger.info("Reloading all data products from PV index into metadata store...")
-            self.indexing = True
             self.ingest_list_of_data_product_paths(pv_index=pv_index)
-            self.update_data_store_date_modified()
-            self.indexing = False
+            self.date_modified = datetime.now(tz=timezone.utc)
             logger.info("Reloading into metadata store completed.")
         except Exception as exception:
-            self.indexing = False
             raise exception
 
     def ingest_list_of_data_product_paths(self, pv_index: PVIndex) -> None:

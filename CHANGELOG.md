@@ -9,6 +9,9 @@
     - [Changed] Removed indexing from the MetadataStore store class, and integrated indexing from the PVInterface class.
     - [Added] Added methods get_folder_size and get_latest_modification_time to the PVDataProduct class.
     - [Changed] Separated the PostgresConnector from the PGMetadataStore.
+    - [Added] Added a POSTGRESQL_QUERY_SIZE_LIMIT to limit the number of products returned to a query from the dashboard at a time.
+    - [Removed] Removed the ElasticSearch search store.
+    - [Changed] Updated PostgreSQL search to only make use of known fields and parameters to prevent SQL injection.
 
 - [NAL-1323](https://jira.skatelescope.org/browse/NAL-1323)
     - [Changed] Added the functionality to allow annotations to be updated.

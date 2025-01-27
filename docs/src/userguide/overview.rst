@@ -35,45 +35,39 @@ Verify the API's status by sending a GET request to the /status endpoint. The re
 
     {
         "api_running": true,
-        "api_version": "0.8.0",
-        "startup_time": "2024-08-06T21:59:18.333369",
-        "last_metadata_update_time": "2024-08-06T21:59:18.333359",
+        "api_version": "0.11.0",
+        "startup_time": "2025-01-27T07:28:50.809548+00:00",
+        "indexing": false,
+        "indexing_timestamp": "2025-01-27T07:28:50.809541+00:00",
+        "self.pv_interface_status": {
+            "data_source": "Persistent volume",
+            "pv_name": "None (using local test data)",
+            "data_product_root_directory": "tests/test_files/product",
+            "pv_available": true,
+            "number_of_date_products_on_pv": 18,
+            "time_of_last_index_run": "2025-01-27T07:28:50.869054+00:00",
+            "reindex_running": false,
+            "index_time_modified": "2025-01-27T07:28:50.866493+00:00"
+        },
         "metadata_store_status": {
             "store_type": "Persistent PosgreSQL metadata store",
-            "host": "localhost",
-            "port": 5432,
-            "user": "postgres",
+            "db_status": {
+                "host": "localhost",
+                "port": 5432,
+                "user": "postgres",
+                "configured": true,
+                "running": true,
+                "dbname": "postgres",
+                "schema": "sdp_sdp_dataproduct_dashboard_dev"
+            },
             "running": true,
-            "schema": "sdp_sdp_dataproduct_dashboard_dev",
-            "science_metadata_table_name": "localhost_sdp_dataproduct_dashboard_dev_v1",
-            "number_of_dataproducts": 10,
-            "postgresql_version": "PostgreSQL 16.3 on x86_64-pc-linux-musl, compiled by gcc (Alpine 13.2.1_git20240309) 13.2.1 20240309, 64-bit"
+            "last_metadata_update_time": "2025-01-27T09:28:51.134177",
+            "science_metadata_table_name": "data_products_metadata_v2",
+            "annotations_table_name": "data_products_annotations_v1",
+            "number_of_dataproducts": 16
         },
         "search_store_status": {
-            "metadata_store_in_use": "ElasticsearchMetadataStore",
-            "url": "https://localhost:9200",
-            "user": "elastic",
-            "running": true,
-            "connection_established_at": "2024-08-06T21:59:18.210017",
-            "number_of_dataproducts": 10,
-            "indices": "ska-dp-dataproduct-localhost-dev-v1",
-            "cluster_info": {
-                "name": "46f82bbc7307",
-                "cluster_name": "docker-cluster",
-                "cluster_uuid": "5nqaD334QZuVZjjMYAFCmQ",
-                "version": {
-                    "number": "8.14.2",
-                    "build_flavor": "default",
-                    "build_type": "docker",
-                    "build_hash": "2afe7caceec8a26ff53817e5ed88235e90592a1b",
-                    "build_date": "2024-07-01T22:06:58.515911606Z",
-                    "build_snapshot": false,
-                    "lucene_version": "9.10.0",
-                    "minimum_wire_compatibility_version": "7.17.0",
-                    "minimum_index_compatibility_version": "7.0.0"
-                },
-                "tagline": "You Know, for Search"
-            }
+            "metadata_store_in_use": "PGSearchStore"
         }
     }
 

@@ -1,4 +1,4 @@
-"""Module to insert data into Elasticsearch instance."""
+"""Module contains methods to search through data products in memory."""
 import copy
 import datetime
 import json
@@ -6,7 +6,6 @@ import logging
 from typing import Any, Union
 
 from ska_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
-from ska_dataproduct_api.components.search.search_store_base_class import MetadataSearchStore
 from ska_dataproduct_api.components.store.in_memory.in_memory import (
     InMemoryVolumeIndexMetadataStore,
 )
@@ -23,7 +22,7 @@ logger = logging.getLogger(__name__)
 # pylint: disable=no-name-in-module
 
 
-class InMemoryDataproductSearch(MetadataSearchStore):
+class InMemoryDataproductSearch:
     """
     This class defines an object that is used to create a list of data products
     based on information contained in the metadata files of these data
@@ -34,12 +33,13 @@ class InMemoryDataproductSearch(MetadataSearchStore):
         self,
         metadata_store: Union[PostgresConnector, InMemoryVolumeIndexMetadataStore],
     ) -> None:
-        super().__init__(metadata_store)
+        self.number_of_dataproducts: int = 0
+        self.metadata_store = metadata_store
+
         muiDataGridInstance.flattened_set_of_keys.clear()
         muiDataGridInstance.flattened_list_of_dataproducts_metadata.clear()
-        self.load_metadata_from_store()
 
-    def insert_metadata_in_search_store(self, metadata_dict: dict) -> None:
+    def insert_data_products_into_muidatagrid(self, metadata_dict: dict) -> None:
         """This method loads the metadata file of a data product, creates a
         list of keys used in it, and then adds it to the flattened_list_of_dataproducts_metadata"""
         # generate a list of keys from this object
@@ -73,20 +73,14 @@ class InMemoryDataproductSearch(MetadataSearchStore):
 
     def status(self) -> dict:
         """
-        Retrieves the current status of the in-memory data product indexing process.
+        Retrieves the current status of the in-memory data store.
 
-        This method returns a dictionary containing the following information about in-memory
-        data product indexing:
-
-        * `metadata_store_in_use`: Indicates that "InMemoryDataproductSearch" is being used for
+        * `metadata_search_store_in_use`: Indicates that in memory search store is being used for
         data product metadata storage.
-        * `indexing`: A boolean indicating whether data product indexing is currently in progress.
-        * `indexing_timestamp` (optional): A timestamp representing when the last data product
-        indexing operation started (if available).
-        * `number_of_data_products`: The number of data products currently indexed in memory.
+        * `number_of_dataproducts`: The number of data products currently indexed in memory.
 
         Returns:
-            A dictionary containing the current in-memory data product indexing status.
+            A dictionary containing the current in-memory data product store status.
         """
 
         return {
@@ -155,6 +149,17 @@ class InMemoryDataproductSearch(MetadataSearchStore):
                     continue
         return json.dumps(search_results)
 
+    def load_in_memory_volume_index_metadata_store_data(self):
+        """
+        Loads metadata from an in-memory volume index metadata store into the MUI data grid class.
+        """
+        for (
+            data_product_uuid,
+            data_product,
+        ) in self.metadata_store.dict_of_data_products_metadata.items():
+            logger.debug("Loading UUID %s into search store", data_product_uuid)
+            self.insert_data_products_into_muidatagrid(data_product.metadata_dict)
+
     def filter_data(
         self,
         mui_data_grid_filter_model: dict[str, Any],
@@ -171,6 +176,13 @@ class InMemoryDataproductSearch(MetadataSearchStore):
         Returns:
             Filtered data.
         """
+
+        try:
+            mui_data_grid_filter_model["items"].extend(search_panel_options["items"])
+        except KeyError:
+            mui_data_grid_filter_model["items"] = search_panel_options["items"]
+
+        self.load_in_memory_volume_index_metadata_store_data()
         muiDataGridInstance.load_metadata_from_list(
             muiDataGridInstance.flattened_list_of_dataproducts_metadata
         )
@@ -179,9 +191,8 @@ class InMemoryDataproductSearch(MetadataSearchStore):
             data=muiDataGridInstance.rows.copy(), users_user_groups=users_user_group_list
         )
         mui_filtered_data = self.apply_filters(access_filtered_data, mui_data_grid_filter_model)
-        searchbox_filtered_data = self.apply_filters(mui_filtered_data, search_panel_options)
 
-        return searchbox_filtered_data
+        return mui_filtered_data
 
     def access_filter(
         self, data: list[dict[str, Any]], users_user_groups: list[str]

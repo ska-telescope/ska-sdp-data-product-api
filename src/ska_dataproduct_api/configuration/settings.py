@@ -76,58 +76,6 @@ STREAM_CHUNK_SIZE: int = int(
     )
 )
 
-# ElasticSearch Variables
-ELASTICSEARCH_HOST: str = config(
-    "SKA_DATAPRODUCT_API_ELASTIC_HOST",
-    default="https://localhost",
-)
-
-ELASTICSEARCH_PORT: int = int(
-    config(
-        "SKA_DATAPRODUCT_API_ELASTIC_PORT",
-        default=9200,
-    )
-)
-
-ELASTIC_HTTP_CA_FILE_NAME: str = config(
-    "SKA_DATAPRODUCT_API_ELASTIC_HTTP_CA_FILE_NAME",
-    default=None,
-)
-
-ELASTIC_HTTP_CA_BASE64_CERT: str = secrets(
-    "SKA_DATAPRODUCT_API_ELASTIC_HTTP_CA_BASE64_CERT",
-    default=None,
-)
-
-ELASTICSEARCH_USER: str = config(
-    "SKA_DATAPRODUCT_API_ELASTIC_USER",
-    default="elastic",
-)
-
-ELASTICSEARCH_PASSWORD: str = secrets(
-    "SKA_DATAPRODUCT_API_ELASTIC_PASSWORD",
-    default="",
-)
-
-ELASTICSEARCH_METADATA_SCHEMA_FILE: pathlib.Path = pathlib.Path(
-    config(
-        "SKA_DATAPRODUCT_API_ELASTIC_METADATA_SCHEMA_FILE",
-        default=(
-            "./src/ska_dataproduct_api/components/search/elasticsearch/"
-            "data_product_metadata_schema.json"
-        ),
-    )
-).resolve()
-
-ELASTICSEARCH_INDICES: str = config(
-    "SKA_DATAPRODUCT_API_ELASTIC_INDICES",
-    default=("ska-dp-dataproduct-localhost-dev-v1"),
-)
-
-ELASTICSEARCH_QUERY_BODY_SIZE: int = int(
-    config("SKA_DATAPRODUCT_API_ELASTIC_QUERY_BODY_SIZE", default=1000),
-)
-
 # ----
 # PostgreSQL Variables
 POSTGRESQL_HOST: str = config(
@@ -171,6 +119,12 @@ POSTGRESQL_ANNOTATIONS_TABLE_NAME: str = config(
     "SKA_DATAPRODUCT_API_POSTGRESQL_ANNOTATIONS_TABLE_NAME",
     default=("data_products_annotations_v1"),
 )
+
+POSTGRESQL_QUERY_SIZE_LIMIT: int = config(
+    "SKA_DATAPRODUCT_API_POSTGRESQL_QUERY_SIZE_LIMIT",
+    default=(100),
+)
+
 # ----
 # SKA Permissions API
 SKA_PERMISSIONS_API_HOST: str = config(

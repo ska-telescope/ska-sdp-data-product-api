@@ -1,10 +1,10 @@
-"""Module to insert data into Elasticsearch instance."""
-import datetime
+"""Module contains helper functions used in the project."""
 import logging
 import os
 import pathlib
 import subprocess
 import tempfile
+from datetime import datetime, timezone
 from typing import Any, Generator, Optional
 
 # pylint: disable=no-name-in-module
@@ -36,12 +36,13 @@ class DPDAPIStatus:  # pylint: disable=too-many-instance-attributes
     ):
         self.api_running = True
 
-        self.date_modified: datetime = datetime.datetime.now()
         self.version: str = VERSION
         self.pv_interface_status: object = pv_interface_status
         self.metadata_store_status: object = metadata_store_status
         self.search_store_status: object = search_store_status
-        self.startup_time: datetime = datetime.datetime.now()  # Added: Time API started
+        self.indexing: bool = False
+        self.indexing_timestamp: datetime = datetime.now(tz=timezone.utc)
+        self.startup_time: datetime = datetime.now(tz=timezone.utc)
         self.request_count: int = 0  # Added: Request count
         self.error_count: int = 0  # Added: Error count
 
@@ -51,7 +52,8 @@ class DPDAPIStatus:  # pylint: disable=too-many-instance-attributes
             "api_running": True,
             "api_version": self.version,
             "startup_time": self.startup_time.isoformat(),
-            "last_metadata_update_time": self.date_modified,
+            "indexing": self.indexing,
+            "indexing_timestamp": self.indexing_timestamp,
             "self.pv_interface_status": self.pv_interface_status(),
             "metadata_store_status": self.metadata_store_status(),
             "search_store_status": self.search_store_status(),
@@ -302,7 +304,7 @@ def filter_strings(operand: str, operator: str, comparator: str) -> bool:
 
 
 def filter_datetimes(
-    operand: datetime.datetime, operator: str, comparator: datetime.datetime
+    operand: datetime, operator: str, comparator: datetime
 ) -> list[dict[str, Any]]:
     """
     This function filters datetime objects based on a provided operator and comparator datetime
@@ -373,7 +375,7 @@ def filter_by_item(
             if isinstance(comparator, int):
                 if compare_integer(operand, operator, comparator):
                     filtered_data.append(item)
-            elif isinstance(comparator, datetime.datetime):
+            elif isinstance(comparator, datetime):
                 try:
                     date_value = parse_valid_date(operand, "%Y-%m-%d")
                 except Exception as exception:  # pylint: disable=broad-exception-caught
@@ -455,7 +457,7 @@ def filter_by_key_value_pair(
     return filtered_data
 
 
-def parse_valid_date(date_string: str, expected_format: str) -> datetime.datetime:
+def parse_valid_date(date_string: str, expected_format: str) -> datetime:
     """Parses a date string into a datetime object if the format is valid.
 
     Args:
@@ -470,7 +472,7 @@ def parse_valid_date(date_string: str, expected_format: str) -> datetime.datetim
         ValueError: If the date format is invalid.
     """
     try:
-        return datetime.datetime.strptime(date_string, expected_format)
+        return datetime.strptime(date_string, expected_format)
     except ValueError as error:
         logging.error("Invalid date format: %s. Expected format: %s", date_string, expected_format)
         raise error

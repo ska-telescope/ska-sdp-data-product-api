@@ -1,6 +1,7 @@
 """This API exposes SKA Data Products to the SKA Data Product Dashboard."""
 
 import logging
+from datetime import datetime, timezone
 from typing import List
 from unittest.mock import MagicMock
 
@@ -64,7 +65,6 @@ def reindex_data_products_stores() -> None:
     try:
         pv_interface.index_all_data_product_files_on_pv()
         metadata_store.reload_all_data_products_in_index(pv_index=pv_interface.pv_index)
-        search_store.load_metadata_from_store()
         logger.info("Persistent volume re-indexed and stores updated.")
     except Exception as exception:  # pylint: disable=broad-exception-caught
         logger.exception("Metadata re-index failed: %s", exception)
@@ -145,12 +145,10 @@ async def filter_data(token: str, request: Request) -> list:
     users_group_assignments = await get_user_groups(token=token)
     users_user_group_list = users_group_assignments["user_groups"]
 
-    # Access the request body
     body = await request.json()
     mui_data_grid_filter_model = body.get("filterModel", {})
     search_panel_options = body.get("searchPanelOptions", {})
 
-    # Rest of your code using body and request object
     filtered_data = search_store.filter_data(
         mui_data_grid_filter_model=mui_data_grid_filter_model,
         search_panel_options=search_panel_options,
@@ -219,7 +217,7 @@ async def ingest_new_data_product(
         data_product_uuid = metadata_store.ingest_file(
             ABSOLUTE_PERSISTENT_STORAGE_PATH / file_object.execution_block / METADATA_FILE_NAME
         )
-        metadata_store.update_data_store_date_modified()
+        metadata_store.date_modified = datetime.now(tz=timezone.utc)
         return {
             "status": "success",
             "message": "New data product received and search store index updated",
@@ -259,8 +257,7 @@ async def ingest_new_metadata(
 
     try:
         data_product_uuid = metadata_store.ingest_metadata(metadata)
-        search_store.insert_metadata_in_search_store(metadata)
-        metadata_store.update_data_store_date_modified()
+        metadata_store.date_modified = datetime.now(tz=timezone.utc)
         logger.info("New data product metadata received and search_store index updated")
         return {
             "status": "success",

@@ -16,9 +16,8 @@ def test_ping_main(test_app):
     assert response.json()["api_running"] is True
     assert "api_version" in response.json()
     assert "startup_time" in response.json()
-    assert "last_metadata_update_time" in response.json()
-    assert "search_store_status" in response.json()
-    assert "metadata_store_status" in response.json()
+    assert "indexing" in response.json()
+    assert "indexing_timestamp" in response.json()
 
 
 def test_reindex_data_products(test_app):

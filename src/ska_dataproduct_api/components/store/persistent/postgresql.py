@@ -4,6 +4,7 @@ import json
 import logging
 import pathlib
 import uuid
+from datetime import datetime, timezone
 from typing import Any, List
 
 import psycopg
@@ -11,10 +12,12 @@ from psycopg.rows import class_row
 
 from ska_dataproduct_api.components.annotations.annotation import DataProductAnnotation
 from ska_dataproduct_api.components.metadata.metadata import DataProductMetadata
+from ska_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
 from ska_dataproduct_api.components.pv_interface.pv_interface import PVIndex
-from ska_dataproduct_api.components.store.metadata_store_base_class import MetadataStore
+from ska_dataproduct_api.configuration.settings import POSTGRESQL_QUERY_SIZE_LIMIT
 from ska_dataproduct_api.utilities.helperfunctions import (
     DataProductIdentifier,
+    find_metadata,
     validate_data_product_identifier,
 )
 
@@ -115,7 +118,7 @@ class PostgresConnector:
             raise error
 
 
-class PGMetadataStore(MetadataStore):
+class PGMetadataStore:
     """
     A class contains the methods related to the Metadata Store.
     """
@@ -126,10 +129,11 @@ class PGMetadataStore(MetadataStore):
         science_metadata_table_name: str,
         annotations_table_name: str,
     ):
-        super().__init__()
         self.db: PostgresConnector = db
         self.science_metadata_table_name = science_metadata_table_name
         self.annotations_table_name = annotations_table_name
+        self.metadata_list = []
+        self.date_modified = datetime.now(tz=timezone.utc)
 
         if self.db.postgresql_running:
             self.create_metadata_table()
@@ -166,7 +170,6 @@ class PGMetadataStore(MetadataStore):
             "store_type": "Persistent PosgreSQL metadata store",
             "db_status": self.db.status(),
             "running": self.db.postgresql_running,
-            "indexing": self.indexing,
             "last_metadata_update_time": self.date_modified,
             "science_metadata_table_name": self.science_metadata_table_name,
             "annotations_table_name": self.annotations_table_name,
@@ -245,7 +248,6 @@ class PGMetadataStore(MetadataStore):
         """
         logger.info("Reloading all data products from PV index into metadata store...")
 
-        self.indexing = True
         for _, pv_data_product in pv_index.dict_of_data_products_on_pv.items():
             try:
                 _ = self.ingest_file(pv_data_product.path)
@@ -256,7 +258,6 @@ class PGMetadataStore(MetadataStore):
                     error,
                 )
                 self.db.postgresql_running = False
-                self.indexing = False
                 raise
             except Exception as error:  # pylint: disable=broad-exception-caught
                 logger.error(
@@ -265,7 +266,6 @@ class PGMetadataStore(MetadataStore):
                     error,
                 )
 
-        self.indexing = False
         logger.info("Reloading into metadata store completed.")
 
     def ingest_file(self, data_product_metadata_file_path: pathlib.Path) -> uuid.UUID:
@@ -290,7 +290,7 @@ class PGMetadataStore(MetadataStore):
             raise error
 
         self.save_metadata_to_postgresql(data_product_metadata_instance)
-        self.update_data_store_date_modified()
+        self.date_modified = datetime.now(tz=timezone.utc)
         return data_product_metadata_instance.data_product_uuid
 
     def check_metadata_exists_by_hash(self, json_hash: str) -> bool:
@@ -613,3 +613,240 @@ WHERE execution_block = %s"
         except (psycopg.OperationalError, psycopg.DatabaseError) as error:
             self.db.postgresql_running = False
             raise error
+
+
+class PGSearchStore:
+    """
+    A class contains the methods related to searching through the PostgreSQL Metadata Store.
+    """
+
+    def __init__(
+        self,
+        db: PostgresConnector,
+        science_metadata_table_name: str,
+        annotations_table_name: str,
+    ):
+        self.db: PostgresConnector = db
+        self.science_metadata_table_name = science_metadata_table_name
+        self.annotations_table_name = annotations_table_name
+        self.metadata_list = []
+
+    def status(self) -> dict:
+        """
+        Returns a dictionary containing the current status of the PGSearchStore.
+
+        Includes information about:
+            - metadata_store_in_use (str): The type of metadata store being used (e.g.,
+            "PGSearchStore").
+        """
+
+        response = {
+            "metadata_store_in_use": "PGSearchStore",
+        }
+
+        return response
+
+    def access_filter(
+        self, data: list[dict[str, Any]], users_user_groups: list[str]
+    ) -> list[dict[str, Any]]:
+        """Filters the mui_data_grid_filter_model based on access groups.
+
+        Args:
+            data: A list of dictionaries representing filter model data.
+            users_user_groups: A list of user group names.
+
+        Returns:
+            A filtered list of dictionaries where either no access_group is assigned or the
+            assigned access_group is in the users_user_groups list.
+        """
+        filtered_model = []
+        for item in data:
+            access_group = item.get("context.access_group", None)
+            if access_group is None or access_group in users_user_groups:
+                filtered_model.append(item)
+        return filtered_model
+
+    def filter_data(
+        self,
+        mui_data_grid_filter_model,
+        search_panel_options,
+        users_user_group_list: list[str],
+    ):
+        """Filters data based on provided criteria.
+
+        Args:
+            mui_data_grid_filter_model: Filter model from the MUI data grid.
+            search_panel_options: Search panel options including date range and key value pairs.
+            users_user_group_list: List of user groups.
+
+        Returns:
+            Filtered data.
+        """
+        try:
+            mui_data_grid_filter_model["items"].extend(search_panel_options["items"])
+        except KeyError:
+            mui_data_grid_filter_model["items"] = search_panel_options["items"]
+
+        self.metadata_list.clear()
+        sql_search_query, params = self.create_postgresql_query(
+            filter_model=mui_data_grid_filter_model, table_name=self.science_metadata_table_name
+        )
+        self.search_metadata(sql_search_query=sql_search_query, params=params)
+
+        muiDataGridInstance.rows.clear()
+        muiDataGridInstance.flattened_list_of_dataproducts_metadata.clear()
+        for dataproduct in self.metadata_list:
+            muiDataGridInstance.update_flattened_list_of_keys(dataproduct)
+            muiDataGridInstance.update_flattened_list_of_dataproducts_metadata(
+                muiDataGridInstance.flatten_dict(dataproduct)
+            )
+        muiDataGridInstance.load_metadata_from_list(
+            muiDataGridInstance.flattened_list_of_dataproducts_metadata
+        )
+
+        access_filtered_data = self.access_filter(
+            data=muiDataGridInstance.rows.copy(), users_user_groups=users_user_group_list
+        )
+
+        return access_filtered_data
+
+    def create_postgresql_query(self, filter_model: dict, table_name: str) -> tuple[str, list]:
+        """
+        Creates a PostgreSQL query string from a MUI Data Grid filter model.
+
+        Args:
+            filter_model: The MUI Data Grid filter model.
+            table_name: The name of the table to query.
+
+        Returns:
+            A PostgreSQL query string.
+        """
+
+        query = f"SELECT data FROM {self.db.schema}.{table_name}"
+        where_clauses = []
+        params = []
+
+        for item in filter_model.get("items", []):
+
+            # Use .get() with a default value to handle missing keys
+            field = item.get("field", None)
+            operator = item.get("operator", None)
+            value = item.get("value", None)
+
+            if (
+                not field
+                or not operator
+                or not value
+                or field not in muiDataGridInstance.flattened_set_of_keys
+            ):
+                continue
+            if operator == "greaterThan":
+                where_clauses.append(f"data->>'{field}' > %s")
+                params.append(value)
+            elif operator == "lessThan":
+                where_clauses.append(f"data->>'{field}' < %s")
+                params.append(value)
+            elif operator == "equals":
+                where_clauses.append(f"data->>'{field}' = %s")
+                params.append(value)
+            elif operator == "contains":
+                where_clauses.append(f"data->>'{field}' LIKE %s")
+                params.append(f"%{value}%")
+            elif operator == "startsWith":
+                where_clauses.append(f"data->>'{field}' LIKE %s")
+                params.append(f"{value}%")
+            elif operator == "endsWith":
+                where_clauses.append(f"data->>'{field}' LIKE %s")
+                params.append(f"%{value}")
+            elif operator == "isEmpty":
+                where_clauses.append(f"data->>'{field}' IS NULL OR data->>'{field}' = ''")
+            elif operator == "isNotEmpty":
+                where_clauses.append(f"data->>'{field}' IS NOT NULL AND data->>'{field}' != ''")
+            elif operator == "isAnyOf":
+                where_clauses.append(f"data->>'{field}' = ANY(%s)")
+                params.append(value)
+
+        if where_clauses:
+            query += " WHERE " + " AND ".join(where_clauses)
+
+        query += " ORDER BY (data->>'date_created')::timestamp DESC LIMIT " + str(
+            POSTGRESQL_QUERY_SIZE_LIMIT
+        )
+
+        return query, params
+
+    def search_metadata(self, sql_search_query, params):
+        """Metadata search method"""
+        try:
+            with psycopg.connect(self.db.connection_string) as conn:
+                with conn.cursor() as cur:
+                    try:
+                        cur.execute(query=sql_search_query, params=params)
+                        result = cur.fetchall()
+                        if result[0]:
+                            for value in result:
+                                self.add_dataproduct(metadata_file=value[0])
+                        return {}
+                    except (IndexError, TypeError) as error:
+                        logger.warning("Metadata search error %s", error)
+                        return {}
+        except (psycopg.OperationalError, psycopg.DatabaseError) as error:
+            self.db.postgresql_running = False
+            raise error
+
+    def add_dataproduct(self, metadata_file: dict):
+        """
+        Populates the MUI Data Grid class the given metadata.
+
+        Args:
+            metadata_file: A dictionary containing the metadata for a data product.
+
+        Raises:
+            ValueError: If the provided metadata_file is not a dictionary.
+        """
+        required_keys = {
+            "execution_block",
+            "date_created",
+            "dataproduct_file",
+            "metadata_file",
+            "data_product_uuid",
+        }
+        data_product_details = {}
+
+        # Handle top-level required keys
+        for key in required_keys:
+            if key in metadata_file:
+                metadata_file[key] = metadata_file[key]
+
+        # Add additional keys based on query (assuming find_metadata is defined)
+        for query_key in muiDataGridInstance.flattened_set_of_keys:
+            query_metadata = find_metadata(metadata_file, query_key)
+            if query_metadata:
+                data_product_details[query_metadata["key"]] = query_metadata["value"]
+
+        self.update_dataproduct_list(metadata_file)
+
+    def update_dataproduct_list(self, data_product_details):
+        """
+        Updates the internal list of data products with the provided metadata.
+
+        This method adds the provided `data_product_details` dictionary to the internal
+        `metadata_list` attribute. If the list is empty, it assigns an "id" of 1 to the
+        first data product. Otherwise, it assigns an "id" based on the current length
+        of the list + 1.
+
+        Args:
+            data_product_details: A dictionary containing the metadata for a data product.
+
+        Returns:
+            None
+        """
+        # Adds the first dictionary to the list
+        if len(self.metadata_list) == 0:
+            data_product_details["id"] = 1
+            self.metadata_list.append(data_product_details)
+            return
+
+        data_product_details["id"] = len(self.metadata_list) + 1
+        self.metadata_list.append(data_product_details)
+        return

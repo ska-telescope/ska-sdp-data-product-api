@@ -211,7 +211,6 @@ def test_reindex_persistent_volume(mocked_postgres_connector):
     metadata_store.reload_all_data_products_in_index(pv_index=pv_interface.pv_index)
 
     assert metadata_store.number_of_date_products_in_table == 1
-    assert metadata_store.indexing is False
 
 
 def test_save_metadata_to_postgresql(mocked_postgres_connector):
