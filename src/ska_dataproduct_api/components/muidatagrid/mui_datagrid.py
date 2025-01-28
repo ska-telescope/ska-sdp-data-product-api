@@ -82,7 +82,7 @@ class MuiDataGridColumn:
         }
 
 
-class MuiDataGrid:
+class MuiDataGridConfig:
     """Class containing components used with the MUI DataGrid"""
 
     def __init__(self) -> None:
@@ -108,7 +108,6 @@ class MuiDataGrid:
 
         self.flattened_set_of_keys = set()
         self.flattened_list_of_dataproducts_metadata: list[dict] = []
-        self.rows: list[dict] = []
 
     def update_columns(self, key: str) -> None:
         """
@@ -122,27 +121,6 @@ class MuiDataGrid:
             self.columns.append(
                 MuiDataGridColumn(field=key, headerName=key, width=150, hide=False).basic_column()
             )
-
-    def add_datagrid_row(self, row: dict) -> None:
-        """Adds a dict of data to the datagrid row object.
-
-        Args:
-            row: A dictionary containing key-value pairs representing the data for the new row.
-                The keys in the dictionary should correspond to the column names in the datagrid.
-        """
-        self.rows.append(row)
-
-    def load_metadata_from_list(self, metadata_list: list[dict]) -> None:
-        """
-        Loads data from the metadata list into the in-memory store of the MUI DataGrid instance.
-
-        This method clears the existing rows in the DataGrid and then iterates through the
-        `self.metadata_list` adding each item as a new row.
-
-        """
-        self.rows.clear()
-        for item in metadata_list:
-            self.add_datagrid_row(item)
 
     def update_flattened_list_of_keys(self, metadata_file: dict) -> None:
         """
@@ -213,21 +191,19 @@ class MuiDataGrid:
         if "uuid" not in data_product_details:
             return
 
-        for item in muiDataGridInstance.flattened_list_of_dataproducts_metadata:
+        for item in self.flattened_list_of_dataproducts_metadata:
             if item["uuid"] == data_product_details["uuid"]:
                 # Update the existing dictionary with new values
                 item.update(data_product_details)
                 return
 
         # If no duplicate found, add the new dictionary
-        if len(muiDataGridInstance.flattened_list_of_dataproducts_metadata) == 0:
+        if len(self.flattened_list_of_dataproducts_metadata) == 0:
             data_product_details["id"] = 1
         else:
-            data_product_details["id"] = (
-                len(muiDataGridInstance.flattened_list_of_dataproducts_metadata) + 1
-            )
+            data_product_details["id"] = len(self.flattened_list_of_dataproducts_metadata) + 1
 
-        muiDataGridInstance.flattened_list_of_dataproducts_metadata.append(data_product_details)
+        self.flattened_list_of_dataproducts_metadata.append(data_product_details)
 
 
-muiDataGridInstance = MuiDataGrid()
+mui_data_grid_config_instance = MuiDataGridConfig()

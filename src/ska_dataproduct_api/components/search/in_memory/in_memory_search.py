@@ -5,7 +5,7 @@ import json
 import logging
 from typing import Any, Union
 
-from ska_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
+from ska_dataproduct_api.components.muidatagrid.mui_datagrid import mui_data_grid_config_instance
 from ska_dataproduct_api.components.store.in_memory.in_memory import (
     InMemoryVolumeIndexMetadataStore,
 )
@@ -36,24 +36,24 @@ class InMemoryDataproductSearch:
         self.number_of_dataproducts: int = 0
         self.metadata_store = metadata_store
 
-        muiDataGridInstance.flattened_set_of_keys.clear()
-        muiDataGridInstance.flattened_list_of_dataproducts_metadata.clear()
+        mui_data_grid_config_instance.flattened_set_of_keys.clear()
+        mui_data_grid_config_instance.flattened_list_of_dataproducts_metadata.clear()
 
     def insert_data_products_into_muidatagrid(self, metadata_dict: dict) -> None:
         """This method loads the metadata file of a data product, creates a
         list of keys used in it, and then adds it to the flattened_list_of_dataproducts_metadata"""
         # generate a list of keys from this object
-        muiDataGridInstance.update_flattened_list_of_keys(metadata_dict)
-        muiDataGridInstance.update_flattened_list_of_dataproducts_metadata(
-            muiDataGridInstance.flatten_dict(metadata_dict)
+        mui_data_grid_config_instance.update_flattened_list_of_keys(metadata_dict)
+        mui_data_grid_config_instance.update_flattened_list_of_dataproducts_metadata(
+            mui_data_grid_config_instance.flatten_dict(metadata_dict)
         )
 
         self.sort_list_of_dict(
-            list_of_dict=muiDataGridInstance.flattened_list_of_dataproducts_metadata
+            list_of_dict=mui_data_grid_config_instance.flattened_list_of_dataproducts_metadata
         )
 
         self.number_of_dataproducts = len(
-            muiDataGridInstance.flattened_list_of_dataproducts_metadata
+            mui_data_grid_config_instance.flattened_list_of_dataproducts_metadata
         )
 
     def sort_list_of_dict(
@@ -111,9 +111,9 @@ class InMemoryDataproductSearch:
 
         if metadata_key_value_pairs is None or len(metadata_key_value_pairs) == 0:
             search_results = copy.deepcopy(
-                muiDataGridInstance.flattened_list_of_dataproducts_metadata
+                mui_data_grid_config_instance.flattened_list_of_dataproducts_metadata
             )
-            for product in muiDataGridInstance.flattened_list_of_dataproducts_metadata:
+            for product in mui_data_grid_config_instance.flattened_list_of_dataproducts_metadata:
                 try:
                     product_date = parse_valid_date(product["date_created"], DATE_FORMAT)
                 except Exception as exception:  # pylint: disable=broad-exception-caught
@@ -125,8 +125,10 @@ class InMemoryDataproductSearch:
 
             return json.dumps(search_results)
 
-        search_results = copy.deepcopy(muiDataGridInstance.flattened_list_of_dataproducts_metadata)
-        for product in muiDataGridInstance.flattened_list_of_dataproducts_metadata:
+        search_results = copy.deepcopy(
+            mui_data_grid_config_instance.flattened_list_of_dataproducts_metadata
+        )
+        for product in mui_data_grid_config_instance.flattened_list_of_dataproducts_metadata:
             try:
                 product_date = parse_valid_date(product["date_created"], DATE_FORMAT)
             except Exception as exception:  # pylint: disable=broad-exception-caught
@@ -176,19 +178,19 @@ class InMemoryDataproductSearch:
         Returns:
             Filtered data.
         """
+        mui_data_rows: list[dict] = []
 
         try:
-            mui_data_grid_filter_model["items"].extend(search_panel_options["items"])
+            mui_data_grid_filter_model["items"].extend(search_panel_options.get("items", []))
         except KeyError:
-            mui_data_grid_filter_model["items"] = search_panel_options["items"]
+            mui_data_grid_filter_model["items"] = search_panel_options.get("items", [])
 
         self.load_in_memory_volume_index_metadata_store_data()
-        muiDataGridInstance.load_metadata_from_list(
-            muiDataGridInstance.flattened_list_of_dataproducts_metadata
-        )
+        for row in mui_data_grid_config_instance.flattened_list_of_dataproducts_metadata:
+            mui_data_rows.append(row)
 
         access_filtered_data = self.access_filter(
-            data=muiDataGridInstance.rows.copy(), users_user_groups=users_user_group_list
+            data=mui_data_rows.copy(), users_user_groups=users_user_group_list
         )
         mui_filtered_data = self.apply_filters(access_filtered_data, mui_data_grid_filter_model)
 

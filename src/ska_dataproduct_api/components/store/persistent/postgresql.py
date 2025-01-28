@@ -12,7 +12,7 @@ from psycopg.rows import class_row
 
 from ska_dataproduct_api.components.annotations.annotation import DataProductAnnotation
 from ska_dataproduct_api.components.metadata.metadata import DataProductMetadata
-from ska_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
+from ska_dataproduct_api.components.muidatagrid.mui_datagrid import mui_data_grid_config_instance
 from ska_dataproduct_api.components.pv_interface.pv_interface import PVIndex
 from ska_dataproduct_api.configuration.settings import POSTGRESQL_QUERY_SIZE_LIMIT
 from ska_dataproduct_api.utilities.helperfunctions import (
@@ -302,8 +302,9 @@ class PGMetadataStore:
                 cur.execute(query=query_string, params=(json_hash,))
                 return cur.fetchone()[0]
 
-    def check_metadata_exists_by_uuid(self, data_product_uuid: str) -> bool:
-        """Checks if metadata exists based on the given execution block."""
+    def get_metadata_id_by_uuid(self, data_product_uuid: str) -> str | None:
+        """Checks if metadata exists based on the given execution block and return the PRIMARY KEY
+        if it exists."""
         query_string = (
             f"SELECT id FROM {self.db.schema}.{self.science_metadata_table_name} WHERE uuid = %s"
         )
@@ -378,7 +379,7 @@ SET data = %s, json_hash = %s, uuid = %s WHERE id = %s"
             return
 
         # Update if uuid exist
-        metadata_table_id = self.check_metadata_exists_by_uuid(
+        metadata_table_id = self.get_metadata_id_by_uuid(
             str(data_product_metadata_instance.data_product_uuid)
         )
 
@@ -682,10 +683,12 @@ class PGSearchStore:
         Returns:
             Filtered data.
         """
+        mui_data_rows: list[dict] = []
+
         try:
-            mui_data_grid_filter_model["items"].extend(search_panel_options["items"])
+            mui_data_grid_filter_model["items"].extend(search_panel_options.get("items", []))
         except KeyError:
-            mui_data_grid_filter_model["items"] = search_panel_options["items"]
+            mui_data_grid_filter_model["items"] = search_panel_options.get("items", [])
 
         self.metadata_list.clear()
         sql_search_query, params = self.create_postgresql_query(
@@ -693,19 +696,17 @@ class PGSearchStore:
         )
         self.search_metadata(sql_search_query=sql_search_query, params=params)
 
-        muiDataGridInstance.rows.clear()
-        muiDataGridInstance.flattened_list_of_dataproducts_metadata.clear()
+        mui_data_grid_config_instance.flattened_list_of_dataproducts_metadata.clear()
         for dataproduct in self.metadata_list:
-            muiDataGridInstance.update_flattened_list_of_keys(dataproduct)
-            muiDataGridInstance.update_flattened_list_of_dataproducts_metadata(
-                muiDataGridInstance.flatten_dict(dataproduct)
+            mui_data_grid_config_instance.update_flattened_list_of_keys(dataproduct)
+            mui_data_grid_config_instance.update_flattened_list_of_dataproducts_metadata(
+                mui_data_grid_config_instance.flatten_dict(dataproduct)
             )
-        muiDataGridInstance.load_metadata_from_list(
-            muiDataGridInstance.flattened_list_of_dataproducts_metadata
-        )
+        for row in mui_data_grid_config_instance.flattened_list_of_dataproducts_metadata:
+            mui_data_rows.append(row)
 
         access_filtered_data = self.access_filter(
-            data=muiDataGridInstance.rows.copy(), users_user_groups=users_user_group_list
+            data=mui_data_rows.copy(), users_user_groups=users_user_group_list
         )
 
         return access_filtered_data
@@ -737,7 +738,7 @@ class PGSearchStore:
                 not field
                 or not operator
                 or not value
-                or field not in muiDataGridInstance.flattened_set_of_keys
+                or field not in mui_data_grid_config_instance.flattened_set_of_keys
             ):
                 continue
             if operator == "greaterThan":
@@ -750,13 +751,13 @@ class PGSearchStore:
                 where_clauses.append(f"data->>'{field}' = %s")
                 params.append(value)
             elif operator == "contains":
-                where_clauses.append(f"data->>'{field}' LIKE %s")
+                where_clauses.append(f"data->>'{field}' ILIKE %s")
                 params.append(f"%{value}%")
             elif operator == "startsWith":
-                where_clauses.append(f"data->>'{field}' LIKE %s")
+                where_clauses.append(f"data->>'{field}' ILIKE %s")
                 params.append(f"{value}%")
             elif operator == "endsWith":
-                where_clauses.append(f"data->>'{field}' LIKE %s")
+                where_clauses.append(f"data->>'{field}' ILIKE %s")
                 params.append(f"%{value}")
             elif operator == "isEmpty":
                 where_clauses.append(f"data->>'{field}' IS NULL OR data->>'{field}' = ''")
@@ -783,9 +784,8 @@ class PGSearchStore:
                     try:
                         cur.execute(query=sql_search_query, params=params)
                         result = cur.fetchall()
-                        if result[0]:
-                            for value in result:
-                                self.add_dataproduct(metadata_file=value[0])
+                        for value in result:
+                            self.add_dataproduct(metadata_file=value[0])
                         return {}
                     except (IndexError, TypeError) as error:
                         logger.warning("Metadata search error %s", error)
@@ -819,7 +819,7 @@ class PGSearchStore:
                 metadata_file[key] = metadata_file[key]
 
         # Add additional keys based on query (assuming find_metadata is defined)
-        for query_key in muiDataGridInstance.flattened_set_of_keys:
+        for query_key in mui_data_grid_config_instance.flattened_set_of_keys:
             query_metadata = find_metadata(metadata_file, query_key)
             if query_metadata:
                 data_product_details[query_metadata["key"]] = query_metadata["value"]
@@ -841,12 +841,5 @@ class PGSearchStore:
         Returns:
             None
         """
-        # Adds the first dictionary to the list
-        if len(self.metadata_list) == 0:
-            data_product_details["id"] = 1
-            self.metadata_list.append(data_product_details)
-            return
-
         data_product_details["id"] = len(self.metadata_list) + 1
         self.metadata_list.append(data_product_details)
-        return

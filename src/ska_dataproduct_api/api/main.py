@@ -14,7 +14,7 @@ from ska_dataproduct_api.components.authorisation.authorisation import (
     extract_token,
     get_user_groups,
 )
-from ska_dataproduct_api.components.muidatagrid.mui_datagrid import muiDataGridInstance
+from ska_dataproduct_api.components.muidatagrid.mui_datagrid import mui_data_grid_config_instance
 from ska_dataproduct_api.components.pv_interface.pv_interface import PVInterface
 from ska_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
 from ska_dataproduct_api.components.store.store_factory import (
@@ -169,7 +169,7 @@ async def get_muidatagridconfig() -> dict:
     Returns:
         dict: The MUI DataGrid configuration object.
     """
-    return muiDataGridInstance.table_config
+    return mui_data_grid_config_instance.table_config
 
 
 @app.post("/download", response_class=StreamingResponse)

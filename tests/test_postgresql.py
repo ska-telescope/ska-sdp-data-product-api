@@ -264,7 +264,7 @@ def test_save_metadata_to_postgresql(mocked_postgres_connector):
     with patch.object(metadata_store, "check_metadata_exists_by_hash", return_value=False):
         with patch.object(
             metadata_store,
-            "check_metadata_exists_by_uuid",
+            "get_metadata_id_by_uuid",
             return_value=None,
         ):
             metadata_store.save_metadata_to_postgresql(data_product_metadata_instance)
@@ -273,7 +273,7 @@ def test_save_metadata_to_postgresql(mocked_postgres_connector):
     with patch.object(metadata_store, "check_metadata_exists_by_hash", return_value=False):
         with patch.object(
             metadata_store,
-            "check_metadata_exists_by_uuid",
+            "get_metadata_id_by_uuid",
             return_value=1,
         ):
             metadata_store.save_metadata_to_postgresql(data_product_metadata_instance)

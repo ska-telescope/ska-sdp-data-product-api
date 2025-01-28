@@ -28,7 +28,7 @@ run-dev:
 
 restart-databases-containers:
 # Try restarting Docker containers (ignore errors)
-	docker restart dpd-postgres-container || true
+	-docker restart dpd-postgres-container
 
 create-dev-postgres:
 # Creates a PostgreSQL Docker container for development use.

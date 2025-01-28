@@ -22,7 +22,7 @@ Clone the repository and its submodules:
 
     git clone --recursive git@gitlab.com:ska-telescope/ska-dataproduct-api.git
 
-The application make use a persistent metadata store implemented with PostgreSQL. Development instances of the database can be created in a local Docker environment by running the provided Makefile commands:
+The application makes use of a persistent metadata store implemented with PostgreSQL. Development instances of the database can be created in a local Docker environment by running the provided Makefile commands:
 
 .. note:: You will be required to give a developer password for you database instances, that should also be added to the environment variables below.
 
