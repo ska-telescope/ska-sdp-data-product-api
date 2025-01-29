@@ -18,6 +18,19 @@ def test_status():
     metadata_store = InMemoryVolumeIndexMetadataStore()
     metadata_store.reload_all_data_products_in_index(pv_index=pv_interface.pv_index)
     mocked_search_store = InMemoryDataproductSearch(metadata_store=metadata_store)
+    _ = mocked_search_store.filter_data(
+        mui_data_grid_filter_model={},
+        search_panel_options={
+            "items": [
+                {"field": "", "operator": "contains", "value": ""},
+                {"field": "date_created", "operator": "greaterThan", "value": "2023-01-01"},
+                {"field": "date_created", "operator": "lessThan", "value": ""},
+            ],
+            "logicOperator": "and",
+        },
+        users_user_group_list={},
+    )
+
     response = mocked_search_store.status()
 
     # Assert expected response
@@ -35,6 +48,19 @@ def test_search_metadata_execution_block_with_valid_date_and_no_eb():
     metadata_store = InMemoryVolumeIndexMetadataStore()
     metadata_store.reload_all_data_products_in_index(pv_index=pv_interface.pv_index)
     mocked_search_store = InMemoryDataproductSearch(metadata_store=metadata_store)
+    _ = mocked_search_store.filter_data(
+        mui_data_grid_filter_model={},
+        search_panel_options={
+            "items": [
+                {"field": "", "operator": "contains", "value": ""},
+                {"field": "date_created", "operator": "greaterThan", "value": "2023-01-01"},
+                {"field": "date_created", "operator": "lessThan", "value": ""},
+            ],
+            "logicOperator": "and",
+        },
+        users_user_group_list={},
+    )
+
     expected_execution_block = "eb-notebook-20240201-54576"
 
     # Call the method
@@ -58,6 +84,19 @@ def test_search_metadata_execution_block_with_valid_date_and_eb():
     metadata_store = InMemoryVolumeIndexMetadataStore()
     metadata_store.reload_all_data_products_in_index(pv_index=pv_interface.pv_index)
     mocked_search_store = InMemoryDataproductSearch(metadata_store=metadata_store)
+    _ = mocked_search_store.filter_data(
+        mui_data_grid_filter_model={},
+        search_panel_options={
+            "items": [
+                {"field": "", "operator": "contains", "value": ""},
+                {"field": "date_created", "operator": "greaterThan", "value": "2023-01-01"},
+                {"field": "date_created", "operator": "lessThan", "value": ""},
+            ],
+            "logicOperator": "and",
+        },
+        users_user_group_list={},
+    )
+
     expected_execution_block = "eb-notebook-20240201-54576"
     metadata_key_value_pairs = [
         {"metadata_key": "execution_block", "metadata_value": "eb-notebook-20240201-54576"}

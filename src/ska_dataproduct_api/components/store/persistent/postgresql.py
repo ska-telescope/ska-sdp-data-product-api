@@ -4,6 +4,7 @@ import json
 import logging
 import pathlib
 import uuid
+from datetime import datetime, timezone
 from typing import Any, List
 
 import psycopg
@@ -11,10 +12,12 @@ from psycopg.rows import class_row
 
 from ska_dataproduct_api.components.annotations.annotation import DataProductAnnotation
 from ska_dataproduct_api.components.metadata.metadata import DataProductMetadata
+from ska_dataproduct_api.components.muidatagrid.mui_datagrid import mui_data_grid_config_instance
 from ska_dataproduct_api.components.pv_interface.pv_interface import PVIndex
-from ska_dataproduct_api.components.store.metadata_store_base_class import MetadataStore
+from ska_dataproduct_api.configuration.settings import POSTGRESQL_QUERY_SIZE_LIMIT
 from ska_dataproduct_api.utilities.helperfunctions import (
     DataProductIdentifier,
+    find_metadata,
     validate_data_product_identifier,
 )
 
@@ -28,9 +31,9 @@ logger = logging.getLogger(__name__)
 # pylint: disable=not-context-manager
 
 
-class PostgresConnector(MetadataStore):
+class PostgresConnector:
     """
-    A class to connect to a PostgreSQL instance and test its availability.
+    A class to connect to a PostgreSQL database.
     """
 
     def __init__(
@@ -41,8 +44,6 @@ class PostgresConnector(MetadataStore):
         password: str,
         dbname: str,
         schema: str,
-        table_name: str,
-        annotations_table_name: str,
     ):
         super().__init__()
         self.host = host
@@ -51,15 +52,12 @@ class PostgresConnector(MetadataStore):
         self.password = password
         self.dbname = dbname
         self.schema = schema
-        self.table_name = table_name
-        self.annotations_table_name = annotations_table_name
         self.conn = None
         self.max_retries = 3  # The maximum number of retries
         self.retry_delay = 5  # The delay between retries in seconds
-        self.postgresql_running: bool = False
-        self.number_of_dataproducts: int = 0
         self.connection_string: str = self.build_connection_string()
-        self.connect()
+        self.postgresql_running: bool = False
+        self.get_postgresql_version()
 
     def status(self) -> dict:
         """
@@ -69,34 +67,14 @@ class PostgresConnector(MetadataStore):
             A dictionary containing the current status information.
         """
         return {
-            "store_type": "Persistent PosgreSQL metadata store",
             "host": self.host,
             "port": self.port,
             "user": self.user,
             "configured": self.postgresql_configured,
             "running": self.postgresql_running,
-            "indexing": self.indexing,
             "dbname": self.dbname,
             "schema": self.schema,
-            "table_name": self.table_name,
-            "annotations_table_name": self.annotations_table_name,
-            "number_of_dataproducts": self.number_of_dataproducts,
-            "postgresql_version": self.postgresql_version,
-            "last_metadata_update_time": self.date_modified,
         }
-
-    def connect(self) -> None:
-        """Connects to the PostgreSQL database and performs initialization tasks.
-
-        This method establishes a connection to the PostgreSQL database, retrieves the
-        PostgreSQL version, creates the metadata table and annotations table if they
-        do not exist, and counts the number of data products stored as JSONB objects.
-        """
-        self.postgresql_version: str = self.get_postgresql_version()
-        if self.postgresql_running:
-            self.create_metadata_table()
-            self.create_annotations_table()
-            self.number_of_dataproducts = self.count_jsonb_objects()
 
     def build_connection_string(self) -> str:
         """
@@ -124,35 +102,93 @@ class PostgresConnector(MetadataStore):
         """
         Retrieves the PostgreSQL version from the database.
 
-        Args:
-            None
+        Returns:
+            str: The PostgreSQL version.
+        """
+        try:
+            query_string = "SELECT version()"
+            with psycopg.connect(self.connection_string) as conn:
+                with conn.cursor() as cur:
+                    cur.execute(query=query_string)
+                    self.postgresql_running = True
+                    return cur.fetchone()[0]
+        except (psycopg.OperationalError, psycopg.DatabaseError) as error:
+            self.postgresql_running = False
+            logger.error("Database error: %s", error)
+            raise error
+
+
+class PGMetadataStore:
+    """
+    A class contains the methods related to the Metadata Store.
+    """
+
+    def __init__(
+        self,
+        db: PostgresConnector,
+        science_metadata_table_name: str,
+        annotations_table_name: str,
+    ):
+        self.db: PostgresConnector = db
+        self.science_metadata_table_name = science_metadata_table_name
+        self.annotations_table_name = annotations_table_name
+        self.metadata_list = []
+        self.date_modified = datetime.now(tz=timezone.utc)
+
+        if self.db.postgresql_running:
+            self.create_metadata_table()
+            self.create_annotations_table()
+
+    @property
+    def number_of_date_products_in_table(self) -> int:
+        """Counts the number of JSON objects within the science metadata table.
 
         Returns:
-            The PostgreSQL version string.
+            The total count of JSON objects.
         """
-        query_string = "SELECT version()"
-        with psycopg.connect(self.connection_string) as conn:
-            with conn.cursor() as cur:
-                cur.execute(query=query_string)
-                self.postgresql_running = True
-                return cur.fetchone()[0]
+        try:
+            query_string = (
+                f"SELECT COUNT(*) FROM {self.db.schema}.{self.science_metadata_table_name}"
+            )
+            with psycopg.connect(self.db.connection_string) as conn:
+                with conn.cursor() as cur:
+                    cur.execute(query=query_string)
+                    return int(cur.fetchone()[0])
+        except (psycopg.OperationalError, psycopg.DatabaseError) as error:
+            self.db.postgresql_running = False
+            logger.error("Database error: %s", error)
+            return None
+
+    def status(self) -> dict:
+        """
+        Retrieves the current status of the Metadata Store.
+
+        Returns:
+            A dictionary containing the current status information.
+        """
+        return {
+            "store_type": "Persistent PosgreSQL metadata store",
+            "db_status": self.db.status(),
+            "running": self.db.postgresql_running,
+            "last_metadata_update_time": self.date_modified,
+            "science_metadata_table_name": self.science_metadata_table_name,
+            "annotations_table_name": self.annotations_table_name,
+            "number_of_dataproducts": self.number_of_date_products_in_table,
+        }
 
     def create_metadata_table(self) -> None:
-        """Creates the metadata table named as defined in the env variable self.table_name
-        if it doesn't exist.
-
-        Raises:
-            psycopg.Error: If there's an error executing the SQL query.
+        """Creates the metadata table named as defined in the env variable
+        self.science_metadata_table_name if it doesn't exist.
         """
 
         logger.info(
             "Creating PostgreSQL metadata table: %s, in schema: %s",
-            self.table_name,
-            self.schema,
+            self.science_metadata_table_name,
+            self.db.schema,
         )
 
         query_string = f"""
-            CREATE TABLE IF NOT EXISTS {self.schema}.{self.table_name} (
+            CREATE TABLE IF NOT EXISTS {self.db.schema}.{self.science_metadata_table_name} (
                 id SERIAL PRIMARY KEY,
                 data JSONB NOT NULL,
                 execution_block VARCHAR(255) DEFAULT NULL,
@@ -161,32 +197,29 @@ class PostgresConnector(MetadataStore):
             );
             """
 
-        with psycopg.connect(self.connection_string) as conn:
+        with psycopg.connect(self.db.connection_string) as conn:
             with conn.cursor() as cur:
                 cur.execute(query=query_string)
                 conn.commit()
                 logger.info(
                     "PostgreSQL metadata table %s created in schema: %s.",
-                    self.table_name,
-                    self.schema,
+                    self.science_metadata_table_name,
+                    self.db.schema,
                 )
 
     def create_annotations_table(self) -> None:
         """Creates the annotations table named as defined in the env variable
         self.annotations_table_name if it doesn't exist.
-
-        Raises:
-            psycopg.Error: If there's an error executing the SQL query.
         """
 
         logger.info(
             "Creating PostgreSQL annotations table: %s, in schema: %s",
             self.annotations_table_name,
-            self.schema,
+            self.db.schema,
         )
 
         query_string = f"""
-            CREATE TABLE IF NOT EXISTS {self.schema}.{self.annotations_table_name} (
+            CREATE TABLE IF NOT EXISTS {self.db.schema}.{self.annotations_table_name} (
                 id SERIAL PRIMARY KEY,
                 uuid VARCHAR(64),
                 annotation_text TEXT,
@@ -196,31 +229,25 @@ class PostgresConnector(MetadataStore):
             );
             """
 
-        with psycopg.connect(self.connection_string) as conn:
+        with psycopg.connect(self.db.connection_string) as conn:
             with conn.cursor() as cur:
                 cur.execute(query=query_string)
                 conn.commit()
                 logger.info(
                     "PostgreSQL annotations table %s created in schema: %s.",
                     self.annotations_table_name,
-                    self.schema,
+                    self.db.schema,
                 )
 
     def reload_all_data_products_in_index(self, pv_index: PVIndex) -> None:
         """
-        Reindexes the persistent volume by ingesting all data product files.
+        Reloads all data product files from the pv_index.
 
-        This method iterates over all data product files in the persistent storage path,
-        ingests each file, and finally counts the JSONB objects.
-
-        Raises:
-            Exception: If an error occurs during the reindexing process.
+        This method iterates over all data product files in the pv_index,
+        ingests each file.
         """
         logger.info("Reloading all data products from PV index into metadata store...")
-        if not self.postgresql_running and self.postgresql_configured:
-            self.connect()
 
-        self.indexing = True
         for _, pv_data_product in pv_index.dict_of_data_products_on_pv.items():
             try:
                 _ = self.ingest_file(pv_data_product.path)
@@ -230,8 +257,7 @@ class PostgresConnector(MetadataStore):
                     "An error occurred while connecting to the PostgreSQL database: %s",
                     error,
                 )
-                self.postgresql_running = False
-                self.indexing = False
+                self.db.postgresql_running = False
                 raise
             except Exception as error:  # pylint: disable=broad-exception-caught
                 logger.error(
@@ -240,8 +266,6 @@ class PostgresConnector(MetadataStore):
                     error,
                 )
 
-        self.number_of_dataproducts = self.count_jsonb_objects()
-        self.indexing = False
         logger.info("Reloading into metadata store completed.")
 
     def ingest_file(self, data_product_metadata_file_path: pathlib.Path) -> uuid.UUID:
@@ -266,22 +290,25 @@ class PostgresConnector(MetadataStore):
             raise error
 
         self.save_metadata_to_postgresql(data_product_metadata_instance)
-        self.update_data_store_date_modified()
+        self.date_modified = datetime.now(tz=timezone.utc)
         return data_product_metadata_instance.data_product_uuid
 
     def check_metadata_exists_by_hash(self, json_hash: str) -> bool:
         """Checks if metadata exists based on the given hash."""
-        query_string = f"SELECT EXISTS(SELECT 1 FROM {self.schema}.{self.table_name} WHERE \
-json_hash = %s)"
-        with psycopg.connect(self.connection_string) as conn:
+        query_string = f"SELECT EXISTS(SELECT 1 FROM {self.db.schema}.\
+{self.science_metadata_table_name} WHERE json_hash = %s)"
+        with psycopg.connect(self.db.connection_string) as conn:
             with conn.cursor() as cur:
                 cur.execute(query=query_string, params=(json_hash,))
                 return cur.fetchone()[0]
 
-    def check_metadata_exists_by_uuid(self, data_product_uuid: str) -> bool:
-        """Checks if metadata exists based on the given execution block."""
-        query_string = f"SELECT id FROM {self.schema}.{self.table_name} WHERE uuid = %s"
-        with psycopg.connect(self.connection_string) as conn:
+    def get_metadata_id_by_uuid(self, data_product_uuid: str) -> str | None:
+        """Checks if metadata exists based on the given execution block and return the PRIMARY KEY
+        if it exists."""
+        query_string = (
+            f"SELECT id FROM {self.db.schema}.{self.science_metadata_table_name} WHERE uuid = %s"
+        )
+        with psycopg.connect(self.db.connection_string) as conn:
             with conn.cursor() as cur:
                 cur.execute(query=query_string, params=(data_product_uuid,))
                 result = cur.fetchone()
@@ -291,9 +318,9 @@ json_hash = %s)"
         self, data_product_metadata_instance: DataProductMetadata, id_field: int
     ) -> None:
         """Updates existing metadata with the given data and hash."""
-        query_string = f"UPDATE {self.schema}.{self.table_name} SET data = %s, json_hash = %s, \
-uuid = %s WHERE id = %s"
-        with psycopg.connect(self.connection_string) as conn:
+        query_string = f"UPDATE {self.db.schema}.{self.science_metadata_table_name} \
+SET data = %s, json_hash = %s, uuid = %s WHERE id = %s"
+        with psycopg.connect(self.db.connection_string) as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     query=query_string,
@@ -308,10 +335,10 @@ uuid = %s WHERE id = %s"
 
     def insert_metadata(self, data_product_metadata_instance: DataProductMetadata) -> None:
         """Inserts new metadata into the database."""
-        table: str = self.schema + "." + self.table_name
+        table: str = self.db.schema + "." + self.science_metadata_table_name
         query_string = f"INSERT INTO {table} (data, json_hash, execution_block, uuid) VALUES \
 (%s, %s, %s, %s)"
-        with psycopg.connect(self.connection_string) as conn:
+        with psycopg.connect(self.db.connection_string) as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     query=query_string,
@@ -352,7 +379,7 @@ uuid = %s WHERE id = %s"
             return
 
         # Update if uuid exist
-        metadata_table_id = self.check_metadata_exists_by_uuid(
+        metadata_table_id = self.get_metadata_id_by_uuid(
             str(data_product_metadata_instance.data_product_uuid)
         )
 
@@ -362,7 +389,6 @@ uuid = %s WHERE id = %s"
                 "Updated metadata with execution_block %s",
                 data_product_metadata_instance.execution_block,
             )
-            self.number_of_dataproducts = self.count_jsonb_objects()
             return
 
         # Add if neither uuid or execution_block exist
@@ -371,24 +397,6 @@ uuid = %s WHERE id = %s"
             "Inserted new metadata with execution_block %s",
             data_product_metadata_instance.execution_block,
         )
-        self.number_of_dataproducts = self.count_jsonb_objects()
-
-    def count_jsonb_objects(self) -> int:
-        """Counts the number of JSON objects within a JSONB column.
-
-        Returns:
-            The total count of JSON objects.
-        """
-        try:
-            query_string = f"SELECT COUNT(*) FROM {self.schema}.{self.table_name}"
-            with psycopg.connect(self.connection_string) as conn:
-                with conn.cursor() as cur:
-                    cur.execute(query=query_string)
-                    return int(cur.fetchone()[0])
-        except (psycopg.OperationalError, psycopg.DatabaseError) as error:
-            self.postgresql_running = False
-            logger.error("Database error: %s", error)
-            return self.number_of_dataproducts  # Count failed , returning previous count
 
     def load_data_products_from_persistent_metadata_store(self) -> list[dict[str, any]]:
         """Fetches JSONB data from Postgresql table.
@@ -400,14 +408,16 @@ uuid = %s WHERE id = %s"
             list[Dict[str, any]]: list of data products.
         """
         try:
-            query_string = f"SELECT id, data FROM {self.schema}.{self.table_name}"
-            with psycopg.connect(self.connection_string) as conn:
+            query_string = (
+                f"SELECT id, data FROM {self.db.schema}.{self.science_metadata_table_name}"
+            )
+            with psycopg.connect(self.db.connection_string) as conn:
                 with conn.cursor() as cur:
                     cur.execute(query=query_string)
                     result = cur.fetchall()
                     return [{"id": row[0], "data": row[1]} for row in result]
         except (psycopg.OperationalError, psycopg.DatabaseError) as error:
-            self.postgresql_running = False
+            self.db.postgresql_running = False
             logger.error("Database error: %s", error)
             return []
 
@@ -442,12 +452,11 @@ uuid = %s WHERE id = %s"
         Returns:
             The data (JSONB) associated with the execution block, or None if not found.
         """
-        query_string = (
-            f"SELECT data FROM {self.schema}.{self.table_name} WHERE execution_block = %s"
-        )
+        query_string = f"SELECT data FROM {self.db.schema}.{self.science_metadata_table_name} \
+WHERE execution_block = %s"
 
         try:
-            with psycopg.connect(self.connection_string) as conn:
+            with psycopg.connect(self.db.connection_string) as conn:
                 with conn.cursor() as cur:
                     try:
                         cur.execute(query=query_string, params=(execution_block,))
@@ -463,7 +472,7 @@ uuid = %s WHERE id = %s"
                         )
                         return {}
         except (psycopg.OperationalError, psycopg.DatabaseError) as error:
-            self.postgresql_running = False
+            self.db.postgresql_running = False
             raise error
 
     def get_data_by_uuid(self, data_product_uuid: str) -> dict[str, Any] | None:
@@ -475,9 +484,11 @@ uuid = %s WHERE id = %s"
         Returns:
             The data (JSONB) associated with the uuid, or None if not found.
         """
-        query_string = f"SELECT data FROM {self.schema}.{self.table_name} WHERE uuid = %s"
+        query_string = (
+            f"SELECT data FROM {self.db.schema}.{self.science_metadata_table_name} WHERE uuid = %s"
+        )
         try:
-            with psycopg.connect(self.connection_string) as conn:
+            with psycopg.connect(self.db.connection_string) as conn:
                 with conn.cursor() as cur:
                     try:
                         cur.execute(query=query_string, params=(data_product_uuid,))
@@ -491,7 +502,7 @@ uuid = %s WHERE id = %s"
                         )
                         return {}
         except (psycopg.OperationalError, psycopg.DatabaseError) as error:
-            self.postgresql_running = False
+            self.db.postgresql_running = False
             raise error
 
     def get_data_product_file_paths(
@@ -540,14 +551,14 @@ uuid = %s WHERE id = %s"
 
     def save_annotation(self, data_product_annotation: DataProductAnnotation) -> None:
         """Inserts new annotation into the database."""
-        table: str = self.schema + "." + self.annotations_table_name
+        table: str = self.db.schema + "." + self.annotations_table_name
 
         if data_product_annotation.annotation_id is None:
             query_string = f"INSERT INTO {table} \
                 (uuid, annotation_text, \
                   user_principal_name, timestamp_created, timestamp_modified)\
                 VALUES (%s, %s, %s, %s, %s)"
-            with psycopg.connect(self.connection_string) as conn:
+            with psycopg.connect(self.db.connection_string) as conn:
                 with conn.cursor() as cur:
                     cur.execute(
                         query=query_string,
@@ -564,7 +575,7 @@ uuid = %s WHERE id = %s"
             query_string = f"UPDATE {table} \
                     SET annotation_text = %s, user_principal_name = %s, timestamp_modified = %s\
                     WHERE id = %s"
-            with psycopg.connect(self.connection_string) as conn:
+            with psycopg.connect(self.db.connection_string) as conn:
                 with conn.cursor() as cur:
                     cur.execute(
                         query=query_string,
@@ -579,7 +590,7 @@ uuid = %s WHERE id = %s"
 
     def retrieve_annotations_by_uuid(self, data_product_uuid: str) -> List[DataProductAnnotation]:
         """Returns all annotations associated with a data product uuid."""
-        table: str = self.schema + "." + self.annotations_table_name
+        table: str = self.db.schema + "." + self.annotations_table_name
         query_string = f"SELECT id as annotation_id, \
                             uuid as data_product_uuid, \
                             annotation_text, \
@@ -588,7 +599,7 @@ uuid = %s WHERE id = %s"
                             timestamp_modified \
                         from {table} WHERE uuid = %s"
         try:
-            with psycopg.connect(self.connection_string) as conn:
+            with psycopg.connect(self.db.connection_string) as conn:
                 with conn.cursor(row_factory=class_row(DataProductAnnotation)) as cur:
                     try:
                         cur.execute(query=query_string, params=[data_product_uuid])
@@ -601,5 +612,234 @@ uuid = %s WHERE id = %s"
                         )
                         raise error
         except (psycopg.OperationalError, psycopg.DatabaseError) as error:
-            self.postgresql_running = False
+            self.db.postgresql_running = False
             raise error
+
+
+class PGSearchStore:
+    """
+    A class contains the methods related to searching through the PostgreSQL Metadata Store.
+    """
+
+    def __init__(
+        self,
+        db: PostgresConnector,
+        science_metadata_table_name: str,
+        annotations_table_name: str,
+    ):
+        self.db: PostgresConnector = db
+        self.science_metadata_table_name = science_metadata_table_name
+        self.annotations_table_name = annotations_table_name
+        self.metadata_list = []
+
+    def status(self) -> dict:
+        """
+        Returns a dictionary containing the current status of the PGSearchStore.
+
+        Includes information about:
+            - metadata_store_in_use (str): The type of metadata store being used (e.g.,
+            "PGSearchStore").
+        """
+
+        response = {
+            "metadata_store_in_use": "PGSearchStore",
+        }
+
+        return response
+
+    def access_filter(
+        self, data: list[dict[str, Any]], users_user_groups: list[str]
+    ) -> list[dict[str, Any]]:
+        """Filters the mui_data_grid_filter_model based on access groups.
+
+        Args:
+            data: A list of dictionaries representing filter model data.
+            users_user_groups: A list of user group names.
+
+        Returns:
+            A filtered list of dictionaries where either no access_group is assigned or the
+            assigned access_group is in the users_user_groups list.
+        """
+        filtered_model = []
+        for item in data:
+            access_group = item.get("context.access_group", None)
+            if access_group is None or access_group in users_user_groups:
+                filtered_model.append(item)
+        return filtered_model
+
+    def filter_data(
+        self,
+        mui_data_grid_filter_model,
+        search_panel_options,
+        users_user_group_list: list[str],
+    ):
+        """Filters data based on provided criteria.
+
+        Args:
+            mui_data_grid_filter_model: Filter model from the MUI data grid.
+            search_panel_options: Search panel options including date range and key value pairs.
+            users_user_group_list: List of user groups.
+
+        Returns:
+            Filtered data.
+        """
+        mui_data_rows: list[dict] = []
+
+        try:
+            mui_data_grid_filter_model["items"].extend(search_panel_options.get("items", []))
+        except KeyError:
+            mui_data_grid_filter_model["items"] = search_panel_options.get("items", [])
+
+        self.metadata_list.clear()
+        sql_search_query, params = self.create_postgresql_query(
+            filter_model=mui_data_grid_filter_model, table_name=self.science_metadata_table_name
+        )
+        self.search_metadata(sql_search_query=sql_search_query, params=params)
+
+        mui_data_grid_config_instance.flattened_list_of_dataproducts_metadata.clear()
+        for dataproduct in self.metadata_list:
+            mui_data_grid_config_instance.update_flattened_list_of_keys(dataproduct)
+            mui_data_grid_config_instance.update_flattened_list_of_dataproducts_metadata(
+                mui_data_grid_config_instance.flatten_dict(dataproduct)
+            )
+        for row in mui_data_grid_config_instance.flattened_list_of_dataproducts_metadata:
+            mui_data_rows.append(row)
+
+        access_filtered_data = self.access_filter(
+            data=mui_data_rows.copy(), users_user_groups=users_user_group_list
+        )
+
+        return access_filtered_data
+
+    def create_postgresql_query(self, filter_model: dict, table_name: str) -> tuple[str, list]:
+        """
+        Creates a PostgreSQL query string from a MUI Data Grid filter model.
+
+        Args:
+            filter_model: The MUI Data Grid filter model.
+            table_name: The name of the table to query.
+
+        Returns:
+            A PostgreSQL query string.
+        """
+
+        query = f"SELECT data FROM {self.db.schema}.{table_name}"
+        where_clauses = []
+        params = []
+
+        for item in filter_model.get("items", []):
+
+            # Use .get() with a default value to handle missing keys
+            field = item.get("field", None)
+            operator = item.get("operator", None)
+            value = item.get("value", None)
+
+            if (
+                not field
+                or not operator
+                or not value
+                or field not in mui_data_grid_config_instance.flattened_set_of_keys
+            ):
+                continue
+            if operator == "greaterThan":
+                where_clauses.append(f"data->>'{field}' > %s")
+                params.append(value)
+            elif operator == "lessThan":
+                where_clauses.append(f"data->>'{field}' < %s")
+                params.append(value)
+            elif operator == "equals":
+                where_clauses.append(f"data->>'{field}' = %s")
+                params.append(value)
+            elif operator == "contains":
+                where_clauses.append(f"data->>'{field}' ILIKE %s")
+                params.append(f"%{value}%")
+            elif operator == "startsWith":
+                where_clauses.append(f"data->>'{field}' ILIKE %s")
+                params.append(f"{value}%")
+            elif operator == "endsWith":
+                where_clauses.append(f"data->>'{field}' ILIKE %s")
+                params.append(f"%{value}")
+            elif operator == "isEmpty":
+                where_clauses.append(f"data->>'{field}' IS NULL OR data->>'{field}' = ''")
+            elif operator == "isNotEmpty":
+                where_clauses.append(f"data->>'{field}' IS NOT NULL AND data->>'{field}' != ''")
+            elif operator == "isAnyOf":
+                where_clauses.append(f"data->>'{field}' = ANY(%s)")
+                params.append(value)
+
+        if where_clauses:
+            query += " WHERE " + " AND ".join(where_clauses)
+
+        query += " ORDER BY (data->>'date_created')::timestamp DESC LIMIT " + str(
+            POSTGRESQL_QUERY_SIZE_LIMIT
+        )
+
+        return query, params
+
+    def search_metadata(self, sql_search_query, params):
+        """Metadata search method"""
+        try:
+            with psycopg.connect(self.db.connection_string) as conn:
+                with conn.cursor() as cur:
+                    try:
+                        cur.execute(query=sql_search_query, params=params)
+                        result = cur.fetchall()
+                        for value in result:
+                            self.add_dataproduct(metadata_file=value[0])
+                        return {}
+                    except (IndexError, TypeError) as error:
+                        logger.warning("Metadata search error %s", error)
+                        return {}
+        except (psycopg.OperationalError, psycopg.DatabaseError) as error:
+            self.db.postgresql_running = False
+            raise error
+
+    def add_dataproduct(self, metadata_file: dict):
+        """
+        Populates the MUI Data Grid class the given metadata.
+
+        Args:
+            metadata_file: A dictionary containing the metadata for a data product.
+
+        Raises:
+            ValueError: If the provided metadata_file is not a dictionary.
+        """
+        required_keys = {
+            "execution_block",
+            "date_created",
+            "dataproduct_file",
+            "metadata_file",
+            "data_product_uuid",
+        }
+        data_product_details = {}
+
+        # Handle top-level required keys
+        for key in required_keys:
+            if key in metadata_file:
+                metadata_file[key] = metadata_file[key]
+
+        # Add additional keys based on query (assuming find_metadata is defined)
+        for query_key in mui_data_grid_config_instance.flattened_set_of_keys:
+            query_metadata = find_metadata(metadata_file, query_key)
+            if query_metadata:
+                data_product_details[query_metadata["key"]] = query_metadata["value"]
+
+        self.update_dataproduct_list(metadata_file)
+
+    def update_dataproduct_list(self, data_product_details):
+        """
+        Updates the internal list of data products with the provided metadata.
+
+        This method adds the provided `data_product_details` dictionary to the internal
+        `metadata_list` attribute. If the list is empty, it assigns an "id" of 1 to the
+        first data product. Otherwise, it assigns an "id" based on the current length
+        of the list + 1.
+
+        Args:
+            data_product_details: A dictionary containing the metadata for a data product.
+
+        Returns:
+            None
+        """
+        data_product_details["id"] = len(self.metadata_list) + 1
+        self.metadata_list.append(data_product_details)
