@@ -4,6 +4,8 @@
 ## Current Development
 
 
+## v0.12.0
+
 - [NAL-1347](https://jira.skatelescope.org/browse/NAL-1347)
     - [Added] Added a PVDataProduct, PVIndex and PVInterface class, refactoring the PV interface in preparation to ease the integration with the DLM database.
     - [Changed] Removed indexing from the MetadataStore store class, and integrated indexing from the PVInterface class.
