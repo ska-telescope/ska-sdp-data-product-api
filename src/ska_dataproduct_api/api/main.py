@@ -16,7 +16,7 @@ from ska_dataproduct_api.components.authorisation.authorisation import (
 )
 from ska_dataproduct_api.components.muidatagrid.mui_datagrid import mui_data_grid_config_instance
 from ska_dataproduct_api.components.pv_interface.pv_interface import PVInterface
-from ska_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
+from ska_dataproduct_api.components.store.persistent.postgresql import PGMetadataStore
 from ska_dataproduct_api.components.store.store_factory import (
     select_metadata_store_class,
     select_search_store_class,
@@ -285,7 +285,7 @@ async def layout():
 async def annotation(data_product_annotation: DataProductAnnotation, response: Response):
     """API endpoint to create new annotations linked to a data product."""
 
-    if not isinstance(metadata_store, (PostgresConnector, MagicMock)):
+    if not isinstance(metadata_store, (PGMetadataStore, MagicMock)):
         logger.info("PostgresSQL not available, cannot access data annotations.")
         response.status_code = status.HTTP_202_ACCEPTED
         return {
@@ -321,7 +321,7 @@ async def get_annotation_by_uuid(
     data_product_uuid: str, response: Response
 ) -> List[DataProductAnnotation] | list:
     """API GET endpoint to retrieve all annotations linked to a data product."""
-    if not isinstance(metadata_store, (PostgresConnector, MagicMock)):
+    if not isinstance(metadata_store, (PGMetadataStore, MagicMock)):
         logger.info("PostgresSQL not available, cannot access data annotations.")
         response.status_code = status.HTTP_202_ACCEPTED
         return {
