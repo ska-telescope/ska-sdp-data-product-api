@@ -3,6 +3,8 @@
 
 ## Current Development
 
+- [NAL-1320](https://jira.skatelescope.org/browse/NAL-1320)
+    - [Changed] Updated the annotation endpoint to obtain the user details for the user profile using the auth token.
 
 ## v0.12.0
 

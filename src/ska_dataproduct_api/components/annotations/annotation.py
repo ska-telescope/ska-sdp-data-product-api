@@ -31,7 +31,7 @@ class DataProductAnnotation:
     """
 
     annotation_text: str
-    user_principal_name: str
+    user_principal_name: str = None
     timestamp_modified: datetime = None
     timestamp_created: datetime = None
     data_product_uuid: str = None
