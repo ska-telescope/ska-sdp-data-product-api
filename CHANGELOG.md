@@ -3,6 +3,9 @@
 
 ## Current Development
 
+- [NAL-1322](https://jira.skatelescope.org/browse/NAL-1322)
+    - [Changed] Updated the PostgreSQL search to allow search of annotations saved in the annotation table.
+
 - [NAL-1320](https://jira.skatelescope.org/browse/NAL-1320)
     - [Changed] Updated the annotation endpoint to obtain the user details for the user profile using the auth token.
 
