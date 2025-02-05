@@ -301,7 +301,7 @@ async def annotation(token: str, request: Request):
     if not isinstance(metadata_store, (PGMetadataStore, MagicMock)):
         logger.info("PostgresSQL not available, cannot access data annotations.")
         return Response(
-            status_code=status.HTTP_202_ACCEPTED,
+            status_code=status.HTTP_404_NOT_FOUND,
             content=json.dumps(
                 {
                     "status": "Received but not processed",
