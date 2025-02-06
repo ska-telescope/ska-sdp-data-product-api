@@ -115,3 +115,33 @@ async def get_user_groups(token: str | None) -> dict[str, list[str]]:
     except (HTTPStatusError, AuthError, ConnectError, TimeoutException) as error:
         logger.error("Error fetching user groups: %s", error)
         return {"user_groups": []}
+
+
+async def get_user_profile(token: str | None) -> dict[str, list[str]]:
+    """Fetches user profile from the permissions API.
+
+    Args:
+        token: The access token.
+
+    Returns:
+        A dictionary containing the user's profile, or an empty dictionary
+        if there's an error or no token is provided.
+
+    Raises:
+        None
+    """
+    try:
+        if token is None:
+            return {"user_profile": []}
+
+        headers = {"Authorization": f"Bearer {token}"}
+        async with httpx.AsyncClient(timeout=10) as client:
+            permissions_api_verification_endpoint = (
+                f"{SKA_PERMISSIONS_API_HOST}:{SKA_PERMISSIONS_API_PORT}/v2/user/profile"
+            )
+            response = await client.get(permissions_api_verification_endpoint, headers=headers)
+            response.raise_for_status()
+            return response.json()
+    except (HTTPStatusError, AuthError, ConnectError, TimeoutException) as error:
+        logger.error("Error fetching user groups: %s", error)
+        return {"user_profile": []}

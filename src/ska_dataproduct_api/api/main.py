@@ -1,5 +1,6 @@
 """This API exposes SKA Data Products to the SKA Data Product Dashboard."""
 
+import json
 import logging
 from datetime import datetime, timezone
 from typing import List
@@ -13,10 +14,11 @@ from ska_dataproduct_api.components.annotations.annotation import DataProductAnn
 from ska_dataproduct_api.components.authorisation.authorisation import (
     extract_token,
     get_user_groups,
+    get_user_profile,
 )
 from ska_dataproduct_api.components.muidatagrid.mui_datagrid import mui_data_grid_config_instance
 from ska_dataproduct_api.components.pv_interface.pv_interface import PVInterface
-from ska_dataproduct_api.components.store.persistent.postgresql import PostgresConnector
+from ska_dataproduct_api.components.store.persistent.postgresql import PGMetadataStore
 from ska_dataproduct_api.components.store.store_factory import (
     select_metadata_store_class,
     select_search_store_class,
@@ -282,36 +284,63 @@ async def layout():
 
 
 @app.post("/annotation")
-async def annotation(data_product_annotation: DataProductAnnotation, response: Response):
+@extract_token
+async def annotation(token: str, request: Request):
     """API endpoint to create new annotations linked to a data product."""
 
-    if not isinstance(metadata_store, (PostgresConnector, MagicMock)):
+    users_profile = await get_user_profile(token=token)
+    data = await request.json()
+
+    data_product_annotation = DataProductAnnotation(
+        annotation_text=data.get("annotation_text"),
+        annotation_id=data.get("annotation_id", None),
+        user_principal_name=users_profile["user_profile"]["userPrincipalName"],
+        data_product_uuid=data.get("data_product_uuid"),
+    )
+
+    if not isinstance(metadata_store, (PGMetadataStore, MagicMock)):
         logger.info("PostgresSQL not available, cannot access data annotations.")
-        response.status_code = status.HTTP_202_ACCEPTED
-        return {
-            "status": "Received but not processed",
-            "message": "PostgresSQL is not available, cannot access data annotations.",
-        }
+        return Response(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content=json.dumps(
+                {
+                    "status": "Received but not processed",
+                    "message": "PostgresSQL is not available, cannot access data annotations.",
+                }
+            ),
+            media_type="application/json",
+        )
     try:
         metadata_store.save_annotation(data_product_annotation)
         if data_product_annotation.annotation_id is None:
             logger.info("New annotation created successfully.")
-            response.status_code = status.HTTP_201_CREATED
-            return {
-                "status": "success",
-                "message": "New Data Annotation received and successfully saved.",
-            }
+            return Response(
+                status_code=status.HTTP_201_CREATED,
+                content=json.dumps(
+                    {
+                        "status": "success",
+                        "message": "New Data Annotation received and successfully saved.",
+                    }
+                ),
+                media_type="application/json",
+            )
         logger.info("Annotation updated successfully.")
-        return {
-            "status": "success",
-            "message": "Data Annotation received and updated successfully.",
-        }
-    except Exception as error:
-        logger.error("Error saving annotation: %s", error)
+        return Response(
+            status_code=status.HTTP_200_OK,
+            content=json.dumps(
+                {
+                    "status": "success",
+                    "message": "Data Annotation received and updated successfully.",
+                }
+            ),
+            media_type="application/json",
+        )
+    except Exception as exception:
+        logger.exception("Error saving annotation: %s", exception)
         raise HTTPException(
-            status_code=500,
-            detail=f"Internal server error while saving new annotation. Error: {error}",
-        ) from error
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Internal server error while saving new annotation. Error: {exception}",
+        ) from exception
 
 
 @app.get(
@@ -321,7 +350,7 @@ async def get_annotation_by_uuid(
     data_product_uuid: str, response: Response
 ) -> List[DataProductAnnotation] | list:
     """API GET endpoint to retrieve all annotations linked to a data product."""
-    if not isinstance(metadata_store, (PostgresConnector, MagicMock)):
+    if not isinstance(metadata_store, (PGMetadataStore, MagicMock)):
         logger.info("PostgresSQL not available, cannot access data annotations.")
         response.status_code = status.HTTP_202_ACCEPTED
         return {

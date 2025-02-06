@@ -566,14 +566,14 @@ WHERE execution_block = %s"
                             data_product_annotation.data_product_uuid,
                             data_product_annotation.annotation_text,
                             data_product_annotation.user_principal_name,
-                            data_product_annotation.timestamp_created,
-                            data_product_annotation.timestamp_modified,
+                            datetime.now(tz=timezone.utc),
+                            datetime.now(tz=timezone.utc),
                         ),
                     )
                     conn.commit()
         else:
             query_string = f"UPDATE {table} \
-                    SET annotation_text = %s, user_principal_name = %s, timestamp_modified = %s\
+                    SET annotation_text = %s, timestamp_modified = %s\
                     WHERE id = %s"
             with psycopg.connect(self.db.connection_string) as conn:
                 with conn.cursor() as cur:
@@ -581,8 +581,7 @@ WHERE execution_block = %s"
                         query=query_string,
                         params=(
                             data_product_annotation.annotation_text,
-                            data_product_annotation.user_principal_name,
-                            data_product_annotation.timestamp_modified,
+                            datetime.now(tz=timezone.utc),
                             data_product_annotation.annotation_id,
                         ),
                     )
