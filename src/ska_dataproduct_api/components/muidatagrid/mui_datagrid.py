@@ -107,6 +107,7 @@ class MuiDataGridConfig:
         self.table_config["columns"] = self.columns
 
         self.flattened_set_of_keys = set()
+        self.flattened_set_of_keys.add("annotation")
         self.flattened_list_of_dataproducts_metadata: list[dict] = []
 
     def update_columns(self, key: str) -> None:

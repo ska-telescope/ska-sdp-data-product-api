@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 # pylint: disable=too-many-public-methods
 # pylint: disable=duplicate-code
 # pylint: disable=not-context-manager
+# pylint: disable=too-many-branches
 
 
 class PostgresConnector:
@@ -221,7 +222,7 @@ class PGMetadataStore:
         query_string = f"""
             CREATE TABLE IF NOT EXISTS {self.db.schema}.{self.annotations_table_name} (
                 id SERIAL PRIMARY KEY,
-                uuid VARCHAR(64),
+                uuid CHAR(64),
                 annotation_text TEXT,
                 user_principal_name VARCHAR(255),
                 timestamp_created TIMESTAMP,
@@ -710,6 +711,29 @@ class PGSearchStore:
 
         return access_filtered_data
 
+    def create_annotations_postgresql_query(self, search_value) -> tuple[str, list]:
+        """
+        Creates the query string  for data products based on a partial value in the
+        annotation_text.
+
+        Args:
+            search_value: The partial value to search for in the annotation_text.
+
+        Returns:
+            A tuple containing the query string and a list of parameters with wildcards for
+            partial matching.
+        """
+
+        query = f"SELECT md.data \
+FROM {self.db.schema}.{self.science_metadata_table_name} AS md \
+JOIN {self.db.schema}.{self.annotations_table_name} AS ann ON md.uuid = ann.uuid \
+WHERE ann.annotation_text ILIKE %s"
+
+        search_value_with_wildcards = f"%{search_value}%"
+        params = [search_value_with_wildcards]
+
+        return query, params
+
     def create_postgresql_query(self, filter_model: dict, table_name: str) -> tuple[str, list]:
         """
         Creates a PostgreSQL query string from a MUI Data Grid filter model.
@@ -740,6 +764,10 @@ class PGSearchStore:
                 or field not in mui_data_grid_config_instance.flattened_set_of_keys
             ):
                 continue
+
+            if field == "annotation":
+                return self.create_annotations_postgresql_query(search_value=value)
+
             if operator == "greaterThan":
                 where_clauses.append(f"data->>'{field}' > %s")
                 params.append(value)
