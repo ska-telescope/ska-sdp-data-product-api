@@ -29,7 +29,12 @@ if not SECRETS_FILE_PATH.exists():
 
 secrets = Config(SECRETS_FILE_PATH)
 
-REINDEXING_DELAY = 300  # Only allow reindexing after 5 minutes
+REINDEXING_DELAY: int = int(
+    config(
+        "REINDEXING_DELAY",
+        default=300,
+    )
+)  # TODO Re-enable - Only allow re-indexing after 5 minutes, add to chart as well.
 
 PERSISTENT_STORAGE_PATH: pathlib.Path = pathlib.Path(
     config("PERSISTENT_STORAGE_PATH", default="./tests/test_files/product"),

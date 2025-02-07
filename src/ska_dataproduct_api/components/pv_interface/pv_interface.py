@@ -4,7 +4,7 @@ import logging
 import os
 import pathlib
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from ska_dataproduct_api.configuration.settings import (
     METADATA_FILE_NAME,
@@ -94,7 +94,7 @@ class PVDataProduct:
         latest modification timestamp for the given data product.
         """
         try:
-            self.size_on_disk = self.get_folder_size(self.path.parent)
+            # self.size_on_disk = self.get_folder_size(self.path.parent)    # TODO Consider calculating this as on demand when requesting to download.
             self.timestamp_modified = self.get_latest_modification_time(self.path.parent)
         except FileNotFoundError as error:
             logger.error("Load of product details failed due to error: %s", error)
@@ -142,6 +142,7 @@ class PVInterface:
         self.pv_name: str = PVCNAME
         self.data_product_root_directory: pathlib.Path = PERSISTENT_STORAGE_PATH
         self.pv_index: PVIndex = PVIndex()
+        self.last_index_duration:timedelta = None
 
     def status(self) -> dict:
         """
@@ -158,6 +159,7 @@ class PVInterface:
             "number_of_date_products_on_pv": self.pv_index.number_of_date_products_on_pv,
             "time_of_last_index_run": self.pv_index.time_of_last_index_run,
             "reindex_running": self.pv_index.reindex_running,
+            "last_index_duration": self.last_index_duration,
             "index_time_modified": self.pv_index.index_time_modified,
         }
 
@@ -184,7 +186,8 @@ class PVInterface:
         current UTC time, and the `reindex_running` attribute is set back to `False` to indicate
         that the re-indexing operation is complete.
         """
-
+        indexing_start_time = datetime.now(tz=timezone.utc)
+        logger.debug("PV indexing started at %s", indexing_start_time)
         try:
             verify_persistent_storage_file_path(self.data_product_root_directory)
         except Exception as error:
@@ -218,8 +221,11 @@ class PVInterface:
                     "This item was already loaded, details updated: %s",
                     str(data_product_file_path),
                 )
-            pv_data_product.load_product_details()
+            # pv_data_product.load_product_details()
             self.pv_index.index_time_modified = datetime.now(tz=timezone.utc)
 
         self.pv_index.time_of_last_index_run = datetime.now(tz=timezone.utc)
         self.pv_index.reindex_running = False
+        self.last_index_duration = datetime.now(tz=timezone.utc) - indexing_start_time
+        logger.info("PV index completed at %s, duration were %s", datetime.now(tz=timezone.utc), self.last_index_duration)
+        

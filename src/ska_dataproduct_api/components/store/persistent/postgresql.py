@@ -116,6 +116,7 @@ class PostgresConnector:
         except (psycopg.OperationalError, psycopg.DatabaseError) as error:
             self.postgresql_running = False
             logger.error("Database error: %s", error)
+            logger.error(f"dbname='{self.dbname}', user='{self.user}', password='redacted', host='{self.host}', port='{self.port}', options='-c search_path='{self.schema}'")
             raise error
 
 
