@@ -218,7 +218,7 @@ class PVInterface:
                     "This item was already loaded, details updated: %s",
                     str(data_product_file_path),
                 )
-            pv_data_product.load_product_details()
+            # pv_data_product.load_product_details()    # TODO Do this on demand rather then on ingest.
             self.pv_index.index_time_modified = datetime.now(tz=timezone.utc)
 
         self.pv_index.time_of_last_index_run = datetime.now(tz=timezone.utc)

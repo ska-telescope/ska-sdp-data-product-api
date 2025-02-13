@@ -602,7 +602,7 @@ WHERE execution_block = %s"
             with psycopg.connect(self.db.connection_string) as conn:
                 with conn.cursor(row_factory=class_row(DataProductAnnotation)) as cur:
                     try:
-                        cur.execute(query=query_string, params=[data_product_uuid])
+                        cur.execute(query=query_string, params=(data_product_uuid,))
                         return cur.fetchall()
                     except (IndexError, TypeError) as error:
                         logger.error(
