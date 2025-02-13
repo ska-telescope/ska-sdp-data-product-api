@@ -20,7 +20,7 @@ from ska_dataproduct_api.configuration.settings import (
     POSTGRESQL_PASSWORD,
     POSTGRESQL_PORT,
     POSTGRESQL_SCHEMA,
-    POSTGRESQL_TABLE_NAME,
+    POSTGRESQL_METADATA_TABLE_NAME,
     POSTGRESQL_USER,
 )
 
@@ -54,7 +54,7 @@ def select_metadata_store_class() -> Union[PGMetadataStore, InMemoryVolumeIndexM
 
         persistent_metadata_store = PGMetadataStore(
             db=metadata_db,
-            science_metadata_table_name=POSTGRESQL_TABLE_NAME,
+            science_metadata_table_name=POSTGRESQL_METADATA_TABLE_NAME,
             annotations_table_name=POSTGRESQL_ANNOTATIONS_TABLE_NAME,
         )
         logger.info("PostgreSQL reachable, setting metadata store to obtain data from PostgreSQL")

@@ -34,7 +34,7 @@ REINDEXING_DELAY: int = int(
         "REINDEXING_DELAY",
         default=300,
     )
-)  # TODO Re-enable - Only allow re-indexing after 5 minutes, add to chart as well.
+)
 
 PERSISTENT_STORAGE_PATH: pathlib.Path = pathlib.Path(
     config("PERSISTENT_STORAGE_PATH", default="./tests/test_files/product"),
@@ -115,9 +115,9 @@ POSTGRESQL_SCHEMA: str = config(
     default=("public"),
 )
 
-POSTGRESQL_TABLE_NAME: str = config(
-    "SKA_DATAPRODUCT_API_POSTGRESQL_TABLE_NAME",
-    default=("data_products_metadata_v1"),
+POSTGRESQL_METADATA_TABLE_NAME: str = config(
+    "SKA_DATAPRODUCT_API_POSTGRESQL_METADATA_TABLE_NAME",
+    default=("data_products_metadata_v2"),
 )
 
 POSTGRESQL_ANNOTATIONS_TABLE_NAME: str = config(
@@ -134,14 +134,7 @@ POSTGRESQL_QUERY_SIZE_LIMIT: int = config(
 # SKA Permissions API
 SKA_PERMISSIONS_API_HOST: str = config(
     "SKA_PERMISSIONS_API_HOST",
-    default="http://localhost",
-)
-
-SKA_PERMISSIONS_API_PORT: int = int(
-    config(
-        "SKA_PERMISSIONS_API_PORT",
-        default=8000,
-    )
+    default="http://localhost:8000",
 )
 
 # ----

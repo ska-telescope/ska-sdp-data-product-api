@@ -4,7 +4,7 @@ import logging
 import os
 import pathlib
 from dataclasses import dataclass
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 from ska_dataproduct_api.configuration.settings import (
     METADATA_FILE_NAME,
@@ -94,7 +94,7 @@ class PVDataProduct:
         latest modification timestamp for the given data product.
         """
         try:
-            # self.size_on_disk = self.get_folder_size(self.path.parent)    # TODO Consider calculating this as on demand when requesting to download.
+            self.size_on_disk = self.get_folder_size(self.path.parent)
             self.timestamp_modified = self.get_latest_modification_time(self.path.parent)
         except FileNotFoundError as error:
             logger.error("Load of product details failed due to error: %s", error)
@@ -142,7 +142,7 @@ class PVInterface:
         self.pv_name: str = PVCNAME
         self.data_product_root_directory: pathlib.Path = PERSISTENT_STORAGE_PATH
         self.pv_index: PVIndex = PVIndex()
-        self.last_index_duration:timedelta = None
+        self.last_index_duration: timedelta = None
 
     def status(self) -> dict:
         """
@@ -221,11 +221,13 @@ class PVInterface:
                     "This item was already loaded, details updated: %s",
                     str(data_product_file_path),
                 )
-            # pv_data_product.load_product_details()
             self.pv_index.index_time_modified = datetime.now(tz=timezone.utc)
 
         self.pv_index.time_of_last_index_run = datetime.now(tz=timezone.utc)
         self.pv_index.reindex_running = False
         self.last_index_duration = datetime.now(tz=timezone.utc) - indexing_start_time
-        logger.info("PV index completed at %s, duration were %s", datetime.now(tz=timezone.utc), self.last_index_duration)
-        
+        logger.info(
+            "PV index completed at %s, duration were %s",
+            datetime.now(tz=timezone.utc),
+            self.last_index_duration,
+        )
