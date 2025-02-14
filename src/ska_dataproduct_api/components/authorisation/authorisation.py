@@ -10,9 +10,7 @@ import httpx
 from fastapi import Depends, Request
 from httpx import ConnectError, HTTPStatusError, TimeoutException
 
-from ska_dataproduct_api.configuration.settings import (
-    SKA_PERMISSIONS_API_HOST,
-)
+from ska_dataproduct_api.configuration.settings import SKA_PERMISSIONS_API_HOST
 from ska_dataproduct_api.utilities.exceptions import AuthError
 
 logger = logging.getLogger(__name__)
@@ -135,9 +133,7 @@ async def get_user_profile(token: str | None) -> dict[str, list[str]]:
 
         headers = {"Authorization": f"Bearer {token}"}
         async with httpx.AsyncClient(timeout=10) as client:
-            permissions_api_verification_endpoint = (
-                f"{SKA_PERMISSIONS_API_HOST}/v2/user/profile"
-            )
+            permissions_api_verification_endpoint = f"{SKA_PERMISSIONS_API_HOST}/v2/user/profile"
             response = await client.get(permissions_api_verification_endpoint, headers=headers)
             response.raise_for_status()
             return response.json()

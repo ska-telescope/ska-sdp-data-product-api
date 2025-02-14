@@ -29,7 +29,12 @@ if not SECRETS_FILE_PATH.exists():
 
 secrets = Config(SECRETS_FILE_PATH)
 
-REINDEXING_DELAY = 300  # Only allow reindexing after 5 minutes
+REINDEXING_DELAY: int = int(
+    config(
+        "REINDEXING_DELAY",
+        default=300,
+    )
+)
 
 PERSISTENT_STORAGE_PATH: pathlib.Path = pathlib.Path(
     config("PERSISTENT_STORAGE_PATH", default="./tests/test_files/product"),
@@ -110,7 +115,7 @@ POSTGRESQL_SCHEMA: str = config(
     default=("public"),
 )
 
-POSTGRESQL_TABLE_NAME: str = config(
+POSTGRESQL_METADATA_TABLE_NAME: str = config(
     "SKA_DATAPRODUCT_API_POSTGRESQL_METADATA_TABLE_NAME",
     default=("data_products_metadata_v2"),
 )
