@@ -3,6 +3,9 @@
 
 ## Current Development
 
+- [NAL-1363](https://jira.skatelescope.org/browse/NAL-1363)
+    - [Changed] Added indexing duration to status
+
 - [NAL-1322](https://jira.skatelescope.org/browse/NAL-1322)
     - [Changed] Updated the PostgreSQL search to allow search of annotations saved in the annotation table.
 
