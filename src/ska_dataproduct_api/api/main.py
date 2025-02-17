@@ -48,7 +48,6 @@ async def startup_event():
     application starts."""
     background_tasks = BackgroundTasks()
     background_tasks.add_task(reindex_data_products_stores)
-    await background_tasks()
 
 
 metadata_store = select_metadata_store_class()
