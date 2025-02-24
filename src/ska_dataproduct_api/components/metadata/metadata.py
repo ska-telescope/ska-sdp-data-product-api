@@ -37,15 +37,46 @@ class DataProductMetadata:
         date_created (str): Date when the metadata was created.
     """
 
-    def __init__(self):
+    def __init__(self, data_source: str = "dpd"):
         self.data_product_file_path: pathlib.Path = None
         self.data_product_metadata_file_path: pathlib.Path = None
         self.metadata_dict: dict = None
         self.date_created: str = None
         self.object_id: str = None
-        self.data_product_uuid: uuid.UUID = None
+        self.data_product_uid: uuid.UUID = None
         self.execution_block: str = None
         self.metadata_dict_hash: str = None
+        self.data_source: str = data_source
+
+    def appended_metadata_dict(
+        self,
+    ) -> dict:
+        """
+        Combines the existing metadata dictionary with additional metadata fields.
+
+        This method creates a copy of the instance's `metadata_dict` and adds
+        the following fields:
+        - "date_created": The creation date and time of the data product.
+        - "dataproduct_file": The file path of the data product.
+        - "metadata_file": The file path of the data product's metadata file.
+        - "data_source": The source of the data.
+        - "uid": The unique identifier of the data product.
+
+        Returns:
+            dict: A dictionary containing the combined metadata.
+
+        """
+        combined_dict = self.metadata_dict.copy()
+        combined_dict.update(
+            {
+                "date_created": self.date_created,
+                "dataproduct_file": str(self.data_product_file_path),
+                "metadata_file": str(self.data_product_metadata_file_path),
+                "data_source": self.data_source,
+                "uid": str(self.data_product_uid),
+            }
+        )
+        return combined_dict
 
     def get_execution_block_id(self, metadata_dict: dict) -> str | None:
         """Retrieves the execution block ID from the given metadata dictionary.
@@ -66,7 +97,7 @@ class DataProductMetadata:
             logger.error("execution_block value key not found in data product, error: %s", error)
             raise error
 
-    def derive_uuid(self, execution_block_id: str, file_path: pathlib.Path) -> uuid.UUID:
+    def derive_uid(self, execution_block_id: str, file_path: pathlib.Path) -> uuid.UUID:
         """Derives a UUID from an execution block ID and file path.
 
         Args:
@@ -85,22 +116,22 @@ class DataProductMetadata:
             raise ValueError("Execution block ID cannot be None.")
 
         # I am using a combination of the execution_block_id and file_path of the data products
-        # to derive a uuid. The file path would be unique and consistent for the initial use as the
+        # to derive a uid. The file path would be unique and consistent for the initial use as the
         # DPD only loads data products from one PV, but as soon as the DLM adds data products
         # to the dashboard, there might not be a direct reference to a file on disk.
 
         # This is also not envisioned to be the source of the global UUID of data products, it
-        # should only be the DLM creating and assigning these uuid's, but for internal use for the
+        # should only be the DLM creating and assigning these uid's, but for internal use for the
         # DPD, to cater for data products that is loaded by the DPD from the PV or for sub
-        # products, we assign a local uuid here.
+        # products, we assign a local uid here.
 
         try:
             combined_string = f"{execution_block_id}:{str(file_path)}"
             hash_value = hashlib.sha256(combined_string.encode("utf-8")).hexdigest()
             formatted_hash = f"{hash_value[:8]}-{hash_value[8:12]}-{hash_value[12:16]}-\
 {hash_value[16:20]}-{hash_value[20:32]}"
-            uuid_value = uuid.UUID(formatted_hash)
-            return uuid_value
+            uid_value = uuid.UUID(formatted_hash)
+            return uid_value
         except ValueError as error:
             logger.error("Failed to create UUID: %s", error)
             raise error
@@ -145,7 +176,7 @@ class DataProductMetadata:
 
         self.execution_block = self.get_execution_block_id(self.metadata_dict)
         self.metadata_dict_hash = self.calculate_metadata_hash(self.metadata_dict)
-        self.data_product_uuid = self.derive_uuid(
+        self.data_product_uid = self.derive_uid(
             execution_block_id=self.execution_block, file_path=self.data_product_file_path
         )
 
@@ -164,11 +195,10 @@ class DataProductMetadata:
         except Exception as error:
             logger.error("Failed to load metadata, error: %s", error)
             raise error
-
-        self.append_metadata()
+        self.derive_additional_metadata()
         return self.metadata_dict
 
-    def load_metadata_from_class(self, metadata: dict) -> dict[str, any]:
+    def load_metadata_from_class(self, metadata: dict, dlm_uid: uuid = None) -> dict[str, any]:
         """
         Loads metadata from a dict.
 
@@ -181,13 +211,16 @@ class DataProductMetadata:
         self.metadata_dict = metadata
         self.execution_block = self.get_execution_block_id(self.metadata_dict)
         self.metadata_dict_hash = self.calculate_metadata_hash(self.metadata_dict)
-        self.data_product_uuid = self.derive_uuid(
-            execution_block_id=self.execution_block, file_path=self.data_product_file_path
-        )
-        self.append_metadata()
+        if self.data_source == "dlm":
+            self.data_product_uid = dlm_uid
+        else:
+            self.data_product_uid = self.derive_uid(
+                execution_block_id=self.execution_block, file_path=self.data_product_file_path
+            )
+        self.derive_additional_metadata()
         return self.metadata_dict
 
-    def append_metadata(self) -> None:
+    def derive_additional_metadata(self) -> None:
         """Appends metadata to the object.
 
         This method attempts to get the date from metadata and append file details.
@@ -199,7 +232,6 @@ class DataProductMetadata:
 
         try:
             self.get_date_from_metadata()
-            self.append_metadata_file_details()
         except Exception as error:  # pylint: disable=broad-exception-caught
             logger.error("Failed to append metadata, error: %s", error)
 
@@ -218,24 +250,6 @@ class DataProductMetadata:
                 self.metadata_dict.get("execution_block", "Unknown"),
                 exception,
             )
-
-    def append_metadata_file_details(self) -> None:
-        """Appends metadata file details to the metadata dictionary.
-
-        Updates the metadata dictionary with the following keys:
-        - 'date_created': The date the metadata was created.
-        - 'dataproduct_file': The path to the data product file as a string.
-        - 'metadata_file': The path to the metadata file as a string.
-        """
-
-        self.metadata_dict.update(
-            {
-                "date_created": self.date_created,
-                "dataproduct_file": str(self.data_product_file_path),
-                "metadata_file": str(self.data_product_metadata_file_path),
-                "uuid": str(self.data_product_uuid),
-            }
-        )
 
     def get_date_from_name(self, execution_block: str) -> str:
         """

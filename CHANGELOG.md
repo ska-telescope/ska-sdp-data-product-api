@@ -4,6 +4,12 @@
 ## Current Development
 
 - [NAL-1363](https://jira.skatelescope.org/browse/NAL-1363)
+    - [Changed] Updated DPD PostgreSQL interface to load data products from the DLM tables.
+
+- [NAL-1341](https://jira.skatelescope.org/browse/NAL-1341)
+    - [Changed] Removed unneeded method call at start of application that ran a background task on startup"
+
+- [NAL-1363](https://jira.skatelescope.org/browse/NAL-1363)
     - [Changed] Added indexing duration to status
 
 - [NAL-1322](https://jira.skatelescope.org/browse/NAL-1322)

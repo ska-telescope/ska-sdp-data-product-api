@@ -155,7 +155,7 @@ or
 .. code-block:: bash
 
     {
-        "uuid": "a0a2a10f-e382-31ba-0949-9a79204dfcad"
+        "uid": "a0a2a10f-e382-31ba-0949-9a79204dfcad"
     }
 
 *Response*
@@ -184,7 +184,7 @@ For example, the post request body:
 .. code-block:: bash
 
     {
-        "uuid": "6a11ddaa-6b45-6759-47e7-a5abd5105b0e"
+        "uid": "6a11ddaa-6b45-6759-47e7-a5abd5105b0e"
     }
 
 *Response*
@@ -218,7 +218,7 @@ For example, the post request body:
         "date_created": "2023-10-31",
         "dataproduct_file": "tests/test_files/product/eb-m005-20231031-12345",
         "metadata_file": "tests/test_files/product/eb-m005-20231031-12345/ska-data-product.yaml",
-        "uuid": "6a11ddaa-6b45-6759-47e7-a5abd5105b0e"
+        "uid": "6a11ddaa-6b45-6759-47e7-a5abd5105b0e"
     }
 
 Ingest new data product
@@ -249,7 +249,7 @@ Sending a POST request to the /ingestnewdataproduct endpoint will load and parse
         {
             "status": "success",
             "message": "New data product received and search store index updated",
-            "uuid": "f0b91aa5-d54b-e11a-410e-3e4edca5346f"
+            "uid": "f0b91aa5-d54b-e11a-410e-3e4edca5346f"
         },
         201
     ]
@@ -322,7 +322,7 @@ For example, the POST request body:
         {
             "status": "success",
             "message": "New data product metadata received and search store index updated",
-            "uuid": "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c"
+            "uid": "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c"
         },
         201
     ]
@@ -350,7 +350,7 @@ For example, the POST request body for a create request:
 .. code-block:: bash
 
     { 
-        "data_product_uuid": "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c",
+        "data_product_uid": "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c",
         "annotation_text": "Example annotation text message.",
         "user_principal_name": "test.user@skao.int",
         "timestamp_created": "2024-11-13T14:32:00",
@@ -421,7 +421,7 @@ Annotations GET endpoint
 
 .. note:: Annotation functionality is only available if the API is running with a PostgreSQL persistent metadata store.
 
-Sending a GET request to the /annotations endpoint will retrieve a list of the annotations linked to the specified data product uuid.
+Sending a GET request to the /annotations endpoint will retrieve a list of the annotations linked to the specified data product uid.
 If PostgreSQL is not available, an status code of 202 will be received.
 
 *Request*
@@ -438,7 +438,7 @@ If PostgreSQL is not available, an status code of 202 will be received.
         [
             {
                 "annotation_id": 21, 
-                "data_product_uuid": "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c",
+                "data_product_uid": "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c",
                 "annotation_text": "Example annotation text message.",
                 "user_principal_name": "test.user@skao.int",
                 "timestamp_created": "2024-11-13:14:32:00",
@@ -446,7 +446,7 @@ If PostgreSQL is not available, an status code of 202 will be received.
             },
             {
                 "annotation_id": 36, 
-                "data_product_uuid": "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c",
+                "data_product_uid": "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c",
                 "annotation_text": "Example annotation text message.",
                 "user_principal_name": "test.user@skao.int",
                 "timestamp_created": "2024-11-13:14:45:00",
@@ -522,7 +522,7 @@ or
 
 .. code-block:: python
 
-    data = {"uuid": "a0a2a10f-e382-31ba-0949-9a79204dfcad"}
+    data = {"uid": "a0a2a10f-e382-31ba-0949-9a79204dfcad"}
 
     response = requests.post(f"{BASE_URL}/download", json=data)
 

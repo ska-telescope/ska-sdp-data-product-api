@@ -4,12 +4,13 @@ import os
 import pathlib
 import subprocess
 import tempfile
+import uuid
 from datetime import datetime, timezone
-from typing import Any, Generator, Optional
+from typing import Any, Generator, Optional, Union
 
 # pylint: disable=no-name-in-module
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ska_dataproduct_api.configuration.settings import (
     PERSISTENT_STORAGE_PATH,
@@ -98,19 +99,60 @@ class ExecutionBlock(BaseModel):
     execution_block: str = None
 
 
+# class DataProductIdentifier(BaseModel):
+#     """Class for defining Data Product identifiers"""
+
+#     uid: str | None = None
+#     execution_block: str | None = None
+#     relativePathName: str | None = None
+#     metaDataFile: str | None = None
+#     data_source: str | None = None
+
+
 class DataProductIdentifier(BaseModel):
-    """Class for defining Data Product identifiers"""
+    """Class for defining Data Product identifiers."""
 
-    uuid: str | None = None
-    execution_block: str | None = None
+    uid: Optional[Union[str, uuid.UUID]] = Field(
+        default=None,
+        description="Unique identifier (UUID) of the data product.",
+    )
+    execution_block: Optional[str] = Field(
+        default=None,
+        description="Identifier for the execution block that produced the data product.",
+    )
+    relative_path_name: Optional[str] = Field(
+        default=None,
+        description="Relative path name of the data product.",
+    )
+    meta_data_file: Optional[str] = Field(
+        default=None,
+        description="Path to the metadata file associated with the data product.",
+    )
+    data_source: Optional[str] = Field(
+        default=None,
+        description="Data source of the data product (PV indexed by the DPD or entry in DLM).",
+    )
 
 
-def validate_data_product_identifier(data_product_identifier: DataProductIdentifier) -> bool:
+def validate_data_product_identifier(data_product_identifier: DataProductIdentifier) -> None:
     """
-    Verify that there are either a UUID or execution_block given to identify a data product with
+    Verify that a DataProductIdentifier has either a UUID or an execution_block.
+
+    Args:
+        data_product_identifier: The DataProductIdentifier to validate.
+
+    Returns:
+        True if the DataProductIdentifier is valid.
+
+    Raises:
+        ValueError: If neither a UUID nor an execution_block is present.
+        TypeError: If the input is not a DataProductIdentifier.
     """
-    if not data_product_identifier.uuid and not data_product_identifier.execution_block:
-        raise AttributeError("No valid data_product_identifier found")
+    if not isinstance(data_product_identifier, DataProductIdentifier):
+        raise TypeError("Input must be of type DataProductIdentifier")
+
+    if not data_product_identifier.uid and not data_product_identifier.execution_block:
+        raise ValueError("DataProductIdentifier must have either a UUID or an execution_block.")
 
 
 class SearchParametersClass(BaseModel):

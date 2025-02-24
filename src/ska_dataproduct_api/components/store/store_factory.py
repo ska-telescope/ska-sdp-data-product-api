@@ -16,6 +16,8 @@ from ska_dataproduct_api.components.store.persistent.postgresql import (
 from ska_dataproduct_api.configuration.settings import (
     POSTGRESQL_ANNOTATIONS_TABLE_NAME,
     POSTGRESQL_DBNAME,
+    POSTGRESQL_DLM_METADATA_TABLE_NAME,
+    POSTGRESQL_DLM_SCHEMA,
     POSTGRESQL_HOST,
     POSTGRESQL_METADATA_TABLE_NAME,
     POSTGRESQL_PASSWORD,
@@ -56,6 +58,8 @@ def select_metadata_store_class() -> Union[PGMetadataStore, InMemoryVolumeIndexM
             db=metadata_db,
             science_metadata_table_name=POSTGRESQL_METADATA_TABLE_NAME,
             annotations_table_name=POSTGRESQL_ANNOTATIONS_TABLE_NAME,
+            dlm_schema=POSTGRESQL_DLM_SCHEMA,
+            dlm_data_item_table_name=POSTGRESQL_DLM_METADATA_TABLE_NAME,
         )
         logger.info("PostgreSQL reachable, setting metadata store to obtain data from PostgreSQL")
         return persistent_metadata_store
@@ -74,11 +78,7 @@ def select_search_store_class(
     """
 
     try:
-        pg_search_store = PGSearchStore(
-            db=metadata_store.db,
-            science_metadata_table_name=metadata_store.science_metadata_table_name,
-            annotations_table_name=metadata_store.annotations_table_name,
-        )
+        pg_search_store = PGSearchStore(db=metadata_store.db, metadata_strore=metadata_store)
         logger.info("PGSearchStore reachable, setting search store to PGSearchStore")
         return pg_search_store
     except Exception as exception:  # pylint: disable=broad-exception-caught

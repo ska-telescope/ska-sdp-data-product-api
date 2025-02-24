@@ -70,39 +70,39 @@ def mock_get_data_by_execution_block(execution_block):
     return None
 
 
-def mock_get_data_by_uuid(uuid):
+def mock_get_data_by_uid(uid):
     """Retrieves mock data based on the provided UUID.
 
     Args:
-        uuid (str): The UUID to query.
+        uid (str): The UUID to query.
 
     Returns:
         dict: A dictionary containing the mock data, or None if the UUID is invalid.
 
     This function is designed to simulate the retrieval of data from an external source.
     It returns a dictionary containing a 'dataproduct_file' key with a file path for the
-    valid 'valid_uuid'. For any other UUID, it returns None.
+    valid 'valid_uid'. For any other UUID, it returns None.
     """
-    if uuid == "valid_uuid":
+    if uid == "valid_uid":
         return {"dataproduct_file": "path/to/another_file.txt"}
     return None
 
 
-def mock_get_annotations_by_uuid(uuid):
-    """Retrieves mock annotation based on the provided uuid.
+def mock_get_annotations_by_uid(uid):
+    """Retrieves mock annotation based on the provided uid.
 
     Args:
-        uuid (str): The data product uuid.
+        uid (str): The data product uid.
 
     Returns:
-        A list of objects with type DataProductAnnotation if uuid is valid
+        A list of objects with type DataProductAnnotation if uid is valid
         or an empty list if the id is invalid.
 
     This function is designed to simulate the retrieval of data from an external source.
-    It returns a list of DataProductAnnotations. For any other uuid, it returns an empty list.
+    It returns a list of DataProductAnnotations. For any other uid, it returns an empty list.
     """
-    if uuid == "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c":
-        return mock_db.retrieve_annotations_by_uuid(uuid)
+    if uid == "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c":
+        return mock_db.retrieve_annotations_by_uid(uid)
     return []
 
 
@@ -148,6 +148,8 @@ def test_valid_execution_block(mocked_postgres_connector):
         db=mocked_postgres_connector["connector"],
         science_metadata_table_name="my_table",
         annotations_table_name="annotations_table",
+        dlm_schema="dlm",
+        dlm_data_item_table_name="data_item",
     )
     identifier = DataProductIdentifier(execution_block="valid_execution_block")
     with patch(
@@ -159,18 +161,20 @@ get_data_by_execution_block",
         assert result == [pathlib.Path("path/to/file.txt")]
 
 
-def test_valid_uuid(mocked_postgres_connector):
+def test_valid_uid(mocked_postgres_connector):
     """Tests successful retrieval of data product file paths for a valid UUID."""
     metadata_store = PGMetadataStore(
         db=mocked_postgres_connector["connector"],
         science_metadata_table_name="my_table",
         annotations_table_name="annotations_table",
+        dlm_schema="dlm",
+        dlm_data_item_table_name="data_item",
     )
-    identifier = DataProductIdentifier(uuid="valid_uuid")
+    identifier = DataProductIdentifier(uid="valid_uid")
     with patch(
         "ska_dataproduct_api.components.store.persistent.postgresql.PGMetadataStore.\
-get_data_by_uuid",
-        side_effect=mock_get_data_by_uuid,
+get_data_by_uid",
+        side_effect=mock_get_data_by_uid,
     ):
         result = metadata_store.get_data_product_file_paths(identifier)
         assert result == [pathlib.Path("path/to/another_file.txt")]
@@ -182,9 +186,11 @@ def test_invalid_identifier(mocked_postgres_connector):
         db=mocked_postgres_connector["connector"],
         science_metadata_table_name="my_table",
         annotations_table_name="annotations_table",
+        dlm_schema="dlm",
+        dlm_data_item_table_name="data_item",
     )
     identifier = DataProductIdentifier(
-        execution_block="invalid_execution_block", uuid="invalid_uuid"
+        execution_block="invalid_execution_block", uid="invalid_uid"
     )
     with patch(
         "ska_dataproduct_api.components.store.persistent.postgresql.PGMetadataStore.\
@@ -192,8 +198,8 @@ get_data_by_execution_block",
         side_effect=mock_get_data_by_execution_block,
     ), patch(
         "ska_dataproduct_api.components.store.persistent.postgresql.PGMetadataStore.\
-get_data_by_uuid",
-        side_effect=mock_get_data_by_uuid,
+get_data_by_uid",
+        side_effect=mock_get_data_by_uid,
     ):
         result = metadata_store.get_data_product_file_paths(identifier)
         assert not result
@@ -206,6 +212,8 @@ def test_reindex_persistent_volume(mocked_postgres_connector):
         db=mocked_postgres_connector["connector"],
         science_metadata_table_name="my_table",
         annotations_table_name="annotations_table",
+        dlm_schema="dlm",
+        dlm_data_item_table_name="data_item",
     )
     pv_interface = PVInterface()
     metadata_store.reload_all_data_products_in_index(pv_index=pv_interface.pv_index)
@@ -252,19 +260,21 @@ def test_save_metadata_to_postgresql(mocked_postgres_connector):
             "target_name": "",
         },
     }
-    data_product_metadata_instance: DataProductMetadata = DataProductMetadata()
+    data_product_metadata_instance: DataProductMetadata = DataProductMetadata(data_source="dpd")
     data_product_metadata_instance.load_metadata_from_class(test_metadata)
 
     metadata_store = PGMetadataStore(
         db=mocked_postgres_connector["connector"],
         science_metadata_table_name="my_table",
         annotations_table_name="annotations_table",
+        dlm_schema="dlm",
+        dlm_data_item_table_name="data_item",
     )
 
     with patch.object(metadata_store, "check_metadata_exists_by_hash", return_value=False):
         with patch.object(
             metadata_store,
-            "get_metadata_id_by_uuid",
+            "get_metadata_id_by_uid",
             return_value=None,
         ):
             metadata_store.save_metadata_to_postgresql(data_product_metadata_instance)
@@ -273,7 +283,7 @@ def test_save_metadata_to_postgresql(mocked_postgres_connector):
     with patch.object(metadata_store, "check_metadata_exists_by_hash", return_value=False):
         with patch.object(
             metadata_store,
-            "get_metadata_id_by_uuid",
+            "get_metadata_id_by_uid",
             return_value=1,
         ):
             metadata_store.save_metadata_to_postgresql(data_product_metadata_instance)
@@ -287,16 +297,18 @@ def test_get_metadata(mocked_postgres_connector):
         db=mocked_postgres_connector["connector"],
         science_metadata_table_name="my_table",
         annotations_table_name="annotations_table",
+        dlm_schema="dlm",
+        dlm_data_item_table_name="data_item",
     )
     with patch(
         "ska_dataproduct_api.components.store.persistent.postgresql.PGMetadataStore.\
-get_data_by_uuid",
-        side_effect=mock_get_data_by_uuid,
+get_data_by_uid",
+        side_effect=mock_get_data_by_uid,
     ):
-        result = metadata_store.get_metadata("valid_uuid")
+        result = metadata_store.get_metadata("valid_uid")
         assert result == {"dataproduct_file": "path/to/another_file.txt"}
 
-        result = metadata_store.get_metadata("invalid_uuid")
+        result = metadata_store.get_metadata("invalid_uid")
         assert result == {}
 
 
@@ -306,9 +318,11 @@ def test_save_annotation_create(mocked_postgres_connector):
         db=mocked_postgres_connector["connector"],
         science_metadata_table_name="my_table",
         annotations_table_name="annotations_table",
+        dlm_schema="dlm",
+        dlm_data_item_table_name="data_item",
     )
     data_product_annotation = {
-        "data_product_uuid": "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c",
+        "data_product_uid": "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c",
         "annotation_text": "test annotation testjkuhkuhkjhk",
         "user_principal_name": "test.user@skao.int",
         "timestamp_created": "2024-11-13T14:35:00",
@@ -328,6 +342,8 @@ def test_save_annotation_update(mocked_postgres_connector):
         db=mocked_postgres_connector["connector"],
         science_metadata_table_name="my_table",
         annotations_table_name="annotations_table",
+        dlm_schema="dlm",
+        dlm_data_item_table_name="data_item",
     )
     data_product_annotation = {
         "annotation_text": "Updated text test annotation testjkuhkuhkjhk",
@@ -343,38 +359,40 @@ save_annotation",
         assert metadata_store.save_annotation(data_product_annotation) is None
 
 
-def test_retrieve_annotations_by_uuid_valid_uuid(mocked_postgres_connector):
+def test_retrieve_annotations_by_uid_valid_uid(mocked_postgres_connector):
     """Tests if annotation is successfully retrieved given a valid id."""
     metadata_store = PGMetadataStore(
         db=mocked_postgres_connector["connector"],
         science_metadata_table_name="my_table",
         annotations_table_name="annotations_table",
+        dlm_schema="dlm",
+        dlm_data_item_table_name="data_item",
     )
     with patch(
         "ska_dataproduct_api.components.store.persistent.postgresql.PGMetadataStore.\
-retrieve_annotations_by_uuid",
-        side_effect=mock_get_annotations_by_uuid,
+retrieve_annotations_by_uid",
+        side_effect=mock_get_annotations_by_uid,
     ):
-        result = metadata_store.retrieve_annotations_by_uuid(
-            "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c"
-        )
+        result = metadata_store.retrieve_annotations_by_uid("1f8250d0-0e2f-2269-1d9a-ad465ae15d5c")
         assert len(result) > 0
         assert isinstance(result[0], DataProductAnnotation)
-        assert result[0].data_product_uuid == "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c"
-        assert result[1].data_product_uuid == "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c"
+        assert result[0].data_product_uid == "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c"
+        assert result[1].data_product_uid == "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c"
 
 
-def test_retrieve_annotations_by_uuid_invalid_uuid(mocked_postgres_connector):
+def test_retrieve_annotations_by_uid_invalid_uid(mocked_postgres_connector):
     """Tests if annotation is successfully retrieved given a valid id."""
     metadata_store = PGMetadataStore(
         db=mocked_postgres_connector["connector"],
         science_metadata_table_name="my_table",
         annotations_table_name="annotations_table",
+        dlm_schema="dlm",
+        dlm_data_item_table_name="data_item",
     )
     with patch(
         "ska_dataproduct_api.components.store.persistent.postgresql.PGMetadataStore.\
-retrieve_annotations_by_uuid",
-        side_effect=mock_get_annotations_by_uuid,
+retrieve_annotations_by_uid",
+        side_effect=mock_get_annotations_by_uid,
     ):
-        result = metadata_store.retrieve_annotations_by_uuid("hello")
+        result = metadata_store.retrieve_annotations_by_uid("hello")
         assert len(result) == 0

@@ -23,7 +23,7 @@ class DataProductAnnotation:
 
     Attributes:
         annotation_id (str): Unique id of annotation.
-        data_product_uuid (str): UUID of associated data product.
+        data_product_uid (str): UUID of associated data product.
         annotation_text (str): Text content of annotation.
         user_principal_name (str): User who created annotation.
         timestamp_created (str): Date and time when annotation was created.
@@ -34,5 +34,5 @@ class DataProductAnnotation:
     user_principal_name: str = None
     timestamp_modified: datetime = None
     timestamp_created: datetime = None
-    data_product_uuid: str = None
+    data_product_uid: str = None
     annotation_id: int = None
