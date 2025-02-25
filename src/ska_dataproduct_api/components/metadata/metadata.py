@@ -41,7 +41,6 @@ class DataProductMetadata:
         self.data_product_file_path: pathlib.Path = None
         self.data_product_metadata_file_path: pathlib.Path = None
         self.metadata_dict: dict = None
-        # self.date_created: str = None
         self.object_id: str = None
         self.data_product_uid: uuid.UUID = None
         self.execution_block: str = None
@@ -117,8 +116,7 @@ class DataProductMetadata:
 
         # I am using a combination of the execution_block_id and file_path of the data products
         # to derive a uid. The file path would be unique and consistent for the initial use as the
-        # DPD only loads data products from one PV, but as soon as the DLM adds data products
-        # to the dashboard, there might not be a direct reference to a file on disk.
+        # DPD only loads data products from one PV.
 
         # This is also not envisioned to be the source of the global UUID of data products, it
         # should only be the DLM creating and assigning these uid's, but for internal use for the
@@ -241,11 +239,14 @@ class DataProductMetadata:
             metadata_date_str = execution_block.split("-")[2]
             date_obj = datetime.datetime.strptime(metadata_date_str, "%Y%m%d")
             return date_obj.strftime("%Y-%m-%d")
-        except ValueError as error:
+        except (ValueError, IndexError) as error:
             logger.error(
                 "The execution_block: %s is missing or not in the following format: "
                 "type-generatorID-datetime-localSeq. Error: %s",
                 execution_block,
                 error,
             )
-            raise
+            # Opting to add the computing epoch as a fallback date for products that have
+            # malformed execution_block id's. This allows them to be displayed on the DPD.
+            date_obj = datetime.datetime.strptime("19700101", "%Y%m%d")
+            return date_obj.strftime("%Y-%m-%d")

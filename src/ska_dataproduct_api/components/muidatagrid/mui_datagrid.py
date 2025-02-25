@@ -199,11 +199,7 @@ class MuiDataGridConfig:
                 item.update(appended_metadata_file)
                 return
 
-        # If no duplicate found, add the new dictionary
-        if len(self.flattened_list_of_dataproducts_metadata) == 0:
-            appended_metadata_file["id"] = 1
-        else:
-            appended_metadata_file["id"] = len(self.flattened_list_of_dataproducts_metadata) + 1
+        appended_metadata_file["id"] = len(self.flattened_list_of_dataproducts_metadata) + 1
 
         self.flattened_list_of_dataproducts_metadata.append(appended_metadata_file)
 

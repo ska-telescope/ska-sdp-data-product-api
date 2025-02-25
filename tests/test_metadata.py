@@ -22,12 +22,13 @@ class TestHelperfunctions:  # pylint: disable=R0903
         )
 
         # Test invalid input (non-existent date)
-        with pytest.raises(ValueError):
+        assert (
             data_product_metadata_instance.get_date_from_name("type-generatorID-20231345-localSeq")
+            == "1970-01-01"
+        )
 
         # Test invalid input (malformed execution_block)
-        with pytest.raises(IndexError):
-            data_product_metadata_instance.get_date_from_name("invalid-format")
+        assert data_product_metadata_instance.get_date_from_name("invalid-format") == "1970-01-01"
 
 
 def test_load_yaml_file_file_not_found():

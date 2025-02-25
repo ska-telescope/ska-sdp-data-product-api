@@ -880,7 +880,12 @@ WHERE ann.annotation_text ILIKE %s"
 
                         return
                     except (IndexError, TypeError) as error:
-                        logger.warning("Metadata search error %s", error)
+                        logger.warning(
+                            "Metadata search error: %s with query: %s on data store: %s",
+                            error,
+                            sql_search_query,
+                            data_store,
+                        )
                         return
 
         except (psycopg.OperationalError, psycopg.DatabaseError) as error:
@@ -918,7 +923,6 @@ WHERE ann.annotation_text ILIKE %s"
             query_metadata = find_metadata(metadata_file, query_key)
             if query_metadata:
                 appended_metadata_file[query_metadata["key"]] = query_metadata["value"]
-
         data_product_metadata_instance: DataProductMetadata = DataProductMetadata(
             data_store=data_store
         )
