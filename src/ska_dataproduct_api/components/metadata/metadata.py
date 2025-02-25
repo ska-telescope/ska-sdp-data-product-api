@@ -41,7 +41,7 @@ class DataProductMetadata:
         self.data_product_file_path: pathlib.Path = None
         self.data_product_metadata_file_path: pathlib.Path = None
         self.metadata_dict: dict = None
-        self.date_created: str = None
+        # self.date_created: str = None
         self.object_id: str = None
         self.data_product_uid: uuid.UUID = None
         self.execution_block: str = None
@@ -69,7 +69,7 @@ class DataProductMetadata:
         combined_dict = self.metadata_dict.copy()
         combined_dict.update(
             {
-                "date_created": self.date_created,
+                "date_created": self.get_date_from_name(self.execution_block),
                 "dataproduct_file": str(self.data_product_file_path),
                 "metadata_file": str(self.data_product_metadata_file_path),
                 "data_store": self.data_store,
@@ -195,7 +195,6 @@ class DataProductMetadata:
         except Exception as error:
             logger.error("Failed to load metadata, error: %s", error)
             raise error
-        self.derive_additional_metadata()
         return self.metadata_dict
 
     def load_metadata_from_class(self, metadata: dict, dlm_uid: uuid = None) -> dict[str, any]:
@@ -217,39 +216,7 @@ class DataProductMetadata:
             self.data_product_uid = self.derive_uid(
                 execution_block_id=self.execution_block, file_path=self.data_product_file_path
             )
-        self.derive_additional_metadata()
         return self.metadata_dict
-
-    def derive_additional_metadata(self) -> None:
-        """Appends metadata to the object.
-
-        This method attempts to get the date from metadata and append file details.
-        Any exceptions encountered during the process are logged.
-
-        Raises:
-            Exception: If an error occurs during metadata appending.
-        """
-
-        try:
-            self.get_date_from_metadata()
-        except Exception as error:  # pylint: disable=broad-exception-caught
-            logger.error("Failed to append metadata, error: %s", error)
-
-    def get_date_from_metadata(self) -> None:
-        """Extracts the date from the metadata and assigns it to self.date_created.
-
-        Attempts to extract the date from the 'execution_block' key in the metadata dictionary.
-        If an error occurs, logs an error message and does not set the date.
-        """
-
-        try:
-            self.date_created = self.get_date_from_name(self.execution_block)
-        except (KeyError, ValueError, TypeError) as exception:
-            logger.error(
-                "Failed to extract date from execution block: %s. Error: %s",
-                self.metadata_dict.get("execution_block", "Unknown"),
-                exception,
-            )
 
     def get_date_from_name(self, execution_block: str) -> str:
         """
