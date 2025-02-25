@@ -179,9 +179,8 @@ class MuiDataGridConfig:
         dictionary with the new values.
 
         This method adds the provided `appended_metadata_file` dictionary to the internal
-        `flattened_list_of_dataproducts_metadata` attribute. If the list is empty, it assigns an
-        "id" of 1 to the first data product. Otherwise, it assigns an "id" based on the current
-        length of the list + 1.
+        `flattened_list_of_dataproducts_metadata` attribute, and it assigns an "id" based on the
+        current length of the list + 1.
 
         Args:
             appended_metadata_file: A dictionary containing the metadata for a data product.

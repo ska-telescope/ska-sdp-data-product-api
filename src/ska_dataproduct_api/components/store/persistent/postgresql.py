@@ -139,11 +139,8 @@ class PGMetadataStore:
     ):
         self.db: PostgresConnector = db
         self.science_metadata_table_name = science_metadata_table_name
-        self.sql_file_path = (
-            "src/ska_dataproduct_api/sql/dpd_metadata_table.sql"  # Replace with the actual path
-        )
+        self.sql_file_path = "src/ska_dataproduct_api/sql/dpd_metadata_table.sql"
         self.annotations_table_name = annotations_table_name
-        # self.filtered_list_of_data_product_metadata_files = []
         self.date_modified = datetime.now(tz=timezone.utc)
         self.science_metadata_table_name = science_metadata_table_name
         self.annotations_table_name = annotations_table_name
@@ -194,8 +191,7 @@ class PGMetadataStore:
         }
 
     def create_table(self, table_name, sql_definition_file) -> None:
-        """Creates the metadata table named as defined in the env variable
-        self.science_metadata_table_name if it doesn't exist by executing
+        """Creates the metadata table if it doesn't exist by executing
         the SQL definition from a .sql file.
         """
         try:
@@ -203,17 +199,15 @@ class PGMetadataStore:
                 sql_query = file.read()
         except FileNotFoundError:
             logger.error("SQL file not found at: %s", sql_definition_file)
-            raise  # Re-raise the exception to stop execution
+            raise
 
-        # Substitute schema and table name if needed.  This makes the SQL file more portable.
-        #  You can use other placeholders if necessary
         sql_query = sql_query.replace("{schema_name}", self.db.schema).replace(
             "{table_name}", table_name
         )
 
         logger.info(
             "Creating PostgreSQL metadata table: %s, in schema: %s using SQL file: %s",
-            self.science_metadata_table_name,
+            table_name,
             self.db.schema,
             sql_definition_file,
         )
@@ -225,13 +219,13 @@ class PGMetadataStore:
                     conn.commit()
                     logger.info(
                         "PostgreSQL metadata table %s created in schema: %s.",
-                        self.science_metadata_table_name,
+                        table_name,
                         self.db.schema,
                     )
         except psycopg.Error as error:
             logger.error("Error creating table: %s", error)
-            conn.rollback()  # Rollback in case of error
-            raise  # Re-raise the exception after logging and rollback
+            conn.rollback()
+            raise
 
     def create_annotations_table(self) -> None:
         """Creates the annotations table named as defined in the env variable
