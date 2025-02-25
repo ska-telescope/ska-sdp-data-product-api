@@ -100,7 +100,7 @@ class InMemoryVolumeIndexMetadataStore:
         """
         try:
             data_product_metadata_instance: DataProductMetadata = DataProductMetadata(
-                data_source="dpd"
+                data_store="dpd"
             )
             data_product_metadata_instance.load_metadata_from_yaml_file(
                 data_product_metadata_file_path
@@ -122,7 +122,7 @@ class InMemoryVolumeIndexMetadataStore:
 
         return data_product_metadata_instance.data_product_uid
 
-    def ingest_metadata(self, metadata_file_dict: dict, data_source: str = "dpd") -> uuid.UUID:
+    def ingest_metadata(self, metadata_file_dict: dict, data_store: str = "dpd") -> uuid.UUID:
         """
         Ingests a data product,structuring the information,
         and inserting it into the metadata store.
@@ -135,7 +135,7 @@ class InMemoryVolumeIndexMetadataStore:
         """
         try:
             data_product_metadata_instance: DataProductMetadata = DataProductMetadata(
-                data_source=data_source
+                data_store=data_store
             )
             data_product_metadata_instance.load_metadata_from_class(metadata=metadata_file_dict)
 

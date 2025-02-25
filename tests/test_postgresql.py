@@ -260,7 +260,7 @@ def test_save_metadata_to_postgresql(mocked_postgres_connector):
             "target_name": "",
         },
     }
-    data_product_metadata_instance: DataProductMetadata = DataProductMetadata(data_source="dpd")
+    data_product_metadata_instance: DataProductMetadata = DataProductMetadata(data_store="dpd")
     data_product_metadata_instance.load_metadata_from_class(test_metadata)
 
     metadata_store = PGMetadataStore(

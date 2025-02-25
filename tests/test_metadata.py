@@ -7,7 +7,7 @@ import yaml
 
 from ska_dataproduct_api.components.metadata.metadata import DataProductMetadata
 
-data_product_metadata_instance: DataProductMetadata = DataProductMetadata(data_source="dpd")
+data_product_metadata_instance: DataProductMetadata = DataProductMetadata(data_store="dpd")
 
 
 class TestHelperfunctions:  # pylint: disable=R0903
@@ -33,7 +33,7 @@ class TestHelperfunctions:  # pylint: disable=R0903
 def test_load_yaml_file_file_not_found():
     """Tests if a FileNotFoundError is raised when the file doesn't exist."""
     test_file_path = pathlib.Path("non_existent_file.yaml")
-    data_product_metadata = DataProductMetadata(data_source="dpd")
+    data_product_metadata = DataProductMetadata(data_store="dpd")
     with pytest.raises(FileNotFoundError) as excinfo:
         data_product_metadata.load_yaml_file(test_file_path)
     assert str(excinfo.value) == f"Metadata file not found: {test_file_path}"
@@ -49,7 +49,7 @@ a: 1
 b: [2, 3, 4
 """
         )
-    data_product_metadata = DataProductMetadata(data_source="dpd")
+    data_product_metadata = DataProductMetadata(data_store="dpd")
     with pytest.raises(yaml.YAMLError) as excinfo:
         data_product_metadata.load_yaml_file(test_file_path)
         assert (

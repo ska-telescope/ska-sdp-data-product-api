@@ -37,7 +37,7 @@ class DataProductMetadata:
         date_created (str): Date when the metadata was created.
     """
 
-    def __init__(self, data_source: str = "dpd"):
+    def __init__(self, data_store: str = "dpd"):
         self.data_product_file_path: pathlib.Path = None
         self.data_product_metadata_file_path: pathlib.Path = None
         self.metadata_dict: dict = None
@@ -46,7 +46,7 @@ class DataProductMetadata:
         self.data_product_uid: uuid.UUID = None
         self.execution_block: str = None
         self.metadata_dict_hash: str = None
-        self.data_source: str = data_source
+        self.data_store: str = data_store
 
     def appended_metadata_dict(
         self,
@@ -59,7 +59,7 @@ class DataProductMetadata:
         - "date_created": The creation date and time of the data product.
         - "dataproduct_file": The file path of the data product.
         - "metadata_file": The file path of the data product's metadata file.
-        - "data_source": The source of the data.
+        - "data_store": The source of the data.
         - "uid": The unique identifier of the data product.
 
         Returns:
@@ -72,7 +72,7 @@ class DataProductMetadata:
                 "date_created": self.date_created,
                 "dataproduct_file": str(self.data_product_file_path),
                 "metadata_file": str(self.data_product_metadata_file_path),
-                "data_source": self.data_source,
+                "data_store": self.data_store,
                 "uid": str(self.data_product_uid),
             }
         )
@@ -211,7 +211,7 @@ class DataProductMetadata:
         self.metadata_dict = metadata
         self.execution_block = self.get_execution_block_id(self.metadata_dict)
         self.metadata_dict_hash = self.calculate_metadata_hash(self.metadata_dict)
-        if self.data_source == "dlm":
+        if self.data_store == "dlm":
             self.data_product_uid = dlm_uid
         else:
             self.data_product_uid = self.derive_uid(

@@ -10,7 +10,7 @@ from typing import Any, Generator, Optional, Union
 
 # pylint: disable=no-name-in-module
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from ska_dataproduct_api.configuration.settings import (
     PERSISTENT_STORAGE_PATH,
@@ -99,39 +99,14 @@ class ExecutionBlock(BaseModel):
     execution_block: str = None
 
 
-# class DataProductIdentifier(BaseModel):
-#     """Class for defining Data Product identifiers"""
-
-#     uid: str | None = None
-#     execution_block: str | None = None
-#     relativePathName: str | None = None
-#     metaDataFile: str | None = None
-#     data_source: str | None = None
-
-
 class DataProductIdentifier(BaseModel):
-    """Class for defining Data Product identifiers."""
+    """Class for defining Data Product identifiers"""
 
-    uid: Optional[Union[str, uuid.UUID]] = Field(
-        default=None,
-        description="Unique identifier (UUID) of the data product.",
-    )
-    execution_block: Optional[str] = Field(
-        default=None,
-        description="Identifier for the execution block that produced the data product.",
-    )
-    relative_path_name: Optional[str] = Field(
-        default=None,
-        description="Relative path name of the data product.",
-    )
-    meta_data_file: Optional[str] = Field(
-        default=None,
-        description="Path to the metadata file associated with the data product.",
-    )
-    data_source: Optional[str] = Field(
-        default=None,
-        description="Data source of the data product (PV indexed by the DPD or entry in DLM).",
-    )
+    uid: Union[str, uuid.UUID] | None = None
+    execution_block: str | None = None
+    relative_path_name: str | None = None
+    meta_data_file: str | None = None
+    data_store: str | None = "dpd"
 
 
 def validate_data_product_identifier(data_product_identifier: DataProductIdentifier) -> None:

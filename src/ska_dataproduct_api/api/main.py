@@ -279,7 +279,7 @@ async def ingest_new_metadata(
 
     try:
         data_product_uid = metadata_store.ingest_metadata(
-            metadata_file_dict=metadata, data_source="api"
+            metadata_file_dict=metadata, data_store="dpd"
         )
         metadata_store.date_modified = datetime.now(tz=timezone.utc)
         logger.info("New data product metadata received and saved in the DPD datastore.")

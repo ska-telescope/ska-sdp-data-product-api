@@ -304,7 +304,7 @@ class PGMetadataStore:
         """
         try:
             data_product_metadata_instance: DataProductMetadata = DataProductMetadata(
-                data_source="dpd"
+                data_store="dpd"
             )
             data_product_metadata_instance.load_metadata_from_yaml_file(
                 data_product_metadata_file_path
@@ -379,11 +379,11 @@ SET data = %s, json_hash = %s, uid = %s WHERE id = %s"
                 )
                 conn.commit()
 
-    def ingest_metadata(self, metadata_file_dict: dict, data_source: str = "dpd") -> uuid.UUID:
+    def ingest_metadata(self, metadata_file_dict: dict, data_store: str = "dpd") -> uuid.UUID:
         """Saves or update metadata to PostgreSQL."""
         try:
             data_product_metadata_instance: DataProductMetadata = DataProductMetadata(
-                data_source=data_source
+                data_store=data_store
             )
             data_product_metadata_instance.load_metadata_from_class(metadata_file_dict)
         except Exception as error:
@@ -519,15 +519,15 @@ WHERE execution_block = %s"
 
         #  {metadata_column} FROM {schema}.{table_name}
 
-        if data_product_itentifier.data_source == "dpd":
+        if data_product_itentifier.data_store == "dpd":
             query_string = f"SELECT data FROM {self.db.schema}.{self.science_metadata_table_name} \
 WHERE uid = %s"
-        elif data_product_itentifier.data_source == "dlm":
+        elif data_product_itentifier.data_store == "dlm":
             query_string = f"SELECT metadata FROM {self.dlm_schema}.\
 {self.dlm_data_item_table_name} WHERE uid = %s"
 
         else:
-            logger.error("Datasource not known %s", data_product_itentifier.data_source)
+            logger.error("Datasource not known %s", data_product_itentifier.data_store)
             return {}
 
         try:
@@ -734,7 +734,7 @@ class PGSearchStore:
             table_name=self.metadata_strore.science_metadata_table_name,
             metadata_column="data",
         )
-        self.search_metadata(sql_search_query=sql_search_query, params=params, data_source="dpd")
+        self.search_metadata(sql_search_query=sql_search_query, params=params, data_store="dpd")
 
         # Filter products in the DLM data_item table
         sql_search_query, params = self.create_postgresql_query(
@@ -743,7 +743,7 @@ class PGSearchStore:
             table_name=self.metadata_strore.dlm_data_item_table_name,
             metadata_column="metadata",
         )
-        self.search_metadata(sql_search_query=sql_search_query, params=params, data_source="dlm")
+        self.search_metadata(sql_search_query=sql_search_query, params=params, data_store="dlm")
 
         # Add all the keys to the MUI config, and add the products to the MUI list of products:
         mui_data_grid_config_instance.flattened_list_of_dataproducts_metadata.clear()
@@ -865,7 +865,7 @@ WHERE ann.annotation_text ILIKE %s"
 
         return query, params
 
-    def search_metadata(self, sql_search_query, params, data_source) -> None:
+    def search_metadata(self, sql_search_query, params, data_store) -> None:
         """Metadata search method"""
         try:
             with psycopg.connect(self.db.connection_string) as conn:
@@ -875,7 +875,7 @@ WHERE ann.annotation_text ILIKE %s"
                         result = cur.fetchall()
                         for value in result:
                             self.add_dataproduct(
-                                uid=value[0], metadata_file=value[1], data_source=data_source
+                                uid=value[0], metadata_file=value[1], data_store=data_store
                             )
 
                         return
@@ -887,7 +887,7 @@ WHERE ann.annotation_text ILIKE %s"
             self.db.postgresql_running = False
             raise error
 
-    def add_dataproduct(self, uid: uuid, metadata_file: dict, data_source: str = "dpd"):
+    def add_dataproduct(self, uid: uuid, metadata_file: dict, data_store: str = "dpd"):
         """
         Adds the metadata to the filtered data product list.
 
@@ -906,7 +906,7 @@ WHERE ann.annotation_text ILIKE %s"
         }
         appended_metadata_file = {}
 
-        # metadata_file["data_source"] = data_source
+        # metadata_file["data_store"] = data_store
 
         # Handle top-level required keys
         for key in required_keys:
@@ -920,13 +920,13 @@ WHERE ann.annotation_text ILIKE %s"
                 appended_metadata_file[query_metadata["key"]] = query_metadata["value"]
 
         data_product_metadata_instance: DataProductMetadata = DataProductMetadata(
-            data_source=data_source
+            data_store=data_store
         )
         data_product_metadata_instance.load_metadata_from_class(
             metadata=metadata_file, dlm_uid=uid
         )
 
-        if data_source == "dlm":
+        if data_store == "dlm":
             self.append_filtered_dataproduct_list(
                 metadata_file=data_product_metadata_instance.appended_metadata_dict()
             )
