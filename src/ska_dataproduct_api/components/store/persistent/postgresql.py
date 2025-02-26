@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 # pylint: disable=duplicate-code
 # pylint: disable=not-context-manager
 # pylint: disable=too-many-branches
+# pylint: disable=too-many-lines
 
 
 class PostgresConnector:
@@ -193,6 +194,13 @@ class PGMetadataStore:
     def create_table(self, table_name, sql_definition_file) -> None:
         """Creates the metadata table if it doesn't exist by executing
         the SQL definition from a .sql file.
+
+        Args:
+            table_name (str): The table name
+            sql_definition_file (str): The SQL script that will be executed to create the table.
+
+        Returns:
+            None
         """
         try:
             with open(sql_definition_file, "r", encoding="utf-8") as file:
@@ -230,6 +238,9 @@ class PGMetadataStore:
     def create_annotations_table(self) -> None:
         """Creates the annotations table named as defined in the env variable
         self.annotations_table_name if it doesn't exist.
+
+        Returns:
+            None
         """
 
         logger.info(
@@ -265,6 +276,12 @@ class PGMetadataStore:
 
         This method iterates over all data product files in the pv_index,
         ingests each file.
+
+        Args:
+            pv_index (PVIndex): Index containing all the data products PV file details.
+
+        Returns:
+            None
         """
         logger.info("Reloading all data products from PV index into metadata store...")
 
@@ -295,6 +312,9 @@ class PGMetadataStore:
 
         Args:
             data_product_metadata_file_path (pathlib.Path): The path to the data file.
+
+        Returns:
+            data_product_uid (uuid.UUID) = The UID of the ingested data product.
         """
         try:
             data_product_metadata_instance: DataProductMetadata = DataProductMetadata(
@@ -316,7 +336,13 @@ class PGMetadataStore:
         return data_product_metadata_instance.data_product_uid
 
     def check_metadata_exists_by_hash(self, json_hash: str) -> bool:
-        """Checks if metadata exists based on the given hash."""
+        """Checks if metadata exists based on the given hash.
+
+        json_hash (str): A SHA256 hash of the metadata JSON.
+
+        Returns:
+            Bool: True if the metadata exist with the given hash.
+        """
         query_string = f"SELECT EXISTS(SELECT 1 FROM {self.db.schema}.\
 {self.science_metadata_table_name} WHERE json_hash = %s)"
         with psycopg.connect(self.db.connection_string) as conn:
@@ -324,9 +350,16 @@ class PGMetadataStore:
                 cur.execute(query=query_string, params=(json_hash,))
                 return cur.fetchone()[0]
 
-    def get_metadata_id_by_uid(self, data_product_uid: str) -> str | None:
+    def get_metadata_id_by_uid(self, data_product_uid: str) -> int | None:
         """Checks if metadata exists based on the given execution block and return the PRIMARY KEY
-        if it exists."""
+        if it exists.
+
+        Args:
+            data_product_uid (str): UUID of associated data product.
+
+        Returns:
+            str | None: PRIMARY KEY of the data product in the table.
+        """
         query_string = (
             f"SELECT id FROM {self.db.schema}.{self.science_metadata_table_name} WHERE uid = %s"
         )
@@ -334,12 +367,45 @@ class PGMetadataStore:
             with conn.cursor() as cur:
                 cur.execute(query=query_string, params=(data_product_uid,))
                 result = cur.fetchone()
-                return result[0] if result else None
+                return int(result[0]) if result else None
 
     def update_metadata(
         self, data_product_metadata_instance: DataProductMetadata, id_field: int
     ) -> None:
-        """Updates existing metadata with the given data and hash."""
+        """
+        Updates an existing metadata record in the database with the provided data product
+        metadata.
+
+        This method updates the 'data' and 'json_hash' columns of a specific metadata record
+        in the database, identified by the 'id_field'. It uses the metadata from the provided
+        `data_product_metadata_instance` to perform the update.
+
+        Args:
+            data_product_metadata_instance (DataProductMetadata): An instance of the
+                DataProductMetadata class containing the updated metadata.
+            id_field (int): The integer ID of the metadata record to be updated.
+
+        Returns:
+            None
+
+        Raises:
+            psycopg.Error: If there is an error executing the database query.
+        """
+        query_string = f"UPDATE {self.db.schema}.{self.science_metadata_table_name} \
+SET data = %s, json_hash = %s, uid = %s WHERE id = %s"
+        with psycopg.connect(self.db.connection_string) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    query=query_string,
+                    params=(
+                        json.dumps(data_product_metadata_instance.appended_metadata_dict()),
+                        data_product_metadata_instance.metadata_dict_hash,
+                        str(data_product_metadata_instance.data_product_uid),
+                        id_field,
+                    ),
+                )
+                conn.commit()
+
         query_string = f"UPDATE {self.db.schema}.{self.science_metadata_table_name} \
 SET data = %s, json_hash = %s, uid = %s WHERE id = %s"
         with psycopg.connect(self.db.connection_string) as conn:
@@ -356,7 +422,23 @@ SET data = %s, json_hash = %s, uid = %s WHERE id = %s"
                 conn.commit()
 
     def insert_metadata(self, data_product_metadata_instance: DataProductMetadata) -> None:
-        """Inserts new metadata into the database."""
+        """
+        Inserts a new metadata record into the database.
+
+        This method adds a new row to the database table specified by `self.db.schema` and
+        `self.science_metadata_table_name`. The data for the new row is extracted from the
+        provided `data_product_metadata_instance`.
+
+        Args:
+            data_product_metadata_instance (DataProductMetadata): An instance of the
+                DataProductMetadata class containing the metadata to be inserted.
+
+        Returns:
+            None
+
+        Raises:
+            psycopg.Error: If there is an error executing the database query.
+        """
         table: str = self.db.schema + "." + self.science_metadata_table_name
         query_string = f"INSERT INTO {table} (data, json_hash, execution_block, uid) VALUES \
 (%s, %s, %s, %s)"
@@ -711,7 +793,7 @@ class PGSearchStore:
             users_user_group_list: List of user groups.
 
         Returns:
-            Filtered data.
+            A list of filtered metadata.
         """
         mui_data_rows: list[dict] = []
 
@@ -787,11 +869,13 @@ WHERE ann.annotation_text ILIKE %s"
         Creates a PostgreSQL query string from a MUI Data Grid filter model.
 
         Args:
-            filter_model: The MUI Data Grid filter model.
-            table_name: The name of the table to query.
+            filter_model (dict): The MUI Data Grid filter model.
+            schema (str): PostgreSQL schema name.
+            table_name (str): The name of the table to query.
+            metadata_column (str): The column containing the metadata.
 
         Returns:
-            A PostgreSQL query string.
+            A PostgreSQL query string and its parameter lists as a tuple.
         """
 
         query = f"SELECT uid, {metadata_column} FROM {schema}.{table_name}"
@@ -859,8 +943,16 @@ WHERE ann.annotation_text ILIKE %s"
 
         return query, params
 
-    def search_metadata(self, sql_search_query, params, data_store) -> None:
-        """Metadata search method"""
+    def search_metadata(self, sql_search_query: str, params: list, data_store: str) -> None:
+        """Metadata search method
+
+        Args:
+            sql_search_query (str): A PostgreSQL query string.
+            params (list): PostgreSQL query parameters.
+            data_store (str): Name of the data store where the data product is located
+            (defaults to "dpd").
+
+        """
         try:
             with psycopg.connect(self.db.connection_string) as conn:
                 with conn.cursor() as cur:
@@ -891,7 +983,10 @@ WHERE ann.annotation_text ILIKE %s"
         Adds the metadata to the filtered data product list.
 
         Args:
-            metadata_file: A dictionary containing the metadata for a data product.
+            uid (uuid.UUID): The unique identifier of the data product.
+            metadata_file (dict): A dictionary containing the metadata for a data product.
+            data_store (str): Name of the data store where the data product is located
+            (defaults to "dpd").
 
         Raises:
             ValueError: If the provided metadata_file is not a dictionary.
@@ -904,8 +999,6 @@ WHERE ann.annotation_text ILIKE %s"
             "data_product_uid",
         }
         appended_metadata_file = {}
-
-        # metadata_file["data_store"] = data_store
 
         # Handle top-level required keys
         for key in required_keys:
@@ -965,7 +1058,7 @@ WHERE ann.annotation_text ILIKE %s"
             )
             raise
 
-    def append_filtered_dataproduct_list(self, metadata_file):
+    def append_filtered_dataproduct_list(self, metadata_file) -> None:
         """
         Updates the internal list of data products with the provided metadata.
 
@@ -975,7 +1068,7 @@ WHERE ann.annotation_text ILIKE %s"
         length of the list + 1.
 
         Args:
-            appended_metadata_file: A dictionary containing the metadata for a data product.
+            metadata_file: A dictionary containing the metadata for a data product.
 
         Returns:
             None

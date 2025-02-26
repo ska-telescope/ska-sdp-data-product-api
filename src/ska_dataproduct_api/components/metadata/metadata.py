@@ -28,20 +28,34 @@ logger = logging.getLogger(__name__)
 
 class DataProductMetadata:
     """
-    Encapsulates metadata for a data product.
+    Encapsulates metadata for a data product, providing access to its properties and location.
+
+    This class manages metadata associated with a data product, including file paths,
+    unique identifiers, execution context, and data storage information. It is designed
+    to facilitate the consistent handling and retrieval of metadata related to data products.
 
     Attributes:
-        data_product_file_path (pathlib.Path): Path to the data product file.
-        data_product_metadata_file_path (pathlib.Path): Path to the metadata file.
-        metadata_dict (dict): Loaded metadata as a dictionary.
-        date_created (str): Date when the metadata was created.
+        data_product_file_path (pathlib.Path): Path to the actual data product file.
+        data_product_metadata_file_path (pathlib.Path): Path to the metadata file associated with
+            the data product.
+        metadata_dict (dict): Loaded metadata as a dictionary, representing the parsed content of
+            the metadata file.
+        data_product_uid (uuid.UUID): Unique identifier (UUID) assigned to the data product.
+        execution_block (str): Identifier or name of the execution block that generated
+            the data product.
+        metadata_dict_hash (str): Hash value of the metadata dictionary, used for integrity checks
+            or versioning.
+        data_store (str): Name of the data store where the data product is located
+            (defaults to "dpd").
+
+    Args:
+        data_store (str, optional): The data store identifier. Defaults to "dpd".
     """
 
     def __init__(self, data_store: str = "dpd"):
         self.data_product_file_path: pathlib.Path = None
         self.data_product_metadata_file_path: pathlib.Path = None
         self.metadata_dict: dict = None
-        self.object_id: str = None
         self.data_product_uid: uuid.UUID = None
         self.execution_block: str = None
         self.metadata_dict_hash: str = None
@@ -58,7 +72,7 @@ class DataProductMetadata:
         - "date_created": The creation date and time of the data product.
         - "dataproduct_file": The file path of the data product.
         - "metadata_file": The file path of the data product's metadata file.
-        - "data_store": The source of the data.
+        - "data_store": Name of the data store where the data product is located.
         - "uid": The unique identifier of the data product.
 
         Returns:
@@ -100,15 +114,15 @@ class DataProductMetadata:
         """Derives a UUID from an execution block ID and file path.
 
         Args:
-            execution_block_id (str): The execution block ID.
-            file_path (pathlib.Path): The file path.
+            execution_block_id (str): Name of the execution block that generated the data product.
+            file_path (pathlib.Path): The file path where the product of this execution block is
+                saved.
 
         Returns:
             uuid.UUID: The derived UUID.
 
         Raises:
-            ValueError: If the execution block ID is None.
-            ValueError: If the UUID cannot be created.
+            ValueError: If the execution block ID is None or the UUID cannot be created.
         """
         if execution_block_id is None:
             logger.error("Execution block ID cannot be None.")
@@ -151,7 +165,7 @@ class DataProductMetadata:
         Loads metadata from a YAML file.
 
         Args:
-            data_product_file_path (pathlib.Path): Path to the metadata file.
+            file_path (pathlib.Path): Path to the YAML file containing metadata.
 
         Raises:
             FileNotFoundError: If the specified file does not exist.
@@ -200,7 +214,9 @@ class DataProductMetadata:
         Loads metadata from a dict.
 
         Args:
-            metadata: The dict instance containing the metadata.
+            metadata (dict): The dict instance containing the metadata.
+            dlm_uid (uuid.UUID): The unique identifier of the data product in the DLM
+                (default = None).
 
         Returns:
             A dictionary containing the loaded metadata.
@@ -221,15 +237,13 @@ class DataProductMetadata:
         Extracts a date string from an execution block (type-generatorID-datetime-localSeq from
         https://confluence.skatelescope.org/display/SWSI/SKA+Unique+Identifiers) and converts it
         to the format 'YYYY-MM-DD'.
+        If the function fails to derive a valid date, it will return 1970-01-01 as a default.
 
         Args:
             execution_block (str): A string containing metadata information.
 
         Returns:
             str: The formatted date string in 'YYYY-MM-DD' format.
-
-        Raises:
-            ValueError: If the date cannot be parsed from the execution block.
 
         Example:
             >>> get_date_from_name("type-generatorID-20230411-localSeq")
