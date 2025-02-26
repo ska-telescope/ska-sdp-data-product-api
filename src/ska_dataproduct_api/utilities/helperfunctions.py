@@ -117,7 +117,7 @@ def validate_data_product_identifier(data_product_identifier: DataProductIdentif
         data_product_identifier: The DataProductIdentifier to validate.
 
     Returns:
-        True if the DataProductIdentifier is valid.
+        None
 
     Raises:
         ValueError: If neither a UUID nor an execution_block is present.

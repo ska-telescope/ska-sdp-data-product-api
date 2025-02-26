@@ -14,7 +14,10 @@ from ska_dataproduct_api.components.annotations.annotation import DataProductAnn
 from ska_dataproduct_api.components.metadata.metadata import DataProductMetadata
 from ska_dataproduct_api.components.muidatagrid.mui_datagrid import mui_data_grid_config_instance
 from ska_dataproduct_api.components.pv_interface.pv_interface import PVIndex
-from ska_dataproduct_api.configuration.settings import POSTGRESQL_QUERY_SIZE_LIMIT
+from ska_dataproduct_api.configuration.settings import (
+    POSTGRESQL_QUERY_SIZE_LIMIT,
+    SCIENCE_METADATA_TABLE_SQL_CONFIG,
+)
 from ska_dataproduct_api.utilities.helperfunctions import DataProductIdentifier, find_metadata
 
 logger = logging.getLogger(__name__)
@@ -140,7 +143,7 @@ class PGMetadataStore:
     ):
         self.db: PostgresConnector = db
         self.science_metadata_table_name = science_metadata_table_name
-        self.sql_file_path = "src/ska_dataproduct_api/sql/dpd_metadata_table.sql"
+        self.sql_file_path = SCIENCE_METADATA_TABLE_SQL_CONFIG
         self.annotations_table_name = annotations_table_name
         self.date_modified = datetime.now(tz=timezone.utc)
         self.science_metadata_table_name = science_metadata_table_name

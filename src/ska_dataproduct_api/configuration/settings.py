@@ -153,6 +153,8 @@ DATE_FORMAT: str = config("DATE_FORMAT", default="%Y-%m-%d")
 
 API_ROOT_PATH: str = config("API_ROOT_PATH", default="")
 
+SCIENCE_METADATA_TABLE_SQL_CONFIG: str = "src/ska_dataproduct_api/sql/dpd_metadata_table.sql"
+
 app = FastAPI()
 
 app = FastAPI(root_path=API_ROOT_PATH)
