@@ -4,8 +4,9 @@ import os
 import pathlib
 import subprocess
 import tempfile
+import uuid
 from datetime import datetime, timezone
-from typing import Any, Generator, Optional
+from typing import Any, Generator, Optional, Union
 
 # pylint: disable=no-name-in-module
 from fastapi.responses import StreamingResponse
@@ -101,16 +102,32 @@ class ExecutionBlock(BaseModel):
 class DataProductIdentifier(BaseModel):
     """Class for defining Data Product identifiers"""
 
-    uuid: str | None = None
+    uid: Union[str, uuid.UUID] | None = None
     execution_block: str | None = None
+    relative_path_name: str | None = None
+    meta_data_file: str | None = None
+    data_store: str | None = "dpd"
 
 
-def validate_data_product_identifier(data_product_identifier: DataProductIdentifier) -> bool:
+def validate_data_product_identifier(data_product_identifier: DataProductIdentifier) -> None:
     """
-    Verify that there are either a UUID or execution_block given to identify a data product with
+    Verify that a DataProductIdentifier has either a UUID or an execution_block.
+
+    Args:
+        data_product_identifier: The DataProductIdentifier to validate.
+
+    Returns:
+        None
+
+    Raises:
+        ValueError: If neither a UUID nor an execution_block is present.
+        TypeError: If the input is not a DataProductIdentifier.
     """
-    if not data_product_identifier.uuid and not data_product_identifier.execution_block:
-        raise AttributeError("No valid data_product_identifier found")
+    if not isinstance(data_product_identifier, DataProductIdentifier):
+        raise TypeError("Input must be of type DataProductIdentifier")
+
+    if not data_product_identifier.uid and not data_product_identifier.execution_block:
+        raise ValueError("DataProductIdentifier must have either a UUID or an execution_block.")
 
 
 class SearchParametersClass(BaseModel):

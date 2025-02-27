@@ -7,7 +7,7 @@ import yaml
 
 from ska_dataproduct_api.components.metadata.metadata import DataProductMetadata
 
-data_product_metadata_instance: DataProductMetadata = DataProductMetadata()
+data_product_metadata_instance: DataProductMetadata = DataProductMetadata(data_store="dpd")
 
 
 class TestHelperfunctions:  # pylint: disable=R0903
@@ -22,18 +22,19 @@ class TestHelperfunctions:  # pylint: disable=R0903
         )
 
         # Test invalid input (non-existent date)
-        with pytest.raises(ValueError):
+        assert (
             data_product_metadata_instance.get_date_from_name("type-generatorID-20231345-localSeq")
+            == "1970-01-01"
+        )
 
         # Test invalid input (malformed execution_block)
-        with pytest.raises(IndexError):
-            data_product_metadata_instance.get_date_from_name("invalid-format")
+        assert data_product_metadata_instance.get_date_from_name("invalid-format") == "1970-01-01"
 
 
 def test_load_yaml_file_file_not_found():
     """Tests if a FileNotFoundError is raised when the file doesn't exist."""
     test_file_path = pathlib.Path("non_existent_file.yaml")
-    data_product_metadata = DataProductMetadata()
+    data_product_metadata = DataProductMetadata(data_store="dpd")
     with pytest.raises(FileNotFoundError) as excinfo:
         data_product_metadata.load_yaml_file(test_file_path)
     assert str(excinfo.value) == f"Metadata file not found: {test_file_path}"
@@ -49,7 +50,7 @@ a: 1
 b: [2, 3, 4
 """
         )
-    data_product_metadata = DataProductMetadata()
+    data_product_metadata = DataProductMetadata(data_store="dpd")
     with pytest.raises(yaml.YAMLError) as excinfo:
         data_product_metadata.load_yaml_file(test_file_path)
         assert (

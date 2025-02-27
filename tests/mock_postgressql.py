@@ -26,12 +26,12 @@ class MockPostgresSQL:
                     annotation.annotation_text = data_product_annotation.annotation_text
                     break
 
-    def retrieve_annotations_by_uuid(self, uuid: str) -> list:
-        """Mocks method to retrieve annotations by uuid."""
+    def retrieve_annotations_by_uid(self, uid: str) -> list:
+        """Mocks method to retrieve annotations by uid."""
         annotations = []
 
         for annotation in self.annotations_table:
-            if annotation.data_product_uuid == uuid:
+            if annotation.data_product_uid == uid:
                 annotations.append(annotation)
 
         return annotations
@@ -41,14 +41,14 @@ class MockPostgresSQL:
         timestamp = datetime.now()
 
         annotation = DataProductAnnotation(
-            data_product_uuid="1f8250d0-0e2f-2269-1d9a-ad465ae15d5c",
+            data_product_uid="1f8250d0-0e2f-2269-1d9a-ad465ae15d5c",
             annotation_text="test annotation",
             user_principal_name="test.user@skao.int",
             timestamp_created=timestamp,
             timestamp_modified=timestamp,
         )
         annotation_2 = DataProductAnnotation(
-            data_product_uuid="1f8250d0-0e2f-2269-1d9a-ad465ae15d5c",
+            data_product_uid="1f8250d0-0e2f-2269-1d9a-ad465ae15d5c",
             annotation_text="test annotation",
             user_principal_name="test.user@skao.int",
             timestamp_created=timestamp,

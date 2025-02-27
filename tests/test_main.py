@@ -45,7 +45,7 @@ def test_download_folder(test_app):
 
 def test_data_product_metadata(test_app):
     """Test if metadata can be retrieved for a data product"""
-    data = '{"uuid": "6a11ddaa-6b45-6759-47e7-a5abd5105b0e"}'
+    data = '{"uid": "6a11ddaa-6b45-6759-47e7-a5abd5105b0e"}'
     response = test_app.post("/dataproductmetadata", data=data)
     assert response.status_code == 200
     assert "Experimental run as part of XYZ-123" in str(response.json())
@@ -82,7 +82,7 @@ def test_ingest_new_metadata(test_app):
 
     response = test_app.post("/ingestnewmetadata", json=data)
     assert response.status_code == 200
-    assert "New data product metadata received and search store index updated" in str(
+    assert "New data product metadata received and saved in the DPD datastore." in str(
         response.json()
     )
 
@@ -169,13 +169,13 @@ def test_filterdataproducts_invalid_token(test_app):
     assert "eb-test-20200325-00001" in list_of_data_products
 
 
-def test_get_annotations_by_uuid(test_app):
-    """Test if annotations are retrieved when given a valid uuid."""
+def test_get_annotations_by_uid(test_app):
+    """Test if annotations are retrieved when given a valid uid."""
 
     with patch("ska_dataproduct_api.api.main.metadata_store", side_effect=mock_db):
         with patch(
-            "ska_dataproduct_api.api.main.metadata_store.retrieve_annotations_by_uuid",
-            side_effect=mock_db.retrieve_annotations_by_uuid,
+            "ska_dataproduct_api.api.main.metadata_store.retrieve_annotations_by_uid",
+            side_effect=mock_db.retrieve_annotations_by_uid,
         ):
 
             response = test_app.get("/annotations/1f8250d0-0e2f-2269-1d9a-ad465ae15d5c")
@@ -183,23 +183,23 @@ def test_get_annotations_by_uuid(test_app):
             assert len(response.json()) > 0
 
             for annotation in response.json():
-                assert annotation["data_product_uuid"] == "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c"
+                assert annotation["data_product_uid"] == "1f8250d0-0e2f-2269-1d9a-ad465ae15d5c"
 
 
-def test_get_annotations_by_uuid_invalid(test_app):
-    """Test if annotations are not retrieved when given an invalid uuid."""
+def test_get_annotations_by_uid_invalid(test_app):
+    """Test if annotations are not retrieved when given an invalid uid."""
 
     with patch("ska_dataproduct_api.api.main.metadata_store", side_effect=mock_db):
         with patch(
-            "ska_dataproduct_api.api.main.metadata_store.retrieve_annotations_by_uuid",
-            side_effect=mock_db.retrieve_annotations_by_uuid,
+            "ska_dataproduct_api.api.main.metadata_store.retrieve_annotations_by_uid",
+            side_effect=mock_db.retrieve_annotations_by_uid,
         ):
             response = test_app.get("/annotations/if8250d0-0e2f-969-1d9a-ad465ae15d5c")
             assert response.status_code == 204
 
 
-def test_get_annotations_by_uuid_no_postgressql(test_app):
-    """Test if annotations are not retrieved when given an invalid uuid."""
+def test_get_annotations_by_uid_no_postgressql(test_app):
+    """Test if annotations are not retrieved when given an invalid uid."""
 
     response = test_app.get("/annotations/if8250d0-0e2f-969-1d9a-ad465ae15d5c")
     assert response.status_code == 202

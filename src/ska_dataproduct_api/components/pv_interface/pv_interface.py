@@ -134,11 +134,12 @@ class PVIndex:
 
 class PVInterface:
     """
-    Loads data products from a persistent volume and stores metadata.
+    Loads details of the metadata of data products from a persistent volume into memory. It
+    creates an index that is used to load metadata files from the volume.
     """
 
     def __init__(self):
-        self.pv_available: bool = False
+        self.pv_available: bool = None
         self.pv_name: str = PVCNAME
         self.data_product_root_directory: pathlib.Path = PERSISTENT_STORAGE_PATH
         self.pv_index: PVIndex = PVIndex()
@@ -146,13 +147,13 @@ class PVInterface:
 
     def status(self) -> dict:
         """
-        Retrieves the current status of the persistent volume.
+        Retrieves the current status of the persistent volume interface.
 
         Returns:
             A dictionary containing the current status information.
         """
         return {
-            "data_source": "Persistent volume",
+            "data_source": "Persistent volume interface",
             "pv_name": self.pv_name,
             "data_product_root_directory": self.data_product_root_directory,
             "pv_available": self.pv_available,
@@ -166,14 +167,6 @@ class PVInterface:
     def index_all_data_product_files_on_pv(self) -> None:
         """This method indexes all data product files found on the persistent volume (PV).
 
-        The method first verifies that the `data_product_root_directory` points to a valid
-        directory. If not, it raises a `ValueError` with a descriptive message.
-
-        Then, it sets the `pv_available` attribute to `True` and the `reindex_running`
-        attribute of the `pv_index` object to `True` to indicate that a reindexing operation
-        is in progress. It logs a message to inform the user about the start of the indexing
-        process.
-
         The method iterates through all files in the `data_product_root_directory`.
         For each metadata file found, that folder is considered a data product file, then:
 
@@ -182,12 +175,11 @@ class PVInterface:
                 added to the index.
             * If the file path is already present in the dictionary, its details will be reloaded.
 
-        Finally, the `time_of_last_index_run` attribute of the `pv_index` object is set to the
-        current UTC time, and the `reindex_running` attribute is set back to `False` to indicate
-        that the re-indexing operation is complete.
         """
         indexing_start_time = datetime.now(tz=timezone.utc)
         logger.debug("PV indexing started at %s", indexing_start_time)
+
+        # Verifies that the `data_product_root_directory` points to a valid directory
         try:
             verify_persistent_storage_file_path(self.data_product_root_directory)
         except Exception as error:

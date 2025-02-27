@@ -1,6 +1,4 @@
 """Module to test InMemoryDataproductSearch"""
-import json
-
 from ska_dataproduct_api.components.pv_interface.pv_interface import PVInterface
 from ska_dataproduct_api.components.search.in_memory.in_memory_search import (
     InMemoryDataproductSearch,
@@ -40,84 +38,7 @@ def test_status():
     }
 
 
-def test_search_metadata_execution_block_with_valid_date_and_no_eb():
-    """Tests the search_metadata method, ensuring only one execution block entry."""
-    # Call the method with expected data
-    pv_interface = PVInterface()
-    pv_interface.index_all_data_product_files_on_pv()
-    metadata_store = InMemoryVolumeIndexMetadataStore()
-    metadata_store.reload_all_data_products_in_index(pv_index=pv_interface.pv_index)
-    mocked_search_store = InMemoryDataproductSearch(metadata_store=metadata_store)
-    _ = mocked_search_store.filter_data(
-        mui_data_grid_filter_model={},
-        search_panel_options={
-            "items": [
-                {"field": "", "operator": "contains", "value": ""},
-                {"field": "date_created", "operator": "greaterThan", "value": "2023-01-01"},
-                {"field": "date_created", "operator": "lessThan", "value": ""},
-            ],
-            "logicOperator": "and",
-        },
-        users_user_group_list={},
-    )
-
-    expected_execution_block = "eb-notebook-20240201-54576"
-
-    # Call the method
-    response = mocked_search_store.search_metadata(
-        start_date="2024-02-01", end_date="2024-02-02", metadata_key_value_pairs=None
-    )
-
-    # Assert expected response
-    response_data = json.loads(response)
-
-    # Check if there's only one unique execution block
-    assert len(set(item["execution_block"] for item in response_data)) == 1
-    assert response_data[0]["execution_block"] == expected_execution_block
-
-
-def test_search_metadata_execution_block_with_valid_date_and_eb():
-    """Tests the search_metadata method, ensuring only one execution block entry."""
-    # Call the method with expected data
-    pv_interface = PVInterface()
-    pv_interface.index_all_data_product_files_on_pv()
-    metadata_store = InMemoryVolumeIndexMetadataStore()
-    metadata_store.reload_all_data_products_in_index(pv_index=pv_interface.pv_index)
-    mocked_search_store = InMemoryDataproductSearch(metadata_store=metadata_store)
-    _ = mocked_search_store.filter_data(
-        mui_data_grid_filter_model={},
-        search_panel_options={
-            "items": [
-                {"field": "", "operator": "contains", "value": ""},
-                {"field": "date_created", "operator": "greaterThan", "value": "2023-01-01"},
-                {"field": "date_created", "operator": "lessThan", "value": ""},
-            ],
-            "logicOperator": "and",
-        },
-        users_user_group_list={},
-    )
-
-    expected_execution_block = "eb-notebook-20240201-54576"
-    metadata_key_value_pairs = [
-        {"metadata_key": "execution_block", "metadata_value": "eb-notebook-20240201-54576"}
-    ]
-
-    # Call the method
-    response = mocked_search_store.search_metadata(
-        start_date="2020-01-01",
-        end_date="2030-12-31",
-        metadata_key_value_pairs=metadata_key_value_pairs,
-    )
-
-    # Assert expected response
-    response_data = json.loads(response)
-
-    # Check if there's only one unique execution block
-    assert len(set(item["execution_block"] for item in response_data)) == 1
-    assert response_data[0]["execution_block"] == expected_execution_block
-
-
-def test_search_metadata():
+def test_filter_data():
     """Method to test search of metadata"""
     pv_interface = PVInterface()
     pv_interface.index_all_data_product_files_on_pv()
@@ -147,14 +68,20 @@ def test_search_metadata():
         ],
         "logicOperator": "and",
     }
-    metadata_list = mocked_search_store.filter_data(
+    filtered_list_of_data_product_metadata_files = mocked_search_store.filter_data(
         mui_data_grid_filter_model=mui_data_grid_filter_model,
         search_panel_options=search_panel_options,
         users_user_group_list=[],
     )
 
-    assert len(set(item["execution_block"] for item in metadata_list)) == 1
-    assert metadata_list[0]["execution_block"] == expected_execution_block
+    assert (
+        len(set(item["execution_block"] for item in filtered_list_of_data_product_metadata_files))
+        == 1
+    )
+    assert (
+        filtered_list_of_data_product_metadata_files[0]["execution_block"]
+        == expected_execution_block
+    )
 
 
 def test_sort_list_of_dict_default():

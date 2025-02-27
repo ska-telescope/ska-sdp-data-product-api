@@ -35,6 +35,7 @@ from ska_dataproduct_api.utilities.helperfunctions import (
     FilePaths,
     SearchParametersClass,
     download_file,
+    validate_data_product_identifier,
 )
 
 logger = logging.getLogger(__name__)
@@ -47,7 +48,7 @@ async def startup_event():
     """This function will execute a background tasks to reindex of the data product when the
     application starts."""
     background_tasks = BackgroundTasks()
-    background_tasks.add_task(reindex_data_products_stores)
+    background_tasks.add_task(reindex_data_products_stores())
 
 
 metadata_store = select_metadata_store_class()
@@ -176,21 +177,37 @@ async def get_muidatagridconfig() -> dict:
 @app.post("/download", response_class=StreamingResponse)
 async def download(data_product_identifier: DataProductIdentifier) -> StreamingResponse:
     """
-    Downloads a file based on the provided UUID or ExecutionBlock information.
+    Downloads a file based on the provided DataProductIdentifier.
+
+    Args:
+        data_product_identifier: The identifier containing either a UUID or ExecutionBlock.
+
+    Returns:
+        A StreamingResponse containing the file data.
 
     Raises:
-        HTTPException: If the required data is missing or there's an error
-                       retrieving or accessing the file.
+        HTTPException:
+            - 400: If neither UUID nor ExecutionBlock is provided.
+            - 403: Permission denied.
+            - 404: If the file is not found or access is denied.
+            - 500: If an unexpected error occurs during file retrieval.
     """
-
-    if not data_product_identifier.uuid and not data_product_identifier.execution_block:
-        raise HTTPException(status_code=400, detail="Missing UUID or ExecutionBlock")
-
     try:
+        validate_data_product_identifier(data_product_identifier)
         file_path_list = metadata_store.get_data_product_file_paths(data_product_identifier)
         return download_file(file_path_list)
-    except (FileNotFoundError, PermissionError) as error:
-        raise HTTPException(status_code=404, detail=f"Failed to access file: {error}") from error
+    except (ValueError, TypeError) as error:
+        raise HTTPException(
+            status_code=400, detail=f"Invalid product identifier: {error}"
+        ) from error
+    except PermissionError as error:
+        raise HTTPException(status_code=403, detail=f"Permission denied: {error}") from error
+    except (FileNotFoundError, KeyError) as error:
+        raise HTTPException(status_code=404, detail=f"File not found: {error}") from error
+    except Exception as error:
+        raise HTTPException(
+            status_code=500, detail=f"An unexpected error occurred: {error}"
+        ) from error
 
 
 @app.post("/dataproductmetadata")
@@ -200,12 +217,16 @@ async def data_product_metadata(data_product_identifier: DataProductIdentifier) 
     for a specified data product identified by its UUID, or {} if no metadata is found.
 
     Raises:
-        HTTPException: 400 Bad Request if the request body is missing the "uuid" field.
+        HTTPException: 400 Bad Request if the request body is missing the "uid" field.
     """
-    if not data_product_identifier.uuid:
-        raise HTTPException(status_code=400, detail="Missing uuid field in request")
+    try:
+        validate_data_product_identifier(data_product_identifier)
+    except (ValueError, TypeError) as error:
+        raise HTTPException(
+            status_code=400, detail=f"Invalid product identifier: {error}"
+        ) from error
 
-    return metadata_store.get_metadata(data_product_identifier.uuid)
+    return metadata_store.get_metadata(data_product_identifier)
 
 
 @app.post("/ingestnewdataproduct")
@@ -215,14 +236,14 @@ async def ingest_new_data_product(
     """This API endpoint returns the data products metadata in json format of
     a specified data product."""
     try:
-        data_product_uuid = metadata_store.ingest_file(
+        data_product_uid = metadata_store.ingest_file(
             ABSOLUTE_PERSISTENT_STORAGE_PATH / file_object.execution_block / METADATA_FILE_NAME
         )
         metadata_store.date_modified = datetime.now(tz=timezone.utc)
         return {
             "status": "success",
             "message": "New data product received and search store index updated",
-            "uuid": data_product_uuid,
+            "uid": data_product_uid,
         }, status.HTTP_201_CREATED
     except Exception as error:
         logger.error("Error ingesting metadata: %s", error)
@@ -257,13 +278,15 @@ async def ingest_new_metadata(
         )
 
     try:
-        data_product_uuid = metadata_store.ingest_metadata(metadata)
+        data_product_uid = metadata_store.ingest_metadata(
+            metadata_file_dict=metadata, data_store="dpd"
+        )
         metadata_store.date_modified = datetime.now(tz=timezone.utc)
-        logger.info("New data product metadata received and search_store index updated")
+        logger.info("New data product metadata received and saved in the DPD datastore.")
         return {
             "status": "success",
-            "message": "New data product metadata received and search store index updated",
-            "uuid": data_product_uuid,
+            "message": "New data product metadata received and saved in the DPD datastore.",
+            "uid": data_product_uid,
         }, status.HTTP_201_CREATED
 
     except Exception as error:
@@ -294,7 +317,7 @@ async def annotation(token: str, request: Request):
         annotation_text=data.get("annotation_text"),
         annotation_id=data.get("annotation_id", None),
         user_principal_name=users_profile["user_profile"]["userPrincipalName"],
-        data_product_uuid=data.get("data_product_uuid"),
+        data_product_uid=data.get("data_product_uid"),
     )
 
     if not isinstance(metadata_store, (PGMetadataStore, MagicMock)):
@@ -343,10 +366,10 @@ async def annotation(token: str, request: Request):
 
 
 @app.get(
-    "/annotations/{data_product_uuid}", response_model=list[DataProductAnnotation] | list | dict
+    "/annotations/{data_product_uid}", response_model=list[DataProductAnnotation] | list | dict
 )
-async def get_annotation_by_uuid(
-    data_product_uuid: str, response: Response
+async def get_annotation_by_uid(
+    data_product_uid: str, response: Response
 ) -> List[DataProductAnnotation] | list:
     """API GET endpoint to retrieve all annotations linked to a data product."""
     if not isinstance(metadata_store, (PGMetadataStore, MagicMock)):
@@ -357,7 +380,7 @@ async def get_annotation_by_uuid(
             "message": "PostgresSQL is not available, cannot access data annotations.",
         }
     try:
-        data_product_annotations = metadata_store.retrieve_annotations_by_uuid(data_product_uuid)
+        data_product_annotations = metadata_store.retrieve_annotations_by_uid(data_product_uid)
         if len(data_product_annotations) == 0:
             response.status_code = status.HTTP_204_NO_CONTENT
             return []

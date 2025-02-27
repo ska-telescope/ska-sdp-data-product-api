@@ -130,6 +130,21 @@ POSTGRESQL_QUERY_SIZE_LIMIT: int = config(
     default=(100),
 )
 
+DLM_INTERFACE_ENABLED: bool = config(
+    "SKA_DATAPRODUCT_DLM_INTERFACE_ENABLED",
+    default=(False),
+)
+
+POSTGRESQL_DLM_SCHEMA: str = config(
+    "SKA_DATAPRODUCT_API_POSTGRESQL_DLM_SCHEMA",
+    default=("dlm"),
+)
+
+POSTGRESQL_DLM_METADATA_TABLE_NAME: str = config(
+    "SKA_DATAPRODUCT_API_POSTGRESQL_DLM_METADATA_TABLE_NAME",
+    default=("data_item"),
+)
+
 # ----
 # SKA Permissions API
 SKA_PERMISSIONS_API_HOST: str = config(
