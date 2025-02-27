@@ -15,8 +15,8 @@ from ska_dataproduct_api.components.metadata.metadata import DataProductMetadata
 from ska_dataproduct_api.components.muidatagrid.mui_datagrid import mui_data_grid_config_instance
 from ska_dataproduct_api.components.pv_interface.pv_interface import PVIndex
 from ska_dataproduct_api.configuration.settings import (
+    DLM_INTERFACE_ENABLED,
     POSTGRESQL_QUERY_SIZE_LIMIT,
-    SCIENCE_METADATA_TABLE_SQL_CONFIG,
 )
 from ska_dataproduct_api.utilities.helperfunctions import DataProductIdentifier, find_metadata
 
@@ -143,7 +143,6 @@ class PGMetadataStore:
     ):
         self.db: PostgresConnector = db
         self.science_metadata_table_name = science_metadata_table_name
-        self.sql_file_path = SCIENCE_METADATA_TABLE_SQL_CONFIG
         self.annotations_table_name = annotations_table_name
         self.date_modified = datetime.now(tz=timezone.utc)
         self.science_metadata_table_name = science_metadata_table_name
@@ -152,9 +151,7 @@ class PGMetadataStore:
         self.dlm_data_item_table_name = dlm_data_item_table_name
 
         if self.db.postgresql_running:
-            self.create_table(
-                table_name=self.science_metadata_table_name, sql_definition_file=self.sql_file_path
-            )
+            self.create_metadata_table()
             self.create_annotations_table()
 
     @property
@@ -194,49 +191,36 @@ class PGMetadataStore:
             "number_of_dataproducts": self.number_of_date_products_in_table,
         }
 
-    def create_table(self, table_name, sql_definition_file) -> None:
-        """Creates the metadata table if it doesn't exist by executing
-        the SQL definition from a .sql file.
-
-        Args:
-            table_name (str): The table name
-            sql_definition_file (str): The SQL script that will be executed to create the table.
-
-        Returns:
-            None
+    def create_metadata_table(self) -> None:
+        """Creates the metadata table named as defined in the env variable
+        self.science_metadata_table_name if it doesn't exist.
         """
-        try:
-            with open(sql_definition_file, "r", encoding="utf-8") as file:
-                sql_query = file.read()
-        except FileNotFoundError:
-            logger.error("SQL file not found at: %s", sql_definition_file)
-            raise
-
-        sql_query = sql_query.replace("{schema_name}", self.db.schema).replace(
-            "{table_name}", table_name
-        )
 
         logger.info(
-            "Creating PostgreSQL metadata table: %s, in schema: %s using SQL file: %s",
-            table_name,
+            "Creating PostgreSQL metadata table: %s, in schema: %s",
+            self.science_metadata_table_name,
             self.db.schema,
-            sql_definition_file,
         )
 
-        try:
-            with psycopg.connect(self.db.connection_string) as conn:
-                with conn.cursor() as cur:
-                    cur.execute(sql_query)
-                    conn.commit()
-                    logger.info(
-                        "PostgreSQL metadata table %s created in schema: %s.",
-                        table_name,
-                        self.db.schema,
-                    )
-        except psycopg.Error as error:
-            logger.error("Error creating table: %s", error)
-            conn.rollback()
-            raise
+        query_string = f"""
+            CREATE TABLE IF NOT EXISTS {self.db.schema}.{self.science_metadata_table_name} (
+                id SERIAL PRIMARY KEY,
+                data JSONB NOT NULL,
+                execution_block VARCHAR(255) DEFAULT NULL,
+                uid UUID UNIQUE,
+                json_hash CHAR(64) UNIQUE
+            );
+            """
+
+        with psycopg.connect(self.db.connection_string) as conn:
+            with conn.cursor() as cur:
+                cur.execute(query=query_string)
+                conn.commit()
+                logger.info(
+                    "PostgreSQL metadata table %s created in schema: %s.",
+                    self.science_metadata_table_name,
+                    self.db.schema,
+                )
 
     def create_annotations_table(self) -> None:
         """Creates the annotations table named as defined in the env variable
@@ -815,14 +799,17 @@ class PGSearchStore:
         )
         self.search_metadata(sql_search_query=sql_search_query, params=params, data_store="dpd")
 
-        # Filter products in the DLM data_item table
-        sql_search_query, params = self.create_postgresql_query(
-            filter_model=mui_data_grid_filter_model,
-            schema=self.metadata_strore.dlm_schema,
-            table_name=self.metadata_strore.dlm_data_item_table_name,
-            metadata_column="metadata",
-        )
-        self.search_metadata(sql_search_query=sql_search_query, params=params, data_store="dlm")
+        if DLM_INTERFACE_ENABLED:
+            # Filter products in the DLM data_item table
+            sql_search_query, params = self.create_postgresql_query(
+                filter_model=mui_data_grid_filter_model,
+                schema=self.metadata_strore.dlm_schema,
+                table_name=self.metadata_strore.dlm_data_item_table_name,
+                metadata_column="metadata",
+            )
+            self.search_metadata(
+                sql_search_query=sql_search_query, params=params, data_store="dlm"
+            )
 
         # Add all the keys to the MUI config, and add the products to the MUI list of products:
         mui_data_grid_config_instance.flattened_list_of_dataproducts_metadata.clear()
@@ -976,6 +963,14 @@ WHERE ann.annotation_text ILIKE %s"
                             data_store,
                         )
                         return
+
+        except (psycopg.errors.InsufficientPrivilege) as error:
+            logger.error(
+                "Metadata search error: %s with query: %s on data store: %s",
+                error,
+                sql_search_query,
+                data_store,
+            )
 
         except (psycopg.OperationalError, psycopg.DatabaseError) as error:
             self.db.postgresql_running = False
