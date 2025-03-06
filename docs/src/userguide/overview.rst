@@ -35,7 +35,7 @@ Verify the API's status by sending a GET request to the /status endpoint. The re
 
     {
         "api_running": true,
-        "api_version": "0.12.0",
+        "api_version": "0.13.0",
         "startup_time": "2025-01-27T07:28:50.809548+00:00",
         "indexing": false,
         "indexing_timestamp": "2025-01-27T07:28:50.809541+00:00",
