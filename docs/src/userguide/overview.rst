@@ -1,24 +1,20 @@
-SKA Data Product API Overview
-=============================
-
-This API is used to provide a list of SKA Data Products (files) that are hosted at a configurable storage location <PERSISTENT_STORAGE_PATH>.
-
-
-Automatic API Documentation
----------------------------
-
-Detailed interactive documentation for the API is available through Swagger UI. Access it at *http://<API URL>/docs* while running the application.
-
-
 Basic Usage
------------
+===========
 
-.. note:: This API is typically deployed behind a secure layer that encrypts communication (TLS/SSL) and likely requires user authentication through a separate system. When accessing the API through a browser, both the encryption and the authentication will be handled by the browser, but direct access with scripts or notebooks to the API from outside the cluster is currently not supported. To make use of this API directly, the user need to access it from within the cluster where it is hosted.
+The Data Product API is used to provide a list of SKA Data Products (files) that are hosted at a configurable storage location <PERSISTENT_STORAGE_PATH>.
+The following sections list some basic usage commands of the API.
 
-.. note:: If a data product have been assigned a context.access_group, then that data product will not be available/listed when accessing the api directly with scripts or notebooks. This is due the required access token of an authenticated user that is not available in this mode of operation.
+.. note::
+This API is typically deployed behind a secure layer that encrypts communication (TLS/SSL) and likely requires user authentication through a separate system.
+When accessing the API through a browser, both the encryption and the authentication will be handled by the browser, but direct access with scripts or notebooks to the API from outside the cluster is currently not supported.
+To make use of this API directly, the user need to access it from within the cluster where it is hosted.
+
+.. note::
+If a data product have been assigned a context.access_group, then that data product will not be available/listed when accessing the api directly with scripts or notebooks.
+This is due the required access token of an authenticated user that is not available in this mode of operation.
 
 Status endpoint
-~~~~~~~~~~~~~~~
+---------------
 
 Verify the API's status by sending a GET request to the /status endpoint. The response will indicate the API's operational state.
 
@@ -28,7 +24,7 @@ Verify the API's status by sending a GET request to the /status endpoint. The re
 
     GET /status
 
-*Response*
+*Example Response*
 
 .. code-block:: bash
 
@@ -74,7 +70,7 @@ Verify the API's status by sending a GET request to the /status endpoint. The re
 
 
 Search endpoint
-~~~~~~~~~~~~~~~
+---------------
 
 Use the search endpoint to query the data products. You can specify a time range and key-value pairs to filter the results. The response prioritizes products within the timeframe that best match your criteria.
 
@@ -112,7 +108,7 @@ Use the search endpoint to query the data products. You can specify a time range
     ]
 
 Re-index data products endpoint
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------
 
 The data product metadata store can be re-indexed but making a get request to the /reindexdataproducts endpoint. This allows the user to update the metadata store if data products or metadata have been added or changed on the data volume since the previous indexing.
 
@@ -129,7 +125,7 @@ The data product metadata store can be re-indexed but making a get request to th
     "Metadata is set to be re-indexed"
 
 Download data product endpoint
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------
 
 Sending a post request to the download endpoint will return a stream response of the specified data product as a tar archive.
 
@@ -165,7 +161,7 @@ A stream response of the specified data product as a tar archive
 .. note:: A data product with an execution block id can contain 'sub' data products, that is defined by another metadata file. If the user request to download the product with the execution_block, all the product of that execution block id will be downloaded.
 
 Retrieve metadata of a data product endpoint
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------------
 
 Sending a post request to the /dataproductmetadata endpoint will return a Response with the metadata of the data product in a JSON format.
 
@@ -222,7 +218,7 @@ For example, the post request body:
     }
 
 Ingest new data product
-~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------
 
 Sending a POST request to the /ingestnewdataproduct endpoint will load and parse a file at the supplied filename, and add the data product to the metadata store.
 
@@ -255,7 +251,7 @@ Sending a POST request to the /ingestnewdataproduct endpoint will load and parse
     ]
 
 Ingest new metadata endpoint
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------
 
 .. note:: In this release, ingested metadata is not persistently stored. This means any data you add will be cleared when the API restarts. This functionality will be changed in future releases.
 
@@ -328,7 +324,7 @@ For example, the POST request body:
     ]
 
 Annotation POST endpoint
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
 .. note:: Annotation functionality is only available if the API is running with a PostgreSQL persistent metadata store.
 
@@ -415,9 +411,8 @@ An example of a response when PostgresSQL is not available:
     ]
 
 
-
 Annotations GET endpoint
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
 .. note:: Annotation functionality is only available if the API is running with a PostgreSQL persistent metadata store.
 
@@ -472,67 +467,3 @@ An example of a response when PostgresSQL is not available:
     ]
 
 
-API User
---------
-
-The Data Product Dashboard (DPD) will usually be used via the GUI, for certain systems and users direct access to the API may be useful and desired. This guide will help users get up to speed with the Data Product Dashboard API.
-
-To access the API from within the cluster, you can use the BASE_URL http://<service name>.<namespace>:<port>
-
-Searching for and downloading Data Products
-When searching for data products it is important to ensure that the most recent data is available. The cached map for the in-memory solution periodically checks for new product that are available, but there is a way to manually ensure this, namely through the update command:
-
-.. code-block:: python
-
-    import requests
-    BASE_URL = "http://<service name>.<namespace>:<port>"
-    response = requests.get(f"{BASE_URL}/reindexdataproducts")
-    print(response.status_code)
-    >>> 202
-
-
-Searching for a specific product can be done by date or by other metadata fields available.
-
-.. code-block:: python
-
-    data = {
-        "start_date": "2001-12-12",
-        "end_date": "2032-12-12",
-        "key_value_pairs": ["execution_block:eb-m001-20191031-12345"]
-    }
-    response = requests.post(f"{BASE_URL}/dataproductsearch", json=data)
-    products = response.json()
-    print(products)
-    >>> [{'execution_block': 'eb-m001-20191031-12345', 'date_created': '2019-10-31', 'dataproduct_file': 'eb-m001-20221212-12345', 'metadata_file': 'eb-m001-20221212-12345/ska-data-product.yaml', 'interface': 'http://schema.skao.int/ska-data-product-meta/0.1', 'context.observer': 'AIV_person_1', 'context.intent': 'Experimental run as part of XYZ-123', 'context.notes': 'Running that signal from XX/YY/ZZ through again, things seem a bit flaky', 'config.processing_block': 'pb-m001-20191031-12345', 'config.processing_script': 'receive', 'config.image': 'artefact.skao.int/ska-docker/vis_receive', 'config.version': '0.1.3', 'config.commit': '516fb5a693f9dc9aff5d46192f4e055b582fc025', 'config.cmdline': '-dump /product/eb-m001-20191031-12345/ska-sdp/pb-m001-20191031-12345/vis.ms', 'id': 2}]
-
-
-Identify the product that should be downloaded and select it. This will be one of the products in the list of returned products:
-
-.. code-block:: python
-
-    product = products[0]
-
-The download endpoint returns a response that can be used to stream the data product into a tarball. This can saved into a local file:
-
-.. code-block:: python
-
-    data = {"execution_block": "eb-notebook-20240201-54576"}
-
-or
-
-.. code-block:: python
-
-    data = {"uid": "a0a2a10f-e382-31ba-0949-9a79204dfcad"}
-
-    response = requests.post(f"{BASE_URL}/download", json=data)
-
-    with open('product.tar', 'wb') as fd:
-        for chunk in response.iter_content(chunk_size=4096):
-            fd.write(chunk)
-
-The tarball can then be opened using standard operation software. On linux this can be done using
-
-.. code-block:: bash
-
-    $ tar -xvf ./product.tar
-    eb-notebook-20240201-54576/

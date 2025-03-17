@@ -1,11 +1,8 @@
 Developer Guide
-~~~~~~~~~~~~~~~
-
-This document complements the guidelines set out in the `SKA telescope developer portal <https://developer.skao.int/en/latest/>`_
-
+===============
 
 Tooling Pre-requisites
-======================
+----------------------
 
 Below are some tools that will be required to work with the data product API:
 
@@ -14,18 +11,17 @@ Below are some tools that will be required to work with the data product API:
 - GNU make 4.2 or later versions: Install page URL: https://www.gnu.org/software/make/
 
 Development setup
-=================
+-----------------
 
 Clone the repository and its submodules:
 
 .. code-block:: bash
 
-    git clone --recursive git@gitlab.com:ska-telescope/ska-dataproduct-api.git
+    git clone --recursive https://gitlab.com/ska-telescope/ska-dataproduct-api.git
 
-The application makes use of a persistent metadata store implemented with PostgreSQL. Development instances of the database can be created in a local Docker environment by running the provided Makefile commands:
+. Development instances of the database can be created in a local Docker environment by running the provided Makefile commands:
 
 .. note:: You will be required to give a developer password for you database instances, that should also be added to the environment variables below.
-
 
 .. code-block:: bash
 
@@ -33,7 +29,7 @@ The application makes use of a persistent metadata store implemented with Postgr
 
 
 Running the application
-=======================
+-----------------------
 
 Configure the environmental variables in the .env file under the root folder according to your requirements and environment. The default values are:
 
@@ -60,7 +56,7 @@ To run the application directly on your host machine:
 
     make run-dev
 
-*To run the application inside a docker container on your host machine:*
+To run the application inside a docker container on your host machine:
 
 .. note:: When running the application in a docker container, the <PERSISTENT_STORAGE_PATH> needs to be accessible from within the container. You can mount the test folder into this location as done below:
 
