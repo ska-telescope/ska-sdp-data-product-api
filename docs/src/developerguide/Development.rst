@@ -31,8 +31,8 @@ Remember to start the docker daemon before executing the make command above.
 You can skip this step if you don't have access to a PostgreSQL instance or you don't want to use the annotation functionality, the API will index the data directory by itself and keep the index in memory.
 However, if you'd like to make use of the annotation functionality, saving the data index into the database is essential.
 
-Running the application
------------------------
+Running the application directly
+--------------------------------
 
 Configure the environmental variables in the .env file under the root folder according to your requirements and environment. The default values are:
 
@@ -61,6 +61,9 @@ To run the application directly on your host machine:
 
 This will install the development environment for the project and also start the application.
 To check the success of the application, open `http://localhost:8001/status` in your browser, you should see a JSON response with the status of the API.
+
+Running the application via Docker
+----------------------------------
 
 To run the application inside a docker container on your host machine:
 
