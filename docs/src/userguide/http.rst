@@ -101,7 +101,7 @@ The response prioritizes products within the timeframe that best match your crit
 Re-index data products endpoint
 -------------------------------
 
-The data product metadata store can be re-indexed but making a get request to the /reindexdataproducts endpoint.
+The data product metadata store can be re-indexed by making a get request to the /reindexdataproducts endpoint.
 This allows the user to update the metadata store if data products or metadata have been added or changed on the data volume since the previous indexing.
 
 *Request*
@@ -148,7 +148,7 @@ or
 
 A stream response of the specified data product as a tar archive
 
-.. note:: A data product with an execution block id can contain 'sub' data products, that is defined by another metadata file. If the user request to download the product with the execution_block, all the product of that execution block id will be downloaded.
+.. note:: A data product with an execution block id can contain 'sub' data products, that is defined by another metadata file. If the user requests to download the product with the execution_block, all the products of that execution block id will be downloaded.
 
 Retrieve metadata of a data product endpoint
 --------------------------------------------
@@ -320,7 +320,7 @@ Annotation POST endpoint
 Annotations are used to add notes to specific data products and are stored in the metadata store in a separate table.
 
 Sending a POST request to the /annotation endpoint will parse the supplied JSON data as data product annotation, and add the annotation to the Postgres database.
-This method can be used to create a data annotation or update and existing data annotation. The method used depends on the existence of the annotation_id.
+This method can be used to create a data annotation or update an existing data annotation. The method used depends on the existence of the annotation_id.
 
 For example, the POST request body for a create request:
 
@@ -406,7 +406,7 @@ Annotations GET endpoint
 .. note:: Annotation functionality is only available if the API is running with a PostgreSQL persistent metadata store.
 
 Sending a GET request to the /annotations endpoint will retrieve a list of the annotations linked to the specified data product uid.
-If PostgreSQL is not available, an status code of 202 will be received.
+If PostgreSQL is not available, a status code of 202 will be received.
 
 *Request*
 
