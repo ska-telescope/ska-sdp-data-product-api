@@ -8,8 +8,8 @@ The current repository contains mainly the code for the API and client configura
 The Data Product API uses `Fast API <https://fastapi.tiangolo.com>`_ as the web framework and `starlette <https://www.starlette.io>`_
 to set up configurations. It also makes use of a persistent metadata store implemented with `PostgreSQL <https://www.postgresql.org>`_.
 
-If you just want to use the API, check the `User Guide <userguide/Overview>`_.
-To understand the internals, check out the `Developer Guide <developerguide/Development>`_.
+If you just want to use the API, check the `User Guide <userguide/overview.html>`_.
+To understand the internals, check out the `Developer Guide <developerguide/Development.html>`_.
 
 .. toctree::
   :maxdepth: 1

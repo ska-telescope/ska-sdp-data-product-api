@@ -19,7 +19,7 @@ Clone the repository and its submodules:
 
     git clone --recursive https://gitlab.com/ska-telescope/ska-dataproduct-api.git
 
-. Development instances of the database can be created in a local Docker environment by running the provided Makefile commands:
+Development instances of the database can be created in a local Docker environment by running the provided Makefile commands:
 
 .. note:: You will be required to give a developer password for you database instances, that should also be added to the environment variables below.
 
