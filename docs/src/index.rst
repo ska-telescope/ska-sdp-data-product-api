@@ -17,7 +17,7 @@ To understand the internals, check out the `Developer Guide <developerguide/Deve
 
   userguide/overview
   userguide/api
-  userguid/http
+  userguide/http
   userguide/client
 
 .. toctree::
