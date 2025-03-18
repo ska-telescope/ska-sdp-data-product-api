@@ -1,5 +1,5 @@
-Python GUI Usage
-================
+Python Usage
+============
 
 While the Data Product Dashboard (DPD) is usually used via the GUI, for certain systems and users direct access to the API may be useful and desired.
 This page provides a brief example of how to access the API with the Python requests package, which can be adopted similarly in other languages.

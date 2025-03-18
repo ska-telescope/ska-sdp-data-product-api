@@ -60,6 +60,7 @@ To run the application directly on your host machine:
     make run-dev
 
 This will install the development environment for the project and also start the application.
+To check the success of the application, open `http://localhost:8001/status` in your browser, you should see a JSON response with the status of the API.
 
 To run the application inside a docker container on your host machine:
 

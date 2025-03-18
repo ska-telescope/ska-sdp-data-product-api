@@ -17,3 +17,6 @@ To access the interactive API documentation, open your web browser and navigate 
 Replace `<your-api-url>` with the actual URL of your running API. For example, if your API is running locally on port 8001, the URL might be:
 
     `http://localhost:8001/docs`
+
+Access to the API can either be configured locally (following the steps on check out the `Developer Guide <developerguide/Development.html>`_),
+or there are existing deployments on platforms such as The `STFC cluster <https://sdhp.stfc.skao.int/integration-ska-dataproduct-dashboard/api/docs#/default/>>`_.
