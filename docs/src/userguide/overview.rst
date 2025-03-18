@@ -12,6 +12,8 @@ Status endpoint
 ---------------
 
 Verify the API's status by sending a GET request to the /status endpoint. The response will indicate the API's operational state.
+This is typically the first check to make sure the API is running and available.
+For this section and below, the responses are example outputs, and what you get may vary based on your local time and configurations.
 
 *Request*
 
@@ -67,7 +69,8 @@ Verify the API's status by sending a GET request to the /status endpoint. The re
 Search endpoint
 ---------------
 
-Use the search endpoint to query the data products. You can specify a time range and key-value pairs to filter the results. The response prioritizes products within the timeframe that best match your criteria.
+Use the search endpoint to query the data products. You can specify a time range and key-value pairs to filter the results.
+The response prioritizes products within the timeframe that best match your criteria.
 
 *Request*
 
@@ -75,7 +78,7 @@ Use the search endpoint to query the data products. You can specify a time range
 
     POST /dataproductsearch
 
-*Body*
+*Example Body*
 
 .. code-block:: bash
 
@@ -85,7 +88,7 @@ Use the search endpoint to query the data products. You can specify a time range
         "key_value_pairs": ["execution_block:eb-m005-20231031-12345"]
     }
 
-*Response*
+*Example Response*
 
 .. code-block:: bash
 
@@ -105,7 +108,8 @@ Use the search endpoint to query the data products. You can specify a time range
 Re-index data products endpoint
 -------------------------------
 
-The data product metadata store can be re-indexed but making a get request to the /reindexdataproducts endpoint. This allows the user to update the metadata store if data products or metadata have been added or changed on the data volume since the previous indexing.
+The data product metadata store can be re-indexed but making a get request to the /reindexdataproducts endpoint.
+This allows the user to update the metadata store if data products or metadata have been added or changed on the data volume since the previous indexing.
 
 *Request*
 
@@ -123,9 +127,7 @@ Download data product endpoint
 ------------------------------
 
 Sending a post request to the download endpoint will return a stream response of the specified data product as a tar archive.
-
-The body of the post request must contain the execution block id or the UUID of the data product you want to download. 
-
+The body of the post request must contain the execution block id or the UUID of the data product you want to download.
 
 *Request*
 
@@ -133,7 +135,7 @@ The body of the post request must contain the execution block id or the UUID of 
 
     POST /download
 
-*Body*
+*Example Body*
 
 .. code-block:: bash
 
@@ -159,10 +161,9 @@ Retrieve metadata of a data product endpoint
 --------------------------------------------
 
 Sending a post request to the /dataproductmetadata endpoint will return a Response with the metadata of the data product in a JSON format.
+The body of the post request must contain the UUID of the data product.
 
-The body of the post request must contain the UUID of the data product. 
-
-For example, the post request body:
+For example, the POST request body:
 
 *Request*
 
@@ -170,7 +171,7 @@ For example, the post request body:
 
     POST /dataproductmetadata
 
-*Body*
+*Example Body*
 
 .. code-block:: bash
 
@@ -178,7 +179,7 @@ For example, the post request body:
         "uid": "6a11ddaa-6b45-6759-47e7-a5abd5105b0e"
     }
 
-*Response*
+*Example Response*
 
 .. code-block:: bash
 
@@ -223,7 +224,7 @@ Sending a POST request to the /ingestnewdataproduct endpoint will load and parse
 
     POST /ingestnewdataproduct
 
-*Body*
+*Example Body*
 
 .. code-block:: bash
 
@@ -232,7 +233,7 @@ Sending a POST request to the /ingestnewdataproduct endpoint will load and parse
         "relativePathName": "product/eb-test-20200325-00001"
     }
 
-*Response*
+*Example Response*
 
 .. code-block:: bash
 
@@ -260,7 +261,7 @@ For example, the POST request body:
 
     POST /ingestnewmetadata
 
-*Body*
+*Example Body*
 
 .. code-block:: bash
 
@@ -305,7 +306,7 @@ For example, the POST request body:
         }
     }
 
-*Response*
+*Example Response*
 
 .. code-block:: bash
 
@@ -336,7 +337,7 @@ For example, the POST request body for a create request:
 
     POST /annotation
 
-*Body*
+*Example Body*
 
 .. code-block:: bash
 
@@ -368,7 +369,7 @@ An example of a POST request body for an update request:
 
     POST /annotation
 
-*Body*
+*Example Body*
 
 .. code-block:: bash
 
@@ -420,7 +421,7 @@ If PostgreSQL is not available, an status code of 202 will be received.
 
     GET /annotations/1f8250d0-0e2f-2269-1d9a-ad465ae15d5c
 
-*Response*
+*Example Response*
 
 .. code-block:: bash
 

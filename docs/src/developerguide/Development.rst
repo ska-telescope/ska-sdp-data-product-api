@@ -28,6 +28,8 @@ Development instances of the database can be created in a local Docker environme
     make create-dev-postgres
 
 Remember to start the docker daemon before executing the make command above.
+You can skip this step if you don't have access to a PostgreSQL instance or you don't want to use the annotation functionality, the API will index the data directory by itself and keep the index in memory.
+However, if you'd like to make use of the annotation functionality, saving the data index into the database is essential.
 
 Running the application
 -----------------------
