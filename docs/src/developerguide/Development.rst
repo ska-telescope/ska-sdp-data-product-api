@@ -27,6 +27,7 @@ Development instances of the database can be created in a local Docker environme
 
     make create-dev-postgres
 
+Remember to start the docker daemon before executing the make command above.
 
 Running the application
 -----------------------
@@ -47,7 +48,7 @@ Configure the application secrets in the .secrets file under the root folder acc
 
 .. code-block:: bash
 
-    SKA_DATAPRODUCT_API_POSTGRESQL_PASSWORD=password
+    SKA_DATAPRODUCT_API_POSTGRESQL_PASSWORD=<your postgres password>
 
 
 To run the application directly on your host machine:
@@ -55,6 +56,8 @@ To run the application directly on your host machine:
 .. code-block:: bash
 
     make run-dev
+
+This will install the development environment for the project and also start the application.
 
 To run the application inside a docker container on your host machine:
 
@@ -65,4 +68,4 @@ To run the application inside a docker container on your host machine:
     docker build -t ska-dataproduct-api .
     docker run -p 8000:8000 -v <YOUR_PROJECT_DIR>/ska-dataproduct-api/tests:/usr/src/ska_dataproduct_api/tests ska-dataproduct-api
 
-Uvicorn will then be running on http://127.0.0.1:8000
+Uvicorn will then be running on http://127.0.0.1:8000.
