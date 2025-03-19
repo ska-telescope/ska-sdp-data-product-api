@@ -3,6 +3,12 @@
 
 ## Current Development
 
+- [PHX-18](https://jira.skatelescope.org/browse/PHX-18)
+    - [Changed] Updated documentation to include more introduction and restructured the content.
+
+
+## v0.13.0
+
 - [NAL-1363](https://jira.skatelescope.org/browse/NAL-1363)
     - [Added] Updated DPD PostgreSQL interface to load data products from the DLM tables.
 
